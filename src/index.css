@@ -1,0 +1,63 @@
+/* Reset some defaults */
+body, html {
+  margin: 0;
+  padding: 0;
+  font-family: 'Segoe UI', Arial, sans-serif;
+  background: #f5f6fa;
+  color: #2d3436;
+  min-height: 100vh;
+}
+
+a {
+  color: #0984e3;
+  text-decoration: none;
+  transition: color 0.2s;
+}
+
+a:hover {
+  color: #636e72;
+}
+
+button {
+  font-family: inherit;
+  cursor: pointer;
+  outline: none;
+}
+
+input, textarea, select {
+  font-family: inherit;
+  padding: 8px;
+  border: 1px solid #dfe6e9;
+  border-radius: 4px;
+  margin-bottom: 12px;
+  box-sizing: border-box;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  color: #2d3436;
+  margin-top: 0;
+}
+
+.container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 32px 16px;
+}
+
+.card {
+  background: #fff;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(45,52,54,0.08);
+  padding: 24px;
+  margin-bottom: 24px;
+}
+
+::-webkit-scrollbar {
+  width: 8px;
+  background: #dfe6e9;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #b2bec3;
+  border-radius: 8px;
+}
