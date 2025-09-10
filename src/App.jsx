@@ -11,6 +11,7 @@ import SignupPage from './auth/SignupPage'
 import LoginPage from './auth/LoginPage'
 import AdminLoginPage from './auth/AdminLoginPage'
 import UserProfilePage from './layouts/pages/UserProfilePage'
+import ServicesPages from './layouts/pages/ServicesPage'
 
 
 export default function App() {
@@ -43,6 +44,10 @@ export default function App() {
         {
           path: '/contact',
           element: <ContactPage />
+        },
+        {
+          path: '/services',
+          element: <ServicesPages />
         }
       ]
     },

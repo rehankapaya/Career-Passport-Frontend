@@ -1,0 +1,122 @@
+:root {
+  --gradient-bg: linear-gradient(
+    135deg,
+    #0d0d0d,
+    #1a1f2b,
+    #2d2d2d,
+    #003366,
+    #ff4500
+  );
+  --primary-color: #ff4500;
+  --text-light: #f1f1f1;
+}
+
+/* Footer main */
+.footer {
+  background: rgba(15, 15, 15, 0.95);
+  color: var(--text-light);
+  padding: 3rem 2rem 1rem;
+  position: relative;
+}
+
+/* Footer content layout */
+.footer-content {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 2rem;
+  max-width: 1200px;
+  margin: auto;
+}
+
+/* Section titles */
+.footer-section h3 {
+  margin-bottom: 1rem;
+  color: var(--primary-color);
+  font-size: 1.1rem;
+}
+
+.footer-logo {
+  font-size: 1.6rem;
+  color: var(--primary-color);
+  margin-bottom: 0.8rem;
+}
+
+.footer-text {
+  font-size: 0.9rem;
+  color: #ccc;
+  line-height: 1.5;
+}
+
+/* Links */
+.footer-section ul {
+  list-style: none;
+  padding: 0;
+}
+
+.footer-section ul li {
+  margin-bottom: 0.6rem;
+}
+
+.footer-section ul li a {
+  color: var(--text-light);
+  text-decoration: none;
+  font-size: 0.95rem;
+  transition: color 0.3s ease;
+}
+
+.footer-section ul li a:hover {
+  color: var(--primary-color);
+}
+
+/* Social Icons */
+.social-icons {
+  display: flex;
+  gap: 1rem;
+  margin-top: 0.5rem;
+}
+
+.social-icons a {
+  color: var(--text-light);
+  font-size: 1.2rem;
+  transition: color 0.3s ease;
+}
+
+.social-icons a:hover {
+  color: var(--primary-color);
+}
+
+/* Bottom bar */
+.footer-bottom {
+  text-align: center;
+  margin-top: 2rem;
+  padding-top: 1rem;
+  border-top: 1px solid #333;
+  font-size: 0.85rem;
+  color: #aaa;
+}
+
+/* 📱 Responsive */
+@media (max-width: 992px) {
+  .footer-content {
+    grid-template-columns: repeat(2, 1fr); /* Tablet = 2 columns */
+  }
+}
+
+@media (max-width: 600px) {
+  .footer-content {
+    grid-template-columns: 1fr; /* Mobile = 1 column */
+    text-align: center;
+  }
+
+  .footer-section ul {
+    padding: 0;
+  }
+
+  .social-icons {
+    justify-content: center;
+  }
+
+  .footer {
+    padding: 2rem 1rem 1rem;
+  }
+}

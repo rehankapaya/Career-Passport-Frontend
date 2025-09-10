@@ -1,29 +1,70 @@
-import React from 'react'
-import { Link } from 'react-router-dom'
+import React, { useState } from "react";
+import './DashboardSidebar.css';
+import {
+  Home,
+  Briefcase,
+  FileText,
+  Video,
+  BookOpen,
+  Bookmark,
+  MessageSquare,
+  Settings,
+  ChevronLeft,
+  ChevronRight,
+} from "lucide-react";
 
 export default function DashboardSidebar() {
+  const [collapsed, setCollapsed] = useState(false);
+
   return (
-    <div
-      style={{
-        width: '220px',
-        background: '#fff',
-        borderRight: '1px solid #eee',
-        minHeight: '100vh',
-        padding: '24px 0',
-        boxSizing: 'border-box',
-        display: 'flex',
-        flexDirection: 'column',
-        gap: '16px'
-      }}
-    >
-      <div style={{ fontWeight: 'bold', fontSize: '20px', marginBottom: '24px', textAlign: 'center', color: '#2d3436' }}>
-        Menu
-      </div>
-      <Link to="/" style={{ padding: '12px 32px', color: '#2d3436', textDecoration: 'none', fontWeight: '500' }}>Home</Link>
-      <Link to="careers" style={{ padding: '12px 32px', color: '#2d3436', textDecoration: 'none', fontWeight: '500' }}>Careers</Link>
-      <Link to="resources" style={{ padding: '12px 32px', color: '#2d3436', textDecoration: 'none', fontWeight: '500' }}>Resources</Link>
-      <Link to="analytics" style={{ padding: '12px 32px', color: '#2d3436', textDecoration: 'none', fontWeight: '500' }}>Analytics</Link>
-      <Link to="settings" style={{ padding: '12px 32px', color: '#2d3436', textDecoration: 'none', fontWeight: '500' }}>Settings</Link>
-    </div>
-  )
+    <aside className={`sidebar ${collapsed ? "collapsed" : ""}`}>
+      {/* Toggle Button */}
+      <button className="collapse-btn" onClick={() => setCollapsed(!collapsed)}>
+        {collapsed ? <ChevronRight size={20} /> : <ChevronLeft size={20} />}
+      </button>
+
+      {/* Sidebar Menu */}
+      <nav className="sidebar-menu">
+        <a href="/dashboard" className="menu-item">
+          <Home size={20} />
+          <span>Dashboard</span>
+        </a>
+        <a href="/careers" className="menu-item">
+          <Briefcase size={20} />
+          <span>Career Bank</span>
+        </a>
+        <a href="/quiz" className="menu-item">
+          <FileText size={20} />
+          <span>Interest Quiz</span>
+        </a>
+        <a href="/multimedia" className="menu-item">
+          <Video size={20} />
+          <span>Multimedia</span>
+        </a>
+        <a href="/stories" className="menu-item">
+          <BookOpen size={20} />
+          <span>Success Stories</span>
+        </a>
+        <a href="/resources" className="menu-item">
+          <FileText size={20} />
+          <span>Resources</span>
+        </a>
+        <a href="/bookmarks" className="menu-item">
+          <Bookmark size={20} />
+          <span>Bookmarks</span>
+        </a>
+        <a href="/feedback" className="menu-item">
+          <MessageSquare size={20} />
+          <span>Feedback</span>
+        </a>
+
+        {/* Admin Only */}
+        <div className="menu-divider"></div>
+        <a href="/admin" className="menu-item admin">
+          <Settings size={20} />
+          <span>Admin Panel</span>
+        </a>
+      </nav>
+    </aside>
+  );
 }

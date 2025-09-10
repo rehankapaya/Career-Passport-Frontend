@@ -1,54 +1,95 @@
-import React from 'react'
-import { useState } from 'react';
-import axios from 'axios';
-import { apiurl } from '../api';
-import { useContext } from 'react';
-import { UserContext } from '../context/UserContext';
-import { toast } from 'react-toastify';
-import { useNavigate } from 'react-router-dom';
+import React, { useState, useContext } from "react";
+import axios from "axios";
+import { apiurl } from "../api";
+import { UserContext } from "../context/UserContext";
+import { toast } from "react-toastify";
+import { useNavigate } from "react-router-dom";
+import "./LoginPage.css";
+
 export default function LoginPage() {
-    const { userlogin } = useContext(UserContext)
-    const navigate = useNavigate();
-    const [formData, setFormData] = useState({
-        email: '',
-        password: '',
-    });
+  const { userlogin } = useContext(UserContext);
+  const navigate = useNavigate();
 
-    const { email, password } = formData;
+  const [formData, setFormData] = useState({
+    email: "",
+    password: "",
+  });
 
-    const handleChange = (e) => {
-        setFormData({ ...formData, [e.target.name]: e.target.value });
-    };
+  const { email, password } = formData;
 
-    async function handleSubmit(e) {
-        e.preventDefault();
+  // input change
+  const handleChange = (e) => {
+    setFormData({ ...formData, [e.target.name]: e.target.value });
+  };
 
-        try {
+  // form submit
+  async function handleSubmit(e) {
+    e.preventDefault();
 
-            const response = await axios.post(`${apiurl}/api/users/login`, formData);
-            console.log('Login successful:', response.data);
-            toast.success("Login Successful")
-            userlogin(response.data.user);
-            navigate("/")
+    try {
+      const response = await axios.post(`${apiurl}/api/users/login`, formData);
+      console.log("Login successful:", response.data);
 
+      toast.success("Login Successful 🎉");
+      userlogin(response.data.user);
+      navigate("/");
+    } catch (error) {
+      console.error("Login failed:", error);
+      toast.error(error.response?.data?.message || "Login Failed");
+    }
+  }
 
-        } catch (error) {
-            console.error('Login failed:', error);
-            toast.error(error.response?.data?.message || "Login Failed")
-        }
+  return (
+    <div className="login-container">
+      <div className="login-card">
+        <h2 className="login-title">Welcome Back</h2>
+        <p className="login-subtitle">Login to continue your career journey ✨</p>
 
-        console.log(formData)
-    };
+        <form className="login-form" onSubmit={handleSubmit}>
+          <div className="form-group">
+            <label htmlFor="email">Email Address</label>
+            <input
+              type="email"
+              id="email"
+              name="email"
+              value={email}
+              onChange={handleChange}
+              placeholder="Enter your email"
+              required
+            />
+          </div>
 
-    return (
-        <div>
-            <h2>Login</h2>
-            <form onSubmit={handleSubmit}>
-                <input type="email" name="email" value={email} onChange={handleChange} placeholder="Email" required />
-                <input type="password" name="password" value={password} onChange={handleChange} placeholder="Password" required />
+          <div className="form-group">
+            <label htmlFor="password">Password</label>
+            <input
+              type="password"
+              id="password"
+              name="password"
+              value={password}
+              onChange={handleChange}
+              placeholder="Enter your password"
+              required
+            />
+          </div>
 
-                <button type="submit">Login</button>
-            </form>
-        </div>
-    );
+          <div className="login-options">
+            <label className="remember">
+              <input type="checkbox" /> Remember me
+            </label>
+            <a href="/auth/forgot" className="forgot-link">
+              Forgot Password?
+            </a>
+          </div>
+
+          <button type="submit" className="login-btn">
+            Login
+          </button>
+        </form>
+
+        <p className="login-footer">
+          Don’t have an account? <a href="/auth/register">Sign up here</a>
+        </p>
+      </div>
+    </div>
+  );
 }
