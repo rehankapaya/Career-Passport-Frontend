@@ -1,40 +1,51 @@
-import React from 'react'
+import React, { useState } from "react";
+import "./DashboardNavbar.css";
 
 export default function DashboardNavbar() {
+  const [menuOpen, setMenuOpen] = useState(false);
+
   return (
-    <nav
-      style={{
-        width: '100%',
-        height: '60px',
-        background: '#2d3436',
-        color: '#fff',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'space-between',
-        padding: '0 32px',
-        boxSizing: 'border-box',
-        fontWeight: 'bold',
-        fontSize: '18px',
-        letterSpacing: '1px'
-      }}
-    >
-      <div>Career Passport Dashboard</div>
-      <div>
-        {/* Example user info or actions */}
-        <span style={{ marginRight: '16px' }}>Welcome, User</span>
-        <button
-          style={{
-            background: '#636e72',
-            color: '#fff',
-            border: 'none',
-            borderRadius: '4px',
-            padding: '8px 16px',
-            cursor: 'pointer'
-          }}
-        >
-          Logout
-        </button>
+    <header className="topbar">
+      {/* Logo / Brand */}
+      <div className="topbar-logo">
+        <span className="logo-text">PathSeeker</span>
       </div>
-    </nav>
-  )
+
+      {/* Search */}
+      <div className="topbar-search">
+        <input type="text" placeholder="Search careers, resources..." />
+      </div>
+
+      {/* Profile + Hamburger */}
+      <div className="topbar-actions">
+        <div className="profile" onClick={() => setMenuOpen(!menuOpen)}>
+          <img
+            src="https://i.pravatar.cc/40"
+            alt="User Avatar"
+            className="avatar"
+          />
+          <span className="username">John Doe</span>
+        </div>
+
+        {/* Hamburger (mobile) */}
+        <div
+          className={`hamburger ${menuOpen ? "open" : ""}`}
+          onClick={() => setMenuOpen(!menuOpen)}
+        >
+          <span></span>
+          <span></span>
+          <span></span>
+        </div>
+      </div>
+
+      {/* Dropdown menu */}
+      {menuOpen && (
+        <div className="dropdown-menu">
+          <a href="/dashboard/profile">Profile</a>
+          <a href="/dashboard/settings">Settings</a>
+          <a href="/auth/logout">Logout</a>
+        </div>
+      )}
+    </header>
+  );
 }

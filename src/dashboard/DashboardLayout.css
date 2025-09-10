@@ -1,0 +1,42 @@
+/* Dashboard Layout */
+.dashboard-container {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+}
+
+/* Topbar fix at top */
+.dashboard-container > :first-child {
+  position: sticky;
+  top: 0;
+  z-index: 1000;
+}
+
+/* Main wrapper: sidebar + content */
+.dashboard-main {
+  display: flex;
+  flex: 1;
+  background: #f5f7fa;
+}
+
+/* Sidebar styles */
+.dashboard-main > :first-child {
+  width: 250px; /* fixed width sidebar */
+  min-height: calc(100vh - 60px); /* adjust if topbar height is 60px */
+  background: #1e293b;
+  color: white;
+  padding: 20px 10px;
+  position: sticky;
+  top: 60px; /* same as topbar height */
+}
+
+/* Content area */
+.dashboard-content {
+  flex: 1;
+  padding: 20px;
+  background: #ffffff;
+  border-radius: 12px;
+  margin: 15px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+  overflow-y: auto;
+}
