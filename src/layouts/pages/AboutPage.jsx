@@ -12,7 +12,7 @@ export default function AboutPage() {
         {/* Left: Image */}
         <div className="about-image">
           <img
-            src="https://source.unsplash.com/600x400/?career,team,office"
+            src="https://cdn.pixabay.com/photo/2017/06/04/20/22/businessman-2372128_640.jpg"
             alt="About PathSeeker"
           />
         </div>
