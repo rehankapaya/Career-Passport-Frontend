@@ -7,19 +7,19 @@ const sliderData = [
     id: 1,
     title: "Discover Your Career Path",
     subtitle: "Tailored guidance for Students, Graduates & Professionals",
-    img: "https://source.unsplash.com/1600x600/?career,office",
+    img: "https://cdn.pixabay.com/photo/2018/05/09/22/40/career-3386334_640.jpg",
   },
   {
     id: 2,
     title: "Explore Global Careers",
     subtitle: "Search roles, skills & opportunities worldwide",
-    img: "https://source.unsplash.com/1600x600/?jobs,technology",
+    img: "https://cdn.pixabay.com/photo/2024/09/21/02/13/global-business-9062781_640.jpg",
   },
   {
     id: 3,
     title: "Learn & Grow",
     subtitle: "Access multimedia, resources & success stories",
-    img: "https://source.unsplash.com/1600x600/?learning,success",
+    img: "https://cdn.pixabay.com/photo/2017/03/09/09/15/learn-2128978_640.jpg",
   },
 ];
 
