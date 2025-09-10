@@ -13,6 +13,7 @@ import AdminLoginPage from './auth/AdminLoginPage'
 import UserProfilePage from './layouts/pages/UserProfilePage'
 import ServicesPages from './layouts/pages/ServicesPage'
 import SuccessStoriesPage from './layouts/pages/SuccessStoriesPage'
+import AdminSuccessStoriesPage from './dashboard/dashboardPages/AdminSuccessStoriesPage'
 
 
 export default function App() {
@@ -68,6 +69,7 @@ export default function App() {
         },
         { path: 'manage-users', element: <h1>Manage Users</h1> },
         { path: 'careers', element: <h1>Careers</h1> },
+        { path: 'adminsuccessstories', element: <AdminSuccessStoriesPage/> },
         { path: 'resources', element: <h1>Resources</h1> },
         { path: 'analytics', element: <h1>Analytics</h1> },
         { path: 'settings', element: <h1>Settings</h1> }

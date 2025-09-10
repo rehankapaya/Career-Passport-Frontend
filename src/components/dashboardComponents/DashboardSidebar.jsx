@@ -12,6 +12,7 @@ import {
   ChevronLeft,
   ChevronRight,
 } from "lucide-react";
+import { Link } from "react-router-dom";
 
 export default function DashboardSidebar() {
   const [collapsed, setCollapsed] = useState(false);
@@ -25,45 +26,45 @@ export default function DashboardSidebar() {
 
       {/* Sidebar Menu */}
       <nav className="sidebar-menu">
-        <a href="/dashboard" className="menu-item">
+        <Link to="dashboard" className="menu-item">
           <Home size={20} />
           <span>Dashboard</span>
-        </a>
-        <a href="/careers" className="menu-item">
+        </Link>
+        <Link to="careers" className="menu-item">
           <Briefcase size={20} />
           <span>Career Bank</span>
-        </a>
-        <a href="/quiz" className="menu-item">
+        </Link>
+        <Link to="quiz" className="menu-item">
           <FileText size={20} />
           <span>Interest Quiz</span>
-        </a>
-        <a href="/multimedia" className="menu-item">
+        </Link>
+        <Link to="multimedia" className="menu-item">
           <Video size={20} />
           <span>Multimedia</span>
-        </a>
-        <a href="/stories" className="menu-item">
+        </Link>
+        <Link to="adminsuccessstories" className="menu-item">
           <BookOpen size={20} />
           <span>Success Stories</span>
-        </a>
-        <a href="/resources" className="menu-item">
+        </Link>
+        <Link to="resources" className="menu-item">
           <FileText size={20} />
           <span>Resources</span>
-        </a>
-        <a href="/bookmarks" className="menu-item">
+        </Link>
+        <Link to="bookmarks" className="menu-item">
           <Bookmark size={20} />
           <span>Bookmarks</span>
-        </a>
-        <a href="/feedback" className="menu-item">
+        </Link>
+        <Link to="feedback" className="menu-item">
           <MessageSquare size={20} />
           <span>Feedback</span>
-        </a>
+        </Link>
 
         {/* Admin Only */}
         <div className="menu-divider"></div>
-        <a href="/admin" className="menu-item admin">
+        <Link to="admin" className="menu-item admin">
           <Settings size={20} />
           <span>Admin Panel</span>
-        </a>
+        </Link>
       </nav>
     </aside>
   );
