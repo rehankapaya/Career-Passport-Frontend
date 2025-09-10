@@ -48,7 +48,7 @@ export default function AdminSuccessStoriesPage() {
   // Reject story
   const handleReject = async (story_id) => {
     try {
-      await axios.delete(`${API_URL}/${story_id}/reject`, {
+      await axios.delete(`${apiurl}/${story_id}/reject`, {
         headers: {
           Authorization: `Bearer ${localStorage.getItem("adminToken")}`,
         },
