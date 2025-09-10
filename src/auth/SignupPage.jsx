@@ -4,6 +4,7 @@ import { apiurl } from "../api";
 import { UserContext } from "../context/UserContext";
 import { toast } from "react-toastify";
 import "./SignupPage.css";
+import { Link } from "react-router-dom";
 
 export default function SignupPage() {
   const { userlogin } = useContext(UserContext);
@@ -136,7 +137,7 @@ export default function SignupPage() {
         </form>
 
         <p className="signup-footer">
-          Already have an account? <a href="/auth/login">Login here</a>
+          Already have an account? <Link to="/login">Login here</Link>
         </p>
       </div>
     </div>

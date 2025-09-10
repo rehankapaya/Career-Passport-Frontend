@@ -20,13 +20,8 @@
 
 .slides {
   display: flex;
-  overflow-x: auto;
-  scroll-snap-type: x mandatory;
-  scrollbar-width: none; /* Firefox */
-}
-
-.slides::-webkit-scrollbar {
-  display: none; /* Chrome */
+  transition: transform 0.8s ease-in-out;
+  width: 100%;
 }
 
 .slide {
@@ -35,7 +30,6 @@
   background-size: cover;
   background-position: center;
   position: relative;
-  scroll-snap-align: start;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -73,6 +67,29 @@
 
 .cta-btn:hover {
   background: #e03d00;
+}
+
+/* Dots */
+.dots {
+  position: absolute;
+  bottom: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  gap: 8px;
+}
+
+.dot {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: #888;
+  cursor: pointer;
+  transition: background 0.3s;
+}
+
+.dot.active {
+  background: var(--primary-color);
 }
 
 /* Sections */

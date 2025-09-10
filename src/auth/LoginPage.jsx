@@ -3,7 +3,7 @@ import axios from "axios";
 import { apiurl } from "../api";
 import { UserContext } from "../context/UserContext";
 import { toast } from "react-toastify";
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import "./LoginPage.css";
 
 export default function LoginPage() {
@@ -87,7 +87,7 @@ export default function LoginPage() {
         </form>
 
         <p className="login-footer">
-          Don’t have an account? <a href="/auth/register">Sign up here</a>
+          Don’t have an account? <Link to="/signup">Sign up here</Link>
         </p>
       </div>
     </div>
