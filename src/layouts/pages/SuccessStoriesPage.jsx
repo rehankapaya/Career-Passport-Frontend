@@ -54,7 +54,6 @@ export default function SuccessStoriesPage() {
         withCredentials: true
       });
       toast.success("Story submitted!");
-      setStories([res.data, ...stories]);
       setForm({ rname: "", domain: "", story_text: "", image_url: null });
     } catch (err) {
       toast.error("Error submitting story");

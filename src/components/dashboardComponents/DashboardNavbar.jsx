@@ -1,8 +1,14 @@
 import React, { useState } from "react";
 import "./DashboardNavbar.css";
+import { useContext } from "react";
+import { UserContext } from "../../context/UserContext";
+import { Link, useNavigate } from "react-router-dom";
 
 export default function DashboardNavbar() {
   const [menuOpen, setMenuOpen] = useState(false);
+
+  const { user, userlogout } = useContext(UserContext)
+  const navigate = useNavigate()
 
   return (
     <header className="topbar">
@@ -43,7 +49,9 @@ export default function DashboardNavbar() {
         <div className="dropdown-menu">
           <a href="/dashboard/profile">Profile</a>
           <a href="/dashboard/settings">Settings</a>
-          <a href="/auth/logout">Logout</a>
+          <Link onClick={() => { userlogout(); navigate('/admin') }} className="login-btn">
+            Logout
+          </Link>
         </div>
       )}
     </header>
