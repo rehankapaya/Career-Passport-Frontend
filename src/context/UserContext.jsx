@@ -10,6 +10,7 @@ export default function UserProvider({children}) {
     const userlogin = (user)=> {
         setUser(user);
         localStorage.setItem("user",JSON.stringify(user))
+        localStorage.setItem("token",user.token)
       
     }
     
