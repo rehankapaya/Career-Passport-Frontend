@@ -1,7 +1,7 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import "./HomePage.css";
 
-// Slider Images (placeholder)
+// Slider Data
 const sliderData = [
   {
     id: 1,
@@ -24,17 +24,30 @@ const sliderData = [
 ];
 
 export default function HomePage() {
+  const [current, setCurrent] = useState(0);
+
+  // Auto slide every 4 seconds
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setCurrent((prev) => (prev === sliderData.length - 1 ? 0 : prev + 1));
+    }, 4000);
+    return () => clearInterval(interval);
+  }, []);
+
   return (
     <>
     <div className="homepage">
       {/* Hero Slider */}
       <section className="hero-slider">
-        <div className="slides">
+        <div
+          className="slides"
+          style={{ transform: `translateX(-${current * 100}%)` }}
+          >
           {sliderData.map((slide) => (
             <div
-              key={slide.id}
-              className="slide"
-              style={{ backgroundImage: `url(${slide.img})` }}
+            key={slide.id}
+            className="slide"
+            style={{ backgroundImage: `url(${slide.img})` }}
             >
               <div className="overlay">
                 <h2>{slide.title}</h2>
@@ -42,6 +55,17 @@ export default function HomePage() {
                 <button className="cta-btn">Get Started</button>
               </div>
             </div>
+          ))}
+        </div>
+
+        {/* Dots Navigation */}
+        <div className="dots">
+          {sliderData.map((_, index) => (
+            <span
+            key={index}
+            className={index === current ? "dot active" : "dot"}
+            onClick={() => setCurrent(index)}
+            ></span>
           ))}
         </div>
       </section>
@@ -95,6 +119,6 @@ export default function HomePage() {
         <button className="cta-btn">Join Now</button>
       </section>
     </div>
-    </>
+            </>
   );
 }
