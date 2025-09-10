@@ -18,7 +18,7 @@ export default function AdminSuccessStoriesPage() {
     try {
       const res = await axios.get(`${apiurl}/api/success-stories/pending`, {
         headers: {
-          Authorization: `Bearer ${localStorage.getItem("adminToken")}`,
+          Authorization: `Bearer ${localStorage.getItem("token")}`,
         },
         withCredentials: true,
       });
@@ -34,7 +34,7 @@ export default function AdminSuccessStoriesPage() {
     try {
       await axios.put(`${apiurl}/api/success-stories/${story_id}/approve`, {}, {
         headers: {
-          Authorization: `Bearer ${localStorage.getItem("adminToken")}`,
+          Authorization: `Bearer ${localStorage.getItem("token")}`,
         },
         withCredentials: true,
       });
@@ -48,9 +48,9 @@ export default function AdminSuccessStoriesPage() {
   // Reject story
   const handleReject = async (story_id) => {
     try {
-      await axios.delete(`${apiurl}/${story_id}/reject`, {
+      await axios.delete(`${apiurl}/api/success-stories/${story_id}/reject`, {
         headers: {
-          Authorization: `Bearer ${localStorage.getItem("adminToken")}`,
+          Authorization: `Bearer ${localStorage.getItem("token")}`,
         },
         withCredentials: true,
       });
