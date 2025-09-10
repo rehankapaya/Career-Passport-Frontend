@@ -38,7 +38,7 @@ export default function DashboardSidebar() {
           <FileText size={20} />
           <span>Interest Quiz</span>
         </Link>
-        <Link to="multimedia" className="menu-item">
+        <Link to="adminmultimedia" className="menu-item">
           <Video size={20} />
           <span>Multimedia</span>
         </Link>
