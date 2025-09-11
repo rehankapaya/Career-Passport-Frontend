@@ -50,7 +50,7 @@ export default function App() {
           element: <HomePage />
         },
         {
-          path: '/user-profile',
+          path: '/profile',
           element: <UserProfilePage />
         },
         {
