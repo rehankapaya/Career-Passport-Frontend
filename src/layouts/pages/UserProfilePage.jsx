@@ -263,7 +263,7 @@ export default function UserProfilePage() {
               </div>
             </div>
             
-            {userProfile.user_id ==user.user_id &&<div className="action-buttons">
+            {userProfile?.user_id ==user?.user_id &&<div className="action-buttons">
               <button
                 onClick={() => setShowEdit(true)}
                 className="btn-primary"
@@ -278,9 +278,9 @@ export default function UserProfilePage() {
         {/* Resume Section */}
         {activeTab === "resume" && (
           <div className="profile-section">
-            {userProfile.user_id == user.user_id && <h3 className="section-title">Resume Management</h3>}
+            {userProfile?.user_id == user?.user_id && <h3 className="section-title">Resume Management</h3>}
 
-            {userProfile.user_id == user.user_id && <div className="resume-status">
+            {userProfile?.user_id == user?.user_id && <div className="resume-status">
               <div className="resume-status-icon">
                 {userProfile?.resume ? "✅" : "📝"}
               </div>
@@ -325,7 +325,7 @@ export default function UserProfilePage() {
               </div>
             )}
 
-            {userProfile.user_id ==user.user_id &&<div className="resume-upload">
+            {userProfile?.user_id ==user?.user_id &&<div className="resume-upload">
               <h4>{userProfile?.resume ? "Update Your Resume" : "Upload Your Resume"}</h4>
               <p>Supported formats: PDF, DOC, DOCX</p>
               <form onSubmit={handleResumeUpload} className="upload-form">

@@ -1,11 +1,17 @@
-import React, { useState } from "react";
-
+import React, { useContext, useState } from "react";
+import {toast} from "react-toastify"
+import axios from "axios";
+import { apiurl } from "../api";
+import { useNavigate } from "react-router-dom";
+import { UserContext } from "../context/UserContext";
 export default function AdminLoginPage() {
+  const { userlogin } = useContext(UserContext);
   const [formData, setFormData] = useState({
     email: "",
     password: "",
   });
   const [loading, setLoading] = useState(false);
+  const navigate = useNavigate();
 
   const { email, password } = formData;
 
@@ -13,17 +19,20 @@ export default function AdminLoginPage() {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
-  const handleSubmit = (e) => {
+  async function handleSubmit(e) {
     e.preventDefault();
-    setLoading(true);
-    // Simulating API call
-    setTimeout(() => {
-      console.log("Admin login successful with:", formData);
-      // toast.success("Admin Login Successful");
-      setLoading(false);
-      // navigate("/admin/dashboard");
-    }, 1500);
-  };
+
+    try {
+      const response = await axios.post(`${apiurl}/api/admin/login`, formData);
+      console.log("Login successful:", response.data);
+      toast.success("Admin Login Successful");
+      userlogin(response.data);
+      navigate("/admin/dashboard");
+    } catch (error) {
+      console.error("Login failed:", error);
+      toast.error(error.response?.data?.message || "Login Failed");
+    }
+  }
 
   const containerStyle = {
     display: 'flex',

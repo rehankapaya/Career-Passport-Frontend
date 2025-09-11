@@ -1,11 +1,13 @@
-import React, { useState } from 'react';
-import { BrowserRouter, Routes, Route, Link } from 'react-router-dom';
+import React, { useContext, useState } from 'react';
+import { useNavigate, Link } from 'react-router-dom';
 import ReactDOM from 'react-dom/client';
+import { UserContext } from '../context/UserContext';
 
 // The Navbar component with all styling converted to inline style attributes.
-export default function NavbarComponent(){
+export default function NavbarComponent() {
   const [isDropdownVisible, setDropdownVisible] = useState(false);
-
+  const navigate = useNavigate()
+  const { userlogout } = useContext(UserContext)
   const navItems = [
     { name: 'Home', to: '/' },
     { name: 'Resources', to: '/resources' },
@@ -98,7 +100,7 @@ export default function NavbarComponent(){
           >
             <Link to="/profile" style={{ display: 'block', padding: '0.5rem 1rem', color: '#4b5563', textDecoration: 'none' }}>Profile</Link>
             <Link to="/settings" style={{ display: 'block', padding: '0.5rem 1rem', color: '#4b5563', textDecoration: 'none' }}>Settings</Link>
-            <Link to="/logout" style={{ display: 'block', padding: '0.5rem 1rem', color: '#4b5563', textDecoration: 'none' }}>Logout</Link>
+            <Link onClick={() => { userlogout(), navigate('/login') }} style={{ display: 'block', padding: '0.5rem 1rem', color: '#4b5563', textDecoration: 'none' }}>Logout</Link>
           </div>
         </div>
       </div>

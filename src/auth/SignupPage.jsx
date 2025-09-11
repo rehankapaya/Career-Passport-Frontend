@@ -1,7 +1,13 @@
-import React, { useState } from "react";
-import { BrowserRouter as Router, Link } from "react-router-dom";
+import React, { useState, useContext } from "react";
+import axios from "axios";
+import { apiurl } from "../api";
+import { UserContext } from "../context/UserContext";
+import { toast } from "react-toastify";
+import { Link } from "react-router-dom";
 
 export default function SignupPage() {
+  const { userlogin } = useContext(UserContext);
+
   const [formData, setFormData] = useState({
     uname: "",
     email: "",
@@ -17,13 +23,36 @@ export default function SignupPage() {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
+  // handle submit
   async function handleSubmit(e) {
     e.preventDefault();
 
     if (password !== confirmPassword) {
+      toast.error("Passwords do not match");
       return;
     }
+
+    try {
+      const response = await axios.post(`${apiurl}/api/users/register`, {
+        uname,
+        email,
+        password,
+        role,
+      });
+
+      console.log("Signup successful:", response.data);
+      toast.success("Signup Successful ");
+
+      // agar signup ke baad auto login karwana ho
+      if (response.data.user) {
+        userlogin(response.data.user);
+      }
+    } catch (error) {
+      console.error("Signup failed:", error);
+      toast.error(error.response?.data?.message || "Signup Failed");
+    }
   }
+
 
   const inputStyle = {
     width: '100%',
