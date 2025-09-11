@@ -24,7 +24,7 @@ import InterestQuizPage from './layouts/pages/InterestQuizPage'
 import BookMarkpage from './layouts/pages/BookMarkpage'
 import FeedbackForm from './layouts/pages/FeedBackForm'
 import ResourceDetailsPage from './layouts/pages/ResourceDetailPage'
-import AdminAddResourcePage from '../../client/src/dashboard/dashboardPages/AdminAddResourcePage'
+import AdminAddResourcePage from './dashboard/dashboardPages/AdminAddResourcePage'
 
 
 export default function App() {
@@ -116,7 +116,7 @@ export default function App() {
         },
         { path: 'manage-users', element: <h1>Manage Users</h1> },
         { path: 'careers', element: <h1>Careers</h1> },
-        { path: 'add-resource', element: <AdminAddResourcePage /> },
+        { path: 'addresource', element: <AdminAddResourcePage /> },
         { path: 'adminmultimedia', element: <AdminMultimediaPage/> },
         { path: 'adminsuccessstories', element: <AdminSuccessStoriesPage/> },
         { path: 'resources', element: <h1>Resources</h1> },

@@ -1,12 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { useParams } from 'react-router-dom';
-
+import './ResourceDetailsPage.css'
 export default function ResourceDetailsPage() {
   const { id } = useParams();
   const [resource, setResource] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [viewMode, setViewMode] = useState('preview'); // 'preview' or 'download'
 
   useEffect(() => {
     fetchResource();
@@ -34,62 +35,42 @@ export default function ResourceDetailsPage() {
     });
   };
 
+  const getFileType = (filename) => {
+    if (!filename) return 'Unknown';
+    const extension = filename.split('.').pop().toLowerCase();
+    if (['pdf'].includes(extension)) return 'PDF Document';
+    if (['doc', 'docx'].includes(extension)) return 'Word Document';
+    if (['xls', 'xlsx'].includes(extension)) return 'Excel Spreadsheet';
+    if (['ppt', 'pptx'].includes(extension)) return 'PowerPoint Presentation';
+    if (['jpg', 'jpeg', 'png', 'gif'].includes(extension)) return 'Image';
+    return 'File';
+  };
+
+  const handleDownload = () => {
+    // Create a temporary link to trigger download
+    const link = document.createElement('a');
+    link.href = resource.file_url;
+    link.setAttribute('download', resource.title || 'resource');
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
   if (loading) {
     return (
-      <div style={{
-        display: 'flex',
-        justifyContent: 'center',
-        alignItems: 'center',
-        minHeight: '100vh',
-        backgroundColor: '#ffffff',
-        padding: '40px 20px'
-      }}>
-        <div style={{
-          fontSize: '16px',
-          color: '#666',
-          textAlign: 'center'
-        }}>
-          Loading resource details...
-        </div>
+      <div className="resource-loading">
+        <div className="loading-spinner"></div>
+        <p>Loading resource details...</p>
       </div>
     );
   }
 
   if (error) {
     return (
-      <div style={{
-        display: 'flex',
-        justifyContent: 'center',
-        alignItems: 'center',
-        minHeight: '100vh',
-        backgroundColor: '#ffffff',
-        padding: '40px 20px'
-      }}>
-        <div style={{
-          textAlign: 'center',
-          maxWidth: '400px'
-        }}>
-          <div style={{
-            color: '#dc3545',
-            fontSize: '18px',
-            marginBottom: '16px',
-            fontWeight: '500'
-          }}>
-            {error}
-          </div>
-          <button
-            onClick={fetchResource}
-            style={{
-              padding: '12px 24px',
-              backgroundColor: '#007bff',
-              color: 'white',
-              border: 'none',
-              borderRadius: '6px',
-              cursor: 'pointer',
-              fontSize: '14px',
-              fontWeight: '500'
-            }}
-          >
+      <div className="resource-error">
+        <div className="error-content">
+          <h3>{error}</h3>
+          <button onClick={fetchResource} className="retry-button">
             Try Again
           </button>
         </div>
@@ -99,200 +80,104 @@ export default function ResourceDetailsPage() {
 
   if (!resource) {
     return (
-      <div style={{
-        display: 'flex',
-        justifyContent: 'center',
-        alignItems: 'center',
-        minHeight: '100vh',
-        backgroundColor: '#ffffff',
-        padding: '40px 20px'
-      }}>
-        <div style={{
-          textAlign: 'center',
-          color: '#666'
-        }}>
-          <div style={{ fontSize: '18px', marginBottom: '8px', fontWeight: '500' }}>
-            Resource not found
-          </div>
-          <div style={{ fontSize: '14px', color: '#999' }}>
-            The requested resource could not be found.
-          </div>
-        </div>
+      <div className="resource-not-found">
+        <h3>Resource not found</h3>
+        <p>The requested resource could not be found.</p>
       </div>
     );
   }
 
   return (
-    <div style={{
-      minHeight: '100vh',
-      backgroundColor: '#ffffff',
-      padding: '40px 20px'
-    }}>
-      <div style={{
-        maxWidth: '800px',
-        margin: '0 auto'
-      }}>
+    <div className="resource-details-container">
+      <div className="resource-details-content">
         {/* Back Button */}
-        <button
-          onClick={() => window.history.back()}
-          style={{
-            display: 'inline-flex',
-            alignItems: 'center',
-            padding: '8px 16px',
-            backgroundColor: 'transparent',
-            color: '#007bff',
-            border: '1px solid #007bff',
-            borderRadius: '6px',
-            cursor: 'pointer',
-            fontSize: '14px',
-            marginBottom: '24px',
-            fontWeight: '500'
-          }}
-        >
-          â† Back
+        <button onClick={() => window.history.back()} className="back-button">
+          ← Back to Resources
         </button>
 
         {/* Main Card */}
-        <div style={{
-          backgroundColor: 'white',
-          borderRadius: '12px',
-          border: '1px solid #eaeaea',
-          boxShadow: '0 1px 3px rgba(0, 0, 0, 0.05)',
-          overflow: 'hidden'
-        }}>
+        <div className="resource-card">
           {/* Header */}
-          <div style={{
-            padding: '32px',
-            borderBottom: '1px solid #eaeaea'
-          }}>
-            <div style={{
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'space-between',
-              marginBottom: '16px',
-              flexWrap: 'wrap',
-              gap: '12px'
-            }}>
-              <h1 style={{
-                margin: '0',
-                fontSize: '28px',
-                fontWeight: '600',
-                color: '#1a1a1a',
-                lineHeight: '1.3'
-              }}>
-                {resource.title}
-              </h1>
-              <div style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: '8px'
-              }}>
-                <span style={{
-                  padding: '6px 12px',
-                  backgroundColor: '#f8f9fa',
-                  color: '#495057',
-                  borderRadius: '20px',
-                  fontSize: '12px',
-                  fontWeight: '500',
-                  border: '1px solid #e9ecef'
-                }}>
-                  {resource.category}
-                </span>
-                <span style={{
-                  padding: '6px 12px',
-                  backgroundColor: '#e7f3ff',
-                  color: '#007bff',
-                  borderRadius: '20px',
-                  fontSize: '12px',
-                  fontWeight: '500'
-                }}>
-                  {resource.views_count} views
-                </span>
+          <div className="resource-header">
+            <div className="resource-title-section">
+              <h1>{resource.title}</h1>
+              <div className="resource-badges">
+                <span className="category-badge">{resource.category}</span>
+                <span className="views-badge">{resource.views_count} views</span>
               </div>
             </div>
 
-            <p style={{
-              color: '#666',
-              lineHeight: '1.6',
-              fontSize: '16px',
-              margin: '0',
-              marginTop: '16px'
-            }}>
-              {resource.description}
-            </p>
+            <p className="resource-description">{resource.description}</p>
           </div>
 
           {/* Content */}
-          <div style={{
-            padding: '32px'
-          }}>
-            {/* File Download */}
-            <div style={{ marginBottom: '32px' }}>
-              <div style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: '16px',
-                flexWrap: 'wrap'
-              }}>
-                <a
-                  href={resource.file_url}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  style={{
-                    display: 'inline-flex',
-                    alignItems: 'center',
-                    gap: '8px',
-                    padding: '12px 24px',
-                    backgroundColor: '#007bff',
-                    color: 'white',
-                    textDecoration: 'none',
-                    borderRadius: '8px',
-                    fontWeight: '500',
-                    fontSize: '14px',
-                    transition: 'all 0.2s ease'
-                  }}
+          <div className="resource-content">
+            {/* File Actions */}
+            <div className="file-actions-section">
+              <div className="view-mode-toggle">
+                <button 
+                  className={viewMode === 'preview' ? 'toggle-active' : ''}
+                  onClick={() => setViewMode('preview')}
                 >
-                  <span>ðŸ“„</span>
-                  Download Resource
-                </a>
-                <span style={{
-                  color: '#999',
-                  fontSize: '14px'
-                }}>
-                  PDF Document
-                </span>
+                  Preview
+                </button>
+                <button 
+                  className={viewMode === 'download' ? 'toggle-active' : ''}
+                  onClick={() => setViewMode('download')}
+                >
+                  Download
+                </button>
               </div>
+
+              {viewMode === 'preview' ? (
+                <div className="preview-section">
+                  <h3>Document Preview</h3>
+                  <div className="preview-container">
+                    {resource.file_url && resource.file_url.toLowerCase().endsWith('.pdf') ? (
+                      <iframe 
+                        src={resource.file_url} 
+                        className="document-preview"
+                        title="Document Preview"
+                      />
+                    ) : (
+                      <div className="preview-not-available">
+                        <p>Preview is not available for this file type.</p>
+                        <p>Please download the file to view its contents.</p>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              ) : (
+                <div className="download-section">
+                  <h3>Download Resource</h3>
+                  <div className="download-info">
+                    <div className="file-type">{getFileType(resource.file_url)}</div>
+                    <p>Click the button below to download this resource to your device.</p>
+                  </div>
+                  <div className="download-actions">
+                    <button onClick={handleDownload} className="download-button">
+                      Download Now
+                    </button>
+                    <a 
+                      href={resource.file_url} 
+                      target="_blank" 
+                      rel="noopener noreferrer"
+                      className="open-link"
+                    >
+                      Open in New Tab
+                    </a>
+                  </div>
+                </div>
+              )}
             </div>
 
             {/* Tags */}
             {resource.tag && resource.tag.length > 0 && (
-              <div style={{ marginBottom: '32px' }}>
-                <h3 style={{
-                  color: '#333',
-                  margin: '0 0 12px 0',
-                  fontSize: '16px',
-                  fontWeight: '600'
-                }}>
-                  Tags
-                </h3>
-                <div style={{
-                  display: 'flex',
-                  flexWrap: 'wrap',
-                  gap: '8px'
-                }}>
+              <div className="tags-section">
+                <h3>Tags</h3>
+                <div className="tags-container">
                   {resource.tag.map((tag, index) => (
-                    <span
-                      key={index}
-                      style={{
-                        padding: '6px 12px',
-                        backgroundColor: '#f8f9fa',
-                        color: '#495057',
-                        borderRadius: '6px',
-                        fontSize: '13px',
-                        fontWeight: '500',
-                        border: '1px solid #e9ecef'
-                      }}
-                    >
+                    <span key={index} className="tag">
                       #{tag}
                     </span>
                   ))}
@@ -301,120 +186,43 @@ export default function ResourceDetailsPage() {
             )}
 
             {/* Metadata Grid */}
-            <div>
-              <h3 style={{
-                color: '#333',
-                margin: '0 0 20px 0',
-                fontSize: '16px',
-                fontWeight: '600'
-              }}>
-                Details
-              </h3>
-              <div style={{
-                display: 'grid',
-                gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
-                gap: '16px'
-              }}>
-                <div>
-                  <div style={{
-                    color: '#999',
-                    fontSize: '13px',
-                    fontWeight: '500',
-                    marginBottom: '4px',
-                    textTransform: 'uppercase',
-                    letterSpacing: '0.5px'
-                  }}>
-                    Created By
-                  </div>
-                  <div style={{
-                    color: '#333',
-                    fontSize: '14px',
-                    fontWeight: '500'
-                  }}>
-                    {resource.created_by || 'Not specified'}
-                  </div>
+            <div className="metadata-section">
+              <h3>Details</h3>
+              <div className="metadata-grid">
+                <div className="metadata-item">
+                  <label>Created By</label>
+                  <span>{resource.created_by || 'Not specified'}</span>
                 </div>
 
-                <div>
-                  <div style={{
-                    color: '#999',
-                    fontSize: '13px',
-                    fontWeight: '500',
-                    marginBottom: '4px',
-                    textTransform: 'uppercase',
-                    letterSpacing: '0.5px'
-                  }}>
-                    Created
-                  </div>
-                  <div style={{
-                    color: '#333',
-                    fontSize: '14px',
-                    fontWeight: '500'
-                  }}>
-                    {formatDate(resource.createdAt)}
-                  </div>
+                <div className="metadata-item">
+                  <label>Created</label>
+                  <span>{formatDate(resource.createdAt)}</span>
                 </div>
 
-                <div>
-                  <div style={{
-                    color: '#999',
-                    fontSize: '13px',
-                    fontWeight: '500',
-                    marginBottom: '4px',
-                    textTransform: 'uppercase',
-                    letterSpacing: '0.5px'
-                  }}>
-                    Updated
-                  </div>
-                  <div style={{
-                    color: '#333',
-                    fontSize: '14px',
-                    fontWeight: '500'
-                  }}>
-                    {formatDate(resource.updatedAt)}
-                  </div>
+                <div className="metadata-item">
+                  <label>Updated</label>
+                  <span>{formatDate(resource.updatedAt)}</span>
                 </div>
 
-                <div>
-                  <div style={{
-                    color: '#999',
-                    fontSize: '13px',
-                    fontWeight: '500',
-                    marginBottom: '4px',
-                    textTransform: 'uppercase',
-                    letterSpacing: '0.5px'
-                  }}>
-                    ID
-                  </div>
-                  <div style={{
-                    color: '#666',
-                    fontSize: '12px',
-                    fontFamily: 'monospace',
-                    wordBreak: 'break-all'
-                  }}>
-                    {resource._id}
-                  </div>
+                <div className="metadata-item">
+                  <label>File Type</label>
+                  <span>{getFileType(resource.file_url)}</span>
+                </div>
+
+                <div className="metadata-item full-width">
+                  <label>Resource ID</label>
+                  <span className="resource-id">{resource._id}</span>
                 </div>
               </div>
             </div>
           </div>
 
           {/* Footer */}
-          <div style={{
-            padding: '24px 32px',
-            backgroundColor: '#f8f9fa',
-            borderTop: '1px solid #eaeaea',
-            textAlign: 'center'
-          }}>
-            <div style={{
-              color: '#999',
-              fontSize: '13px'
-            }}>
-              Resource ID: {resource._id} â€¢ Version: {resource.__v}
-            </div>
+          <div className="resource-footer">
+            <p>Resource ID: {resource._id} • Version: {resource.__v}</p>
           </div>
         </div>
       </div>
     </div>
   );
-};
+}
