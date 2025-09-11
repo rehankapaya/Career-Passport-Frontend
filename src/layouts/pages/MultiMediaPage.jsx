@@ -12,6 +12,8 @@ import {
   Search as SearchIcon,
   PlayCircle
 } from "lucide-react";
+import { useBookmark } from "../../hooks/useBookmark";
+import { Bookmark, BookmarkCheck } from "lucide-react";
 
 export default function MultimediaPage() {
   const [items, setItems] = useState([]);
@@ -55,6 +57,7 @@ export default function MultimediaPage() {
     if (selectedCategory !== "all") {
       result = result.filter(item => item.type === selectedCategory);
     }
+
     // Filter by search query
     if (searchQuery) {
       const query = searchQuery.toLowerCase();
@@ -113,31 +116,63 @@ export default function MultimediaPage() {
     });
   };
 
+  const BookmarkButton = ({ mediaId, size = 20, inline = false }) => {
+    const { isBookmarked, loading, toggleBookmark } = useBookmark('multimedia', mediaId);
+    const baseStyle = inline ? {
+      background: 'none',
+      border: '1px solid #e5e7eb',
+      borderRadius: '8px',
+      padding: '6px',
+    } : {
+      position: 'absolute',
+      top: '10px',
+      right: '10px',
+      background: 'rgba(255,255,255,0.9)',
+      border: '1px solid #e5e7eb',
+      borderRadius: '8px',
+      padding: '6px',
+    };
+    return (
+      <button
+        onClick={(e) => { e.stopPropagation(); toggleBookmark(); }}
+        disabled={loading}
+        style={{
+          ...baseStyle,
+          cursor: loading ? 'not-allowed' : 'pointer',
+          color: isBookmarked ? '#f59e0b' : '#6b7280'
+        }}
+        title={isBookmarked ? 'Remove bookmark' : 'Add bookmark'}
+      >
+        {isBookmarked ? <BookmarkCheck size={size} /> : <Bookmark size={size} />}
+      </button>
+    );
+  };
+
   return (
     <>
-      <div style={{ backgroundColor: '#f9f9f9', minHeight: '100vh', padding: '0 2rem', fontFamily: 'Inter, sans-serif' }}>
+      <div style={{ backgroundColor: '#f9f9f9', minHeight: '100vh', padding: '0 2rem', fontFamily: "'Segoe UI', Tahoma, Geneva, Verdana, sans-serif" }}>
         {/* Header */}
         <div style={{
           padding: "1rem 0",
           display: "flex",
           alignItems: "center",
-          borderBottom: "1px solid #e0e0e0"
+          borderBottom: "1px solid #e9ecef"
         }}>
           <div style={{
-            backgroundColor: "#ff0000",
+            backgroundColor: "#4b6cb7",
             color: "white",
-            fontWeight: "bold",
+            fontWeight: 600,
             padding: "0.25rem 0.75rem",
-            borderRadius: "4px",
-            fontSize: "1.2rem",
+            borderRadius: "6px",
+            fontSize: "1.1rem",
             marginRight: "1rem"
           }}>
             MEDIA
           </div>
           <h1 style={{
             fontSize: "2rem",
-            fontWeight: "bold",
-            color: "#333",
+            fontWeight: 600,
+            color: "#2c3e50",
             margin: 0
           }}>
             Multimedia Library
@@ -160,11 +195,13 @@ export default function MultimediaPage() {
                 width: "100%",
                 padding: "0.75rem 3rem 0.75rem 1.5rem",
                 borderRadius: "50px",
-                border: "1px solid #ddd",
+                border: "1px solid #e9ecef",
+                backgroundColor: '#fff',
                 outline: "none",
                 fontSize: '1rem',
                 boxShadow: "0 2px 5px rgba(0,0,0,0.05)",
-                transition: "border-color 0.2s"
+                transition: "border-color 0.2s",
+                color: '#2c3e50'
               }}
             />
             <SearchIcon
@@ -178,7 +215,7 @@ export default function MultimediaPage() {
         {/* Filter Buttons */}
         <div style={{
           display: "flex",
-          gap: "1rem",
+          gap: "0.5rem",
           marginBottom: "2rem",
           flexWrap: "wrap",
           justifyContent: "center"
@@ -188,16 +225,16 @@ export default function MultimediaPage() {
               key={category}
               onClick={() => setSelectedCategory(category)}
               style={{
-                padding: '0.5rem 1rem',
-                borderRadius: '1.5rem',
-                border: `1px solid ${selectedCategory === category ? '#6a5acd' : '#ddd'}`,
-                backgroundColor: selectedCategory === category ? '#6a5acd' : 'transparent',
-                color: selectedCategory === category ? 'white' : '#6a5acd',
+                padding: '8px 16px',
+                borderRadius: '20px',
+                border: selectedCategory === category ? '1px solid #4b6cb7' : '1px solid #e9ecef',
+                backgroundColor: selectedCategory === category ? '#4b6cb7' : '#f8f9fa',
+                color: selectedCategory === category ? 'white' : '#6c757d',
                 cursor: 'pointer',
-                fontSize: '0.9rem',
-                fontWeight: 'bold',
+                fontSize: '0.95rem',
+                fontWeight: 500,
                 textTransform: 'capitalize',
-                transition: 'all 0.3s'
+                transition: 'all 0.3s ease'
               }}
             >
               {category === "all" ? "All Media" : category}s
@@ -206,7 +243,7 @@ export default function MultimediaPage() {
         </div>
 
         {/* Latest Content Heading */}
-        <h2 style={{ fontSize: '1.5rem', fontWeight: 'bold', color: '#333', marginBottom: '1.5rem', textAlign: 'center' }}>
+        <h2 style={{ fontSize: '1.5rem', fontWeight: 600, color: '#2c3e50', marginBottom: '1.5rem', textAlign: 'center' }}>
           Latest Content
         </h2>
 
@@ -214,11 +251,11 @@ export default function MultimediaPage() {
         {loading ? (
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', gap: '2rem', justifyContent: 'center' }}>
             {[...Array(6)].map((_, i) => (
-              <div key={i} style={{ backgroundColor: "#fff", borderRadius: "8px", boxShadow: "0 4px 15px rgba(0,0,0,0.08)", overflow: "hidden", height: '300px' }}>
-                <div style={{ backgroundColor: "#e0e0e0", height: "180px", width: "100%" }}></div>
+              <div key={i} style={{ backgroundColor: "#fff", borderRadius: "8px", boxShadow: "0 4px 6px rgba(0, 0, 0, 0.1)", overflow: "hidden", height: '300px' }}>
+                <div style={{ backgroundColor: "#e9ecef", height: "180px", width: "100%" }}></div>
                 <div style={{ padding: "1rem" }}>
-                  <div style={{ backgroundColor: "#e0e0e0", height: "1.5rem", width: "80%", marginBottom: "0.5rem", borderRadius: "4px" }}></div>
-                  <div style={{ backgroundColor: "#e0e0e0", height: "1.2rem", width: "60%", borderRadius: "4px" }}></div>
+                  <div style={{ backgroundColor: "#e9ecef", height: "1.5rem", width: "80%", marginBottom: "0.5rem", borderRadius: "4px" }}></div>
+                  <div style={{ backgroundColor: "#e9ecef", height: "1.2rem", width: "60%", borderRadius: "4px" }}></div>
                 </div>
               </div>
             ))}
@@ -231,9 +268,10 @@ export default function MultimediaPage() {
                 style={{
                   backgroundColor: "#fff",
                   borderRadius: "8px",
-                  boxShadow: "0 4px 15px rgba(0,0,0,0.08)",
+                  boxShadow: "0 4px 6px rgba(0, 0, 0, 0.1)",
                   overflow: "hidden",
-                  cursor: "pointer"
+                  cursor: "pointer",
+                  position: 'relative'
                 }}
                 onClick={() => handleViewDetails(item.media_id)}
               >
@@ -283,39 +321,44 @@ export default function MultimediaPage() {
                       fontSize: '1.5rem'
                     }}>
                       {getMediaIcon(item.type)}
-                      <span style={{ textTransform: 'uppercase', fontWeight: 'bold', marginTop: '8px' }}>{item.type}</span>
+                      <span style={{ textTransform: 'uppercase', fontWeight: 600, marginTop: '8px' }}>{item.type}</span>
                     </div>
                   )}
                 </div>
 
                 {/* Content details */}
                 <div style={{ padding: '1rem' }}>
-                  <h3 style={{
-                    fontSize: '1.1rem',
-                    fontWeight: 'bold',
-                    color: '#333',
-                    marginBottom: '0.5rem',
-                    lineHeight: '1.4'
-                  }}>
-                    {item.title}
-                  </h3>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '0.5rem' }}>
+                    <h3 style={{
+                      fontSize: '1.1rem',
+                      fontWeight: 600,
+                      color: '#2c3e50',
+                      marginBottom: '0.5rem',
+                      lineHeight: '1.4',
+                      marginTop: 0
+                    }}>
+                      {item.title}
+                    </h3>
+                    {/* Inline Bookmark Button next to title */}
+                    <BookmarkButton mediaId={item.media_id} inline size={18} />
+                  </div>
                   {/* Tags as chips */}
                   <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem', margin: '0.75rem 0' }}>
                     {item.tags && item.tags.slice(0, 3).map((tag, index) => (
-                      <span key={index} style={{ backgroundColor: '#e8f0fe', color: '#1a73e8', padding: '4px 8px', borderRadius: '12px', fontSize: '0.75rem', fontWeight: 500 }}>
+                      <span key={index} style={{ backgroundColor: '#f8f9fa', color: '#495057', padding: '4px 8px', borderRadius: '12px', fontSize: '0.75rem', fontWeight: 500, border: '1px solid #e9ecef' }}>
                         {tag}
                       </span>
                     ))}
                   </div>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                     {/* CreatedAt date */}
-                    <p style={{ fontSize: '0.9rem', color: '#666', margin: 0 }}>
+                    <p style={{ fontSize: '0.9rem', color: '#6c757d', margin: 0 }}>
                       {formatDate(item.createdAt)}
                     </p>
                     {/* Star Rating */}
                     <div style={{ display: 'flex', alignItems: 'center', color: '#f5c518' }}>
                       <StarIcon style={{ marginRight: '4px', width: '16px', height: '16px' }} />
-                      <span style={{ fontSize: '0.9rem', color: '#666' }}>4.5</span>
+                      <span style={{ fontSize: '0.9rem', color: '#6c757d' }}>4.5</span>
                     </div>
                   </div>
                 </div>
@@ -323,15 +366,15 @@ export default function MultimediaPage() {
             ))}
           </div>
         ) : (
-          <div style={{ textAlign: 'center', padding: '4rem 0', color: '#888', fontSize: '1.2rem' }}>
+          <div style={{ textAlign: 'center', padding: '4rem 0', color: '#6c757d', fontSize: '1.1rem' }}>
             No content found. Please try a different search or filter.
           </div>
         )}
       </div>
 
       {/* Suggestions Section */}
-      <div style={{ backgroundColor: '#f9f9f9', padding: '2rem' }}>
-        <h2 style={{ fontSize: '1.5rem', fontWeight: 'bold', color: '#333', marginBottom: '1.5rem', textAlign: 'center' }}>
+      <div style={{ backgroundColor: '#f9f9f9', padding: '2rem', fontFamily: "'Segoe UI', Tahoma, Geneva, Verdana, sans-serif" }}>
+        <h2 style={{ fontSize: '1.5rem', fontWeight: 600, color: '#2c3e50', marginBottom: '1.5rem', textAlign: 'center' }}>
           Latest Content
           Suggestions
         </h2>
@@ -342,12 +385,15 @@ export default function MultimediaPage() {
               style={{
                 backgroundColor: '#fff',
                 borderRadius: '12px',
-                boxShadow: '0 4px 15px rgba(0,0,0,0.08)',
+                boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)',
                 overflow: 'hidden',
-                cursor: 'pointer'
+                cursor: 'pointer',
+                position: 'relative'
               }}
               onClick={() => handleViewDetails(item.media_id)}
             >
+              {/* Bookmark absolute on suggestion card remains */}
+              <BookmarkButton mediaId={item.media_id} size={18} />
               <div style={{ position: 'relative', height: '180px', backgroundColor: '#ddd' }}>
                 <img
                   src={getThumbnailUrl(item)}
@@ -367,15 +413,15 @@ export default function MultimediaPage() {
                 )}
               </div>
               <div style={{ padding: '1rem' }}>
-                <h3 style={{ fontSize: '1.2rem', fontWeight: 'bold', color: '#4b0082', marginBottom: '0.5rem' }}>
+                <h3 style={{ fontSize: '1.2rem', fontWeight: 600, color: '#4b0082', marginBottom: '0.5rem' }}>
                   {item.title}
                 </h3>
-                <p style={{ fontSize: '0.9rem', color: '#666' }}>
+                <p style={{ fontSize: '0.95rem', color: '#6c757d' }}>
                   {item.description}
                 </p>
                 <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem', margin: '0.75rem 0' }}>
                   {item.tags && item.tags.slice(0, 3).map((tag, index) => (
-                    <span key={index} style={{ backgroundColor: '#e8f0fe', color: '#1a73e8', padding: '4px 8px', borderRadius: '12px', fontSize: '0.75rem', fontWeight: 500 }}>
+                    <span key={index} style={{ backgroundColor: '#f8f9fa', color: '#495057', padding: '4px 8px', borderRadius: '12px', fontSize: '0.75rem', fontWeight: 500, border: '1px solid #e9ecef' }}>
                       {tag}
                     </span>
                   ))}

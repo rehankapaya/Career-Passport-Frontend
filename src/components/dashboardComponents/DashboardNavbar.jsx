@@ -19,6 +19,8 @@ export default function DashboardNavbar() {
         backgroundColor: "#fff",
         boxShadow: "0 2px 4px rgba(0, 0, 0, 0.1)",
         height: "60px",
+        fontFamily: "'Segoe UI', Tahoma, Geneva, Verdana, sans-serif",
+        color: "#2c3e50",
       }}
     >
       {/* Logo / Brand */}
@@ -47,7 +49,7 @@ export default function DashboardNavbar() {
         </svg>
         <span
           style={{
-            fontWeight: "bold",
+            fontWeight: 600,
             fontSize: "18px",
             color: "#4B0082",
           }}
@@ -71,6 +73,7 @@ export default function DashboardNavbar() {
             gap: "5px",
             color: "#6c757d",
             cursor: "pointer",
+            fontWeight: 500,
           }}
         >
           {/* Moon Icon */}
@@ -79,6 +82,7 @@ export default function DashboardNavbar() {
               padding: "5px",
               backgroundColor: "#f8f9fa",
               borderRadius: "50%",
+              border: "1px solid #e9ecef",
             }}
           >
             <svg
@@ -95,7 +99,7 @@ export default function DashboardNavbar() {
               <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
             </svg>
           </div>
-          <span>Welcome, Alex</span>
+          <span>Welcome, {user?.name || "Alex"}</span>
         </div>
 
         <div
@@ -116,6 +120,7 @@ export default function DashboardNavbar() {
               width: "40px",
               height: "40px",
               borderRadius: "50%",
+              border: "1px solid #e9ecef",
             }}
           />
         </div>
@@ -136,6 +141,8 @@ export default function DashboardNavbar() {
             display: "flex",
             flexDirection: "column",
             gap: "5px",
+            border: "1px solid #e9ecef",
+            fontFamily: "'Segoe UI', Tahoma, Geneva, Verdana, sans-serif",
           }}
         >
           <a

@@ -25,6 +25,7 @@ import BookMarkpage from './layouts/pages/BookMarkpage'
 import FeedbackForm from './layouts/pages/FeedBackForm'
 import ResourceDetailsPage from './layouts/pages/ResourceDetailPage'
 import AdminAddResourcePage from './dashboard/dashboardPages/AdminAddResourcePage'
+import AdminFeedbackPage from './dashboard/dashboardPages/AdminFeedbackPage'
 
 
 export default function App() {
@@ -119,7 +120,7 @@ export default function App() {
         { path: 'addresource', element: <AdminAddResourcePage /> },
         { path: 'adminmultimedia', element: <AdminMultimediaPage/> },
         { path: 'adminsuccessstories', element: <AdminSuccessStoriesPage/> },
-        { path: 'resources', element: <h1>Resources</h1> },
+        { path: 'adminfeedback', element: <AdminFeedbackPage/> },
         { path: 'analytics', element: <h1>Analytics</h1> },
         { path: 'settings', element: <h1>Settings</h1> }
       ]

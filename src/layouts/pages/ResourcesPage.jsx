@@ -2,6 +2,51 @@ import axios from 'axios';
 import React, { useEffect, useState } from 'react'
 import { apiurl } from '../../api';
 import { Link } from 'react-router-dom';
+import { useBookmark } from '../../hooks/useBookmark';
+import { Bookmark, BookmarkCheck } from 'lucide-react';
+
+// Resource Card Component with Bookmark
+const ResourceCard = ({ resource }) => {
+    const { isBookmarked, loading, toggleBookmark } = useBookmark('resource', resource.resource_id);
+
+    return (
+        <div style={{ backgroundColor: '#ffffff', borderRadius: '0.5rem', padding: '1.5rem', boxShadow: '0 1px 2px 0 rgba(0,0,0,0.05)', display: 'flex', flexDirection: 'column', justifyContent: 'space-between', position: 'relative' }}>
+            <button
+                onClick={toggleBookmark}
+                disabled={loading}
+                style={{
+                    position: 'absolute',
+                    top: '1rem',
+                    right: '1rem',
+                    background: 'none',
+                    border: 'none',
+                    cursor: loading ? 'not-allowed' : 'pointer',
+                    padding: '0.5rem',
+                    borderRadius: '0.375rem',
+                    color: isBookmarked ? '#f59e0b' : '#6b7280',
+                    transition: 'all 0.2s'
+                }}
+                title={isBookmarked ? 'Remove from bookmarks' : 'Add to bookmarks'}
+            >
+                {isBookmarked ? <BookmarkCheck size={20} /> : <Bookmark size={20} />}
+            </button>
+            
+            <div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', color: '#6b7280', fontSize: '0.875rem', marginBottom: '0.5rem' }}>
+                    <span style={{ fontSize: '1.5rem' }}>📄</span>
+                    <span>{resource?.createdAt}</span>
+                </div>
+                <h3 style={{ fontSize: '1.125rem', fontWeight: '600', color: '#1f2937', marginBottom: '0.5rem' }}>{resource.title}</h3>
+                <p style={{ color: '#4b5563', fontSize: '0.875rem' }}>{resource.description}</p>
+            </div>
+            <div style={{ marginTop: '1rem' }}>
+                <Link to={`/resources/${resource.resource_id}`} style={{ width: '100%', backgroundColor: '#1f2937', color: '#ffffff', padding: '0.75rem 1rem', borderRadius: '0.375rem', cursor: 'pointer', border: 'none', textDecoration: 'none', display: 'block', textAlign: 'center' }}>
+                    Read Article
+                </Link>
+            </div>
+        </div>
+    );
+};
 
 export default function ResourcesPage() {
         const [resources, setResources] = useState([]);
@@ -68,21 +113,7 @@ export default function ResourcesPage() {
 
                     <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, minmax(0, 1fr))', gap: '1.5rem', marginBottom: '2.5rem' }}>
                         {resources.map((r, index) => (
-                            <div key={index} style={{ backgroundColor: '#ffffff', borderRadius: '0.5rem', padding: '1.5rem', boxShadow: '0 1px 2px 0 rgba(0,0,0,0.05)', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
-                                <div>
-                                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', color: '#6b7280', fontSize: '0.875rem', marginBottom: '0.5rem' }}>
-                                        <span style={{ fontSize: '1.5rem' }}>📄</span>
-                                        <span>{r?.createdAt}</span>
-                                    </div>
-                                    <h3 style={{ fontSize: '1.125rem', fontWeight: '600', color: '#1f2937', marginBottom: '0.5rem' }}>{r.title}</h3>
-                                    <p style={{ color: '#4b5563', fontSize: '0.875rem' }}>{r.description}</p>
-                                </div>
-                                <div style={{ marginTop: '1rem' }}>
-                                    <Link to={`/resources/${r.resource_id}`}style={{ width: '100%', backgroundColor: '#1f2937', color: '#ffffff', padding: '0.75rem 1rem', borderRadius: '0.375rem', cursor: 'pointer', border: 'none' }}>
-                                        Read Article
-                                    </Link>
-                                </div>
-                            </div>
+                            <ResourceCard key={index} resource={r} />
                         ))}
                     </div>
 

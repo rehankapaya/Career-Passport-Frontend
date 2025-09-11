@@ -1,13 +1,18 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { useParams } from 'react-router-dom';
-import './ResourceDetailsPage.css'
+import './ResourceDetailsPage.css';
+import { useBookmark } from '../../hooks/useBookmark';
+import { Bookmark, BookmarkCheck } from 'lucide-react';
 export default function ResourceDetailsPage() {
   const { id } = useParams();
   const [resource, setResource] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [viewMode, setViewMode] = useState('preview'); // 'preview' or 'download'
+  
+  // Bookmark functionality
+  const { isBookmarked, loading: bookmarkLoading, toggleBookmark } = useBookmark('resource', id);
 
   useEffect(() => {
     fetchResource();
@@ -100,7 +105,31 @@ export default function ResourceDetailsPage() {
           {/* Header */}
           <div className="resource-header">
             <div className="resource-title-section">
-              <h1>{resource.title}</h1>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                <h1>{resource.title}</h1>
+                <button
+                  onClick={toggleBookmark}
+                  disabled={bookmarkLoading}
+                  style={{
+                    background: 'none',
+                    border: 'none',
+                    cursor: bookmarkLoading ? 'not-allowed' : 'pointer',
+                    padding: '0.5rem',
+                    borderRadius: '0.375rem',
+                    color: isBookmarked ? '#f59e0b' : '#6b7280',
+                    transition: 'all 0.2s',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '0.5rem'
+                  }}
+                  title={isBookmarked ? 'Remove from bookmarks' : 'Add to bookmarks'}
+                >
+                  {isBookmarked ? <BookmarkCheck size={24} /> : <Bookmark size={24} />}
+                  <span style={{ fontSize: '0.875rem', fontWeight: '500' }}>
+                    {isBookmarked ? 'Bookmarked' : 'Bookmark'}
+                  </span>
+                </button>
+              </div>
               <div className="resource-badges">
                 <span className="category-badge">{resource.category}</span>
                 <span className="views-badge">{resource.views_count} views</span>

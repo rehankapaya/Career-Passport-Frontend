@@ -26,6 +26,8 @@ export default function DashboardSidebar() {
         padding: "20px 0",
         transition: "width 0.3s ease",
         overflow: "hidden",
+        fontFamily: "'Segoe UI', Tahoma, Geneva, Verdana, sans-serif",
+        color: "#2c3e50",
       }}
     >
       {/* Toggle Button */}
@@ -85,7 +87,7 @@ export default function DashboardSidebar() {
             padding: "10px 20px",
             color: "#007bff",
             textDecoration: "none",
-            backgroundColor: "#e6f0ff",
+            backgroundColor: "#e7f3ff",
             borderLeft: "4px solid #007bff",
             transition: "all 0.3s ease",
             gap: "10px",
@@ -98,6 +100,7 @@ export default function DashboardSidebar() {
               transition: "opacity 0.3s ease",
               whiteSpace: "nowrap",
               overflow: "hidden",
+              fontWeight: 600,
             }}
           >
             Dashboard
@@ -122,6 +125,7 @@ export default function DashboardSidebar() {
               transition: "opacity 0.3s ease",
               whiteSpace: "nowrap",
               overflow: "hidden",
+              fontWeight: 500,
             }}
           >
             Career Bank
@@ -146,6 +150,7 @@ export default function DashboardSidebar() {
               transition: "opacity 0.3s ease",
               whiteSpace: "nowrap",
               overflow: "hidden",
+              fontWeight: 500,
             }}
           >
             Interest Quiz
@@ -170,6 +175,7 @@ export default function DashboardSidebar() {
               transition: "opacity 0.3s ease",
               whiteSpace: "nowrap",
               overflow: "hidden",
+              fontWeight: 500,
             }}
           >
             Multimedia
@@ -194,13 +200,14 @@ export default function DashboardSidebar() {
               transition: "opacity 0.3s ease",
               whiteSpace: "nowrap",
               overflow: "hidden",
+              fontWeight: 500,
             }}
           >
             Success Stories
           </span>
         </Link>
         <Link
-          to="add-resource"
+          to="addresource"
           style={{
             display: "flex",
             alignItems: "center",
@@ -218,6 +225,7 @@ export default function DashboardSidebar() {
               transition: "opacity 0.3s ease",
               whiteSpace: "nowrap",
               overflow: "hidden",
+              fontWeight: 500,
             }}
           >
             Resources
@@ -242,13 +250,14 @@ export default function DashboardSidebar() {
               transition: "opacity 0.3s ease",
               whiteSpace: "nowrap",
               overflow: "hidden",
+              fontWeight: 500,
             }}
           >
             Bookmarks
           </span>
         </Link>
         <Link
-          to="feedback"
+          to="adminfeedback"
           style={{
             display: "flex",
             alignItems: "center",
@@ -266,6 +275,7 @@ export default function DashboardSidebar() {
               transition: "opacity 0.3s ease",
               whiteSpace: "nowrap",
               overflow: "hidden",
+              fontWeight: 500,
             }}
           >
             Feedback
@@ -275,7 +285,7 @@ export default function DashboardSidebar() {
         {/* Admin Only */}
         <div
           style={{
-            borderTop: "1px solid #ddd",
+            borderTop: "1px solid #e9ecef",
             margin: "10px 20px",
           }}
         ></div>
@@ -298,6 +308,7 @@ export default function DashboardSidebar() {
               transition: "opacity 0.3s ease",
               whiteSpace: "nowrap",
               overflow: "hidden",
+              fontWeight: 500,
             }}
           >
             Admin Panel

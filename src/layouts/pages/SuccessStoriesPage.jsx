@@ -2,6 +2,8 @@ import React, { useEffect, useState } from "react";
 import axios from "axios";
 import { toast } from "react-toastify";
 import { apiurl } from "../../api";
+import { useBookmark } from "../../hooks/useBookmark";
+import { Bookmark, BookmarkCheck } from "lucide-react";
 
 export default function SuccessStoriesPage() {
   const [stories, setStories] = useState([]);
@@ -59,6 +61,27 @@ export default function SuccessStoriesPage() {
       toast.error("Error submitting story");
     }
     setLoading(false);
+  };
+
+  const StoryBookmarkButton = ({ storyId }) => {
+    const { isBookmarked, loading, toggleBookmark } = useBookmark('story', storyId);
+    return (
+      <button
+        onClick={(e) => { e.stopPropagation(); toggleBookmark(); }}
+        disabled={loading}
+        style={{
+          background: 'none',
+          border: '1px solid #e5e7eb',
+          borderRadius: '8px',
+          padding: '6px',
+          cursor: loading ? 'not-allowed' : 'pointer',
+          color: isBookmarked ? '#f59e0b' : '#6b7280'
+        }}
+        title={isBookmarked ? 'Remove bookmark' : 'Add bookmark'}
+      >
+        {isBookmarked ? <BookmarkCheck size={18} /> : <Bookmark size={18} />}
+      </button>
+    );
   };
 
   return (
@@ -120,21 +143,24 @@ export default function SuccessStoriesPage() {
           <div key={story.story_id} style={{
             background: "#f5f6fa", padding: 20, borderRadius: 10, marginBottom: 24, boxShadow: "0 1px 4px #dfe6e9"
           }}>
-            <div style={{ display: "flex", alignItems: "center", gap: 18 }}>
-              {story.image_url &&
-                <img
-                  src={`http://localhost:5000/${story.image_url.replace(/\\/g, "/")}`}
-                  alt="Story"
-                  style={{ width: 80, height: 80, borderRadius: "10px", objectFit: "cover" }}
-                />
-              }
-              <div>
-                <h3 style={{ margin: 0 }}>{story.rname}</h3>
-                <span style={{
-                  background: "#dff9fb", color: "#0984e3", padding: "2px 12px", borderRadius: "999px",
-                  fontSize: "0.95rem", marginBottom: 8, display: "inline-block"
-                }}>{story.domain}</span>
+            <div style={{ display: "flex", alignItems: "center", gap: 18, justifyContent: 'space-between' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 18 }}>
+                {story.image_url &&
+                  <img
+                    src={`http://localhost:5000/${story.image_url.replace(/\\/g, "/")}`}
+                    alt="Story"
+                    style={{ width: 80, height: 80, borderRadius: "10px", objectFit: "cover" }}
+                  />
+                }
+                <div>
+                  <h3 style={{ margin: 0 }}>{story.rname}</h3>
+                  <span style={{
+                    background: "#dff9fb", color: "#0984e3", padding: "2px 12px", borderRadius: "999px",
+                    fontSize: "0.95rem", marginBottom: 8, display: "inline-block"
+                  }}>{story.domain}</span>
+                </div>
               </div>
+              <StoryBookmarkButton storyId={story.story_id} />
             </div>
             <p style={{ marginTop: 16 }}>{story.story_text}</p>
             {story.approved_at &&

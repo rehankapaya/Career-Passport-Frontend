@@ -1,134 +1,264 @@
-import React from 'react'
+import React, { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
+import { useBookmark } from '../../hooks/useBookmark';
+import { BookmarkCheck, ExternalLink, Calendar, Tag } from 'lucide-react';
+import axios from 'axios';
+import { apiurl } from '../../api';
 
-export default function BookMarkpage() {
-    const bookmarks = [
-  {
-    icon: '💻',
-    title: 'Software Engineer',
-    description: 'Design, develop, and maintain software applications and systems using various programming languages.',
-    date: 'Jan 15, 2025',
-    notes: 'Great career path with high demand. Need to focus on learning Python and JavaScript. Consider getting AWS certification.'
-  },
-  {
-    icon: '📈',
-    title: 'Data Scientist',
-    description: 'Analyze complex data sets to extract insights and help organizations make data-driven decisions.',
-    date: 'Jan 12, 2025',
-    notes: 'Requires strong math and statistics background. Python, R, and SQL are essential. Consider pursuing a Master\'s in Data Science.'
-  },
-  {
-    icon: '📝',
-    title: 'Resume Writing Guide',
-    description: 'Comprehensive guide on creating professional resumes that get noticed by employers and ATS systems.',
-    date: 'Jan 10, 2025',
-    notes: 'Excellent tips on ATS optimization. Need to update my resume format and add more quantified achievements.'
-  },
-  {
-    icon: '🎨',
-    title: 'UX/UI Designer',
-    description: 'Create intuitive and visually appealing user interfaces and experiences for digital products and applications.',
-    date: 'Jan 8, 2025',
-    notes: 'Perfect blend of creativity and technology. Need to build a strong portfolio. Figma and Adobe Creative Suite are must-haves.'
-  },
-  {
-    icon: '✔️',
-    title: 'Interview Preparation Checklist',
-    description: 'Complete checklist and strategies for acing job interviews, from preparation to follow-up.',
-    date: 'Jan 5, 2025',
-    notes: 'Very comprehensive guide. STAR method examples are particularly helpful. Need to practice mock interviews more.'
-  },
-  {
-    icon: '📣',
-    title: 'Digital Marketing Specialist',
-    description: 'Plan and execute digital marketing campaigns across various online channels to drive brand awareness and growth.',
-    date: 'Jan 3, 2025',
-    notes: 'Growing field with lots of opportunities. Google Ads and Facebook Ads certifications would be valuable additions.'
+export default function BookmarkPage() {
+  const [bookmarks, setBookmarks] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [filter, setFilter] = useState('all'); // all, resource, multimedia, career, story
+
+  const { getBookmarks } = useBookmark();
+
+  useEffect(() => {
+    fetchBookmarks();
+  }, [filter]);
+
+  const fetchItemDetails = async (bookmark) => {
+    try {
+      let endpoint = '';
+      switch (bookmark.itemType) {
+        case 'resource':
+          endpoint = `${apiurl}/api/resources/${bookmark.itemId}`;
+          break;
+        case 'multimedia':
+          endpoint = `${apiurl}/api/multimedia/${bookmark.itemId}`;
+          break;
+        case 'career':
+          endpoint = `${apiurl}/api/careers/${bookmark.itemId}`;
+          break;
+        case 'story':
+          endpoint = `${apiurl}/api/success-stories/${bookmark.itemId}`;
+          break;
+        default:
+          return bookmark;
+      }
+      const res = await axios.get(endpoint);
+      const data = res.data;
+      let displayTitle = 'Bookmarked Item';
+      if (bookmark.itemType === 'story') {
+        displayTitle = data.rname || data.title || displayTitle;
+      } else {
+        displayTitle = data.title || displayTitle;
+      }
+      return { ...bookmark, displayTitle };
+    } catch (e) {
+      return { ...bookmark, displayTitle: 'Bookmarked Item' };
+    }
+  };
+
+  const fetchBookmarks = async () => {
+    setLoading(true);
+    try {
+      const data = await getBookmarks(filter === 'all' ? null : filter);
+      const enriched = await Promise.all(data.map(fetchItemDetails));
+      setBookmarks(enriched);
+    } catch (error) {
+      console.error('Error fetching bookmarks:', error);
+      setBookmarks([]);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const getItemTypeIcon = (type) => {
+    switch (type) {
+      case 'resource': return '📄';
+      case 'multimedia': return '🎥';
+      case 'career': return '💼';
+      case 'story': return '📖';
+      default: return '📌';
+    }
+  };
+
+  const getItemTypeColor = (type) => {
+    switch (type) {
+      case 'resource': return '#3b82f6';
+      case 'multimedia': return '#8b5cf6';
+      case 'career': return '#10b981';
+      case 'story': return '#f59e0b';
+      default: return '#6b7280';
+    }
+  };
+
+  const formatDate = (dateString) => {
+    return new Date(dateString).toLocaleDateString('en-US', {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric'
+    });
+  };
+
+  const getItemLink = (bookmark) => {
+    switch (bookmark.itemType) {
+      case 'resource': return `/resources/${bookmark.itemId}`;
+      case 'multimedia': return `/multimedia/${bookmark.itemId}`;
+      case 'career': return `/careers/${bookmark.itemId}`;
+      case 'story': return `/success-stories/${bookmark.itemId}`;
+      default: return '#';
+    }
+  };
+
+  if (loading) {
+    return (
+      <div style={{ minHeight: '100vh', backgroundColor: '#f3f4f6', fontFamily: "'Segoe UI', Tahoma, Geneva, Verdana, sans-serif", padding: '2rem' }}>
+        <div style={{ maxWidth: '80rem', margin: 'auto' }}>
+          <div style={{ textAlign: 'center', padding: '4rem 0' }}>
+            <div style={{ fontSize: '2rem', marginBottom: '1rem' }}>⏳</div>
+            <p>Loading your bookmarks...</p>
+          </div>
+        </div>
+      </div>
+    );
   }
-];
 
   return (
-    <div>
-        <div style={{ minHeight: '100vh', backgroundColor: '#f3f4f6', fontFamily: 'sans-serif', padding: '2rem' }}>
+    <div style={{ minHeight: '100vh', backgroundColor: '#f3f4f6', fontFamily: "'Segoe UI', Tahoma, Geneva, Verdana, sans-serif", padding: '2rem' }}>
       <div style={{ maxWidth: '80rem', margin: 'auto' }}>
         {/* Header */}
         <div style={{ textAlign: 'center', marginBottom: '2.5rem' }}>
-          <div style={{ backgroundColor: '#e5e7eb', borderRadius: '0.75rem', padding: '0.75rem', display: 'inline-block', marginBottom: '1rem' }}>
-            <span style={{ fontSize: '2rem' }}>🔖</span>
+          <div style={{ backgroundColor: '#f59e0b', borderRadius: '0.75rem', padding: '0.75rem', display: 'inline-block', marginBottom: '1rem' }}>
+            <BookmarkCheck size={32} color="white" />
           </div>
           <h1 style={{ fontSize: '2.25rem', fontWeight: '700', color: '#1f2937', marginBottom: '0.5rem' }}>My Bookmarks</h1>
           <p style={{ color: '#6b7280', maxWidth: '42rem', margin: 'auto' }}>
-            Your saved careers, resources, and notes - all organized in one place for easy access and sharing.
+            All your saved resources, multimedia, careers, and success stories in one place.
           </p>
         </div>
 
-        {/* Action Bar */}
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem', flexWrap: 'wrap', gap: '1rem' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-            <span style={{ color: '#4b5563', fontWeight: '500' }}>12 bookmarks saved</span>
-            <span style={{ color: '#6b7280' }}>Filter:</span>
-            <select style={{ padding: '0.5rem', borderRadius: '0.375rem', border: '1px solid #d1d5db' }}>
-              <option>All Bookmarks</option>
-            </select>
-          </div>
-          <div style={{ display: 'flex', gap: '0.5rem' }}>
-            <button style={{ padding: '0.75rem 1.5rem', borderRadius: '0.375rem', border: '1px solid #d1d5db', backgroundColor: '#ffffff', color: '#1f2937', cursor: 'pointer' }}>
-              Export All
+        {/* Filter Buttons */}
+        <div style={{ display: 'flex', justifyContent: 'center', gap: '0.75rem', marginBottom: '2.5rem', flexWrap: 'wrap' }}>
+          {[
+            { key: 'all', label: 'All', count: bookmarks.length },
+            { key: 'resource', label: 'Resources', count: bookmarks.filter(b => b.itemType === 'resource').length },
+            { key: 'multimedia', label: 'Multimedia', count: bookmarks.filter(b => b.itemType === 'multimedia').length },
+            { key: 'career', label: 'Careers', count: bookmarks.filter(b => b.itemType === 'career').length },
+            { key: 'story', label: 'Stories', count: bookmarks.filter(b => b.itemType === 'story').length }
+          ].map(filterOption => (
+            <button
+              key={filterOption.key}
+              onClick={() => setFilter(filterOption.key)}
+              style={{
+                backgroundColor: filter === filterOption.key ? '#1f2937' : '#ffffff',
+                color: filter === filterOption.key ? '#ffffff' : '#1f2937',
+                padding: '0.75rem 1.5rem',
+                borderRadius: '9999px',
+                border: '1px solid #d1d5db',
+                cursor: 'pointer',
+                boxShadow: '0 1px 2px 0 rgba(0,0,0,0.05)',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '0.5rem'
+              }}
+            >
+              {filterOption.label}
+              <span style={{
+                backgroundColor: filter === filterOption.key ? '#374151' : '#e5e7eb',
+                color: filter === filterOption.key ? '#ffffff' : '#6b7280',
+                padding: '0.25rem 0.5rem',
+                borderRadius: '9999px',
+                fontSize: '0.75rem',
+                fontWeight: '600'
+              }}>
+                {filterOption.count}
+              </span>
             </button>
-            <button style={{ padding: '0.75rem 1.5rem', borderRadius: '0.375rem', border: 'none', backgroundColor: '#1f2937', color: '#ffffff', cursor: 'pointer' }}>
-              Share Collection
-            </button>
-          </div>
+          ))}
         </div>
 
         {/* Bookmarks Grid */}
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, minmax(0, 1fr))', gap: '1.5rem' }}>
-          {bookmarks.map((bookmark, index) => (
-            <div key={index} style={{ backgroundColor: '#ffffff', borderRadius: '0.5rem', boxShadow: '0 1px 2px 0 rgba(0,0,0,0.05)', padding: '1.5rem', display: 'flex', flexDirection: 'column' }}>
-              {/* Card Header */}
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-                  <div style={{ backgroundColor: '#e5e7eb', borderRadius: '0.5rem', padding: '0.5rem', display: 'inline-block' }}>
-                    <span style={{ fontSize: '1.5rem' }}>{bookmark.icon}</span>
+        {bookmarks.length === 0 ? (
+          <div style={{ textAlign: 'center', padding: '4rem 0' }}>
+            <div style={{ fontSize: '4rem', marginBottom: '1rem' }}>📌</div>
+            <h3 style={{ fontSize: '1.5rem', fontWeight: '600', color: '#1f2937', marginBottom: '0.5rem' }}>No bookmarks yet</h3>
+            <p style={{ color: '#6b7280', marginBottom: '2rem' }}>
+              Start bookmarking resources, multimedia, careers, and stories to see them here.
+            </p>
+            <Link
+              to="/resources"
+              style={{
+                backgroundColor: '#1f2937',
+                color: '#ffffff',
+                padding: '0.75rem 1.5rem',
+                borderRadius: '0.375rem',
+                textDecoration: 'none',
+                display: 'inline-block'
+              }}
+            >
+              Browse Resources
+            </Link>
+          </div>
+        ) : (
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: '1.5rem' }}>
+            {bookmarks.map((bookmark) => (
+              <div key={bookmark._id} style={{
+                backgroundColor: '#ffffff',
+                borderRadius: '0.5rem',
+                padding: '1.5rem',
+                boxShadow: '0 1px 2px 0 rgba(0,0,0,0.05)',
+                border: '1px solid #e5e7eb',
+                transition: 'all 0.2s',
+                cursor: 'pointer'
+              }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '1rem' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                    <span style={{ fontSize: '1.5rem' }}>{getItemTypeIcon(bookmark.itemType)}</span>
+                    <span style={{
+                      backgroundColor: getItemTypeColor(bookmark.itemType) + '20',
+                      color: getItemTypeColor(bookmark.itemType),
+                      padding: '0.25rem 0.75rem',
+                      borderRadius: '9999px',
+                      fontSize: '0.75rem',
+                      fontWeight: '600',
+                      textTransform: 'uppercase'
+                    }}>
+                      {bookmark.itemType}
+                    </span>
                   </div>
-                  <h3 style={{ fontSize: '1.25rem', fontWeight: '600', color: '#1f2937' }}>{bookmark.title}</h3>
+                  <ExternalLink size={16} color="#6b7280" />
                 </div>
-                <span style={{ fontSize: '1.5rem', color: '#9ca3af', cursor: 'pointer' }}>⭐</span>
-              </div>
 
-              {/* Description */}
-              <p style={{ color: '#4b5563', fontSize: '0.875rem', marginBottom: '1rem' }}>{bookmark.description}</p>
-              
-              {/* Notes Section */}
-              <div style={{ backgroundColor: '#f9fafb', borderLeft: '3px solid #d1d5db', padding: '1rem', borderRadius: '0.25rem', marginBottom: '1rem' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
-                  <h4 style={{ fontSize: '0.875rem', fontWeight: '600', color: '#1f2937' }}>My Notes:</h4>
-                  <span style={{ fontSize: '1rem', color: '#6b7280', cursor: 'pointer' }}>✏️</span>
+                <div style={{ marginBottom: '1rem' }}>
+                  <h3 style={{ fontSize: '1.125rem', fontWeight: '600', color: '#1f2937', marginBottom: '0.25rem' }}>
+                    {bookmark.displayTitle || 'Bookmarked Item'}
+                  </h3>
+                  <p style={{ color: '#6b7280', fontSize: '0.8rem', margin: 0 }}>
+                    ID: {bookmark.itemId}
+                  </p>
                 </div>
-                <p style={{ color: '#4b5563', fontSize: '0.875rem' }}>{bookmark.notes}</p>
-              </div>
 
-              {/* Date and Actions */}
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 'auto' }}>
-                <div style={{ fontSize: '0.75rem', color: '#6b7280' }}>
-                  Saved on {bookmark.date}
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: '#6b7280', fontSize: '0.875rem' }}>
+                    <Calendar size={14} />
+                    <span>Saved {formatDate(bookmark.createdAt)}</span>
+                  </div>
                 </div>
-                <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
-                  <button style={{ color: '#4b5563', border: 'none', backgroundColor: 'transparent', cursor: 'pointer', fontSize: '1rem' }}>
-                    📖
-                  </button>
-                  <button style={{ color: '#4b5563', border: 'none', backgroundColor: 'transparent', cursor: 'pointer', fontSize: '1rem' }}>
-                    🔗
-                  </button>
-                  <button style={{ color: '#4b5563', border: 'none', backgroundColor: 'transparent', cursor: 'pointer', fontSize: '1rem' }}>
-                    🗑️
-                  </button>
-                </div>
+
+                <Link
+                  to={getItemLink(bookmark)}
+                  style={{
+                    display: 'inline-block',
+                    backgroundColor: '#1f2937',
+                    color: '#ffffff',
+                    padding: '0.5rem 1rem',   // smaller padding
+                    borderRadius: '0.375rem',
+                    textDecoration: 'none',
+                    fontSize: '0.875rem',
+                    fontWeight: '500',
+                    textAlign: 'center',
+                    marginTop: '0.5rem'
+                  }}
+                >
+                  View Item
+                </Link>
+
               </div>
-            </div>
-          ))}
-        </div>
+            ))}
+          </div>
+        )}
       </div>
-    </div>      
     </div>
-  )
+  );
 }

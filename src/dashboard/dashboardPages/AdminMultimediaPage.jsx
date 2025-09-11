@@ -5,6 +5,8 @@ import { apiurl } from "../../api";
 
 export default function AdminMultimediaPage() {
   const [items, setItems] = useState([]);
+  const [filteredItems, setFilteredItems] = useState([]);
+  const [searchTerm, setSearchTerm] = useState("");
   const [form, setForm] = useState({
     title: "",
     type: "video",
@@ -28,16 +30,40 @@ export default function AdminMultimediaPage() {
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [deletingId, setDeletingId] = useState(null);
   const [viewMode, setViewMode] = useState("grid"); // "grid" or "list"
+  const [showAddForm, setShowAddForm] = useState(false);
+  
 
   // Fetch all multimedia
   useEffect(() => {
     fetchMultimedia();
   }, []);
 
+  // Filter items based on search term
+  useEffect(() => {
+    if (searchTerm) {
+      const filtered = items.filter(item => 
+        item.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        item.type.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        (item.tags && Array.isArray(item.tags) && 
+          item.tags.some(tag => tag.toLowerCase().includes(searchTerm.toLowerCase()))) ||
+        (item.transcript && item.transcript.toLowerCase().includes(searchTerm.toLowerCase()))
+      );
+      setFilteredItems(filtered);
+    } else {
+      setFilteredItems(items);
+    }
+  }, [searchTerm, items]);
+
   const fetchMultimedia = () => {
     axios.get(`${apiurl}/api/multimedia`)
-      .then(res => setItems(res.data))
-      .catch(() => setItems([]));
+      .then(res => {
+        setItems(res.data);
+        setFilteredItems(res.data);
+      })
+      .catch(() => {
+        setItems([]);
+        setFilteredItems([]);
+      });
   };
 
   // Handle form change
@@ -80,13 +106,14 @@ export default function AdminMultimediaPage() {
         headers: {
           "Content-Type": "multipart/form-data",
           Authorization: `Bearer ${localStorage.getItem("token")}`,
-          withCredentials: true
-        }
+        },
+        withCredentials: true
       });
 
       toast.success("Multimedia created!");
       setItems([res.data, ...items]);
       setForm({ title: "", type: "video", url: "", tags: "", transcript: "", file: null });
+      setShowAddForm(false);
     } catch (err) {
       toast.error("Error creating multimedia");
       console.error(err);
@@ -97,15 +124,15 @@ export default function AdminMultimediaPage() {
   // Open edit modal
   const openEditModal = (item) => {
     setEditForm({
-      id: item.media_id,
+      id: item._id || item.media_id,
       title: item.title,
       type: item.type,
       url: item.url,
-      tags: item.tags ? item.tags.join(", ") : "",
+      tags: item.tags ? (Array.isArray(item.tags) ? item.tags.join(", ") : item.tags) : "",
       transcript: item.transcript || "",
       file: null
     });
-    setEditUploadOption(item.url.startsWith('uploads/') ? "file" : "url");
+    setEditUploadOption(item.url && item.url.startsWith('uploads/') ? "file" : "url");
     setIsEditModalOpen(true);
   };
 
@@ -131,8 +158,8 @@ export default function AdminMultimediaPage() {
         headers: {
           "Content-Type": "multipart/form-data",
           Authorization: `Bearer ${localStorage.getItem("token")}`,
-          withCredentials: true
-        }
+        },
+        withCredentials: true
       });
 
       toast.success("Multimedia updated!");
@@ -156,12 +183,12 @@ export default function AdminMultimediaPage() {
       await axios.delete(`${apiurl}/api/multimedia/${id}`, {
         headers: {
           Authorization: `Bearer ${localStorage.getItem("token")}`,
-          withCredentials: true
-        }
+        },
+        withCredentials: true
       });
 
       toast.success("Multimedia deleted!");
-      setItems(items.filter(item => item.media_id !== id));
+      setItems(items.filter(item => (item._id || item.media_id) !== id));
     } catch (err) {
       toast.error("Error deleting multimedia");
       console.error(err);
@@ -180,9 +207,9 @@ export default function AdminMultimediaPage() {
   // Function to get thumbnail for media
   const getThumbnail = (item) => {
     if (item.type === "video") {
-      if (item.url.startsWith('uploads/')) {
+      if (item.url && item.url.startsWith('uploads/')) {
         return "https://via.placeholder.com/300x180/ff6b6b/ffffff?text=Video";
-      } else if (item.url.includes('youtube.com') || item.url.includes('youtu.be')) {
+      } else if (item.url && (item.url.includes('youtube.com') || item.url.includes('youtu.be'))) {
         const videoId = item.url.match(/(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([^"&?\/\s]{11})/);
         if (videoId && videoId[1]) {
           return `https://img.youtube.com/vi/${videoId[1]}/mqdefault.jpg`;
@@ -199,209 +226,198 @@ export default function AdminMultimediaPage() {
     return "https://via.placeholder.com/300x180/96aab5/ffffff?text=Media";
   };
 
+  // Format date for display
+  const formatDate = (dateString) => {
+    return new Date(dateString).toLocaleDateString('en-US', {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric'
+    });
+  };
+
   return (
-    <div style={{ maxWidth: 1400, margin: "0 auto", padding: 24 }}>
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 24 }}>
-        <h2 style={{ margin: 0 }}>Admin Multimedia Management</h2>
-        
-        {/* View Mode Toggle */}
-        <div style={{ display: "flex", gap: 8 }}>
+    <div style={styles.container}>
+      <div style={styles.header}>
+        <h1 style={styles.pageTitle}>Multimedia Management</h1>
+        <div style={styles.controls}>
           <button
-            onClick={() => setViewMode("grid")}
-            style={{
-              padding: "8px 12px",
-              borderRadius: "6px",
-              border: "none",
-              background: viewMode === "grid" ? "#0984e3" : "#f0f0f0",
-              color: viewMode === "grid" ? "white" : "#333",
-              cursor: "pointer",
-              display: "flex",
-              alignItems: "center",
-              gap: 4
-            }}
+            onClick={() => setShowAddForm(!showAddForm)}
+            style={styles.toggleButton}
           >
-            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <rect x="3" y="3" width="7" height="7"></rect>
-              <rect x="14" y="3" width="7" height="7"></rect>
-              <rect x="14" y="14" width="7" height="7"></rect>
-              <rect x="3" y="14" width="7" height="7"></rect>
-            </svg>
-            Grid
+            {showAddForm ? 'View Multimedia' : 'Add New Media'}
           </button>
-          <button
-            onClick={() => setViewMode("list")}
-            style={{
-              padding: "8px 12px",
-              borderRadius: "6px",
-              border: "none",
-              background: viewMode === "list" ? "#0984e3" : "#f0f0f0",
-              color: viewMode === "list" ? "white" : "#333",
-              cursor: "pointer",
-              display: "flex",
-              alignItems: "center",
-              gap: 4
-            }}
-          >
-            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <line x1="8" y1="6" x2="21" y2="6"></line>
-              <line x1="8" y1="12" x2="21" y2="12"></line>
-              <line x1="8" y1="18" x2="21" y2="18"></line>
-              <line x1="3" y1="6" x2="3.01" y2="6"></line>
-              <line x1="3" y1="12" x2="3.01" y2="12"></line>
-              <line x1="3" y1="18" x2="3.01" y2="18"></line>
-            </svg>
-            List
-          </button>
+           {!showAddForm && (
+            <div style={styles.viewControls}>
+              <button
+                onClick={() => setViewMode('list')}
+                style={{
+                  ...styles.viewButton,
+                  ...(viewMode === 'list' ? styles.activeViewButton : {})
+                }}
+              >
+                List View
+              </button>
+              <button
+                onClick={() => setViewMode('grid')}
+                style={{
+                  ...styles.viewButton,
+                  ...(viewMode === 'grid' ? styles.activeViewButton : {})
+                }}
+              >
+                Grid View
+              </button>
+            </div>
+          )}
         </div>
       </div>
 
-      {/* Create Form */}
-      <details style={{ marginBottom: 32 }}>
-        <summary style={{ 
-          cursor: "pointer", 
-          fontSize: "1.1rem", 
-          fontWeight: "bold",
-          padding: "12px 16px",
-          background: "#f8f9fa",
-          borderRadius: "8px"
-        }}>
-          Add New Media
-        </summary>
-        <form onSubmit={handleSubmit} style={{
-          background: "#fff", 
-          padding: 24, 
-          borderRadius: "0 0 8px 8px",
-          boxShadow: "0 2px 8px rgba(0,0,0,0.1)",
-          marginTop: 8
-        }}>
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
-            <div>
-              <label style={{ display: "block", marginBottom: 4, fontWeight: "500" }}>Title</label>
-              <input
-                type="text"
-                name="title"
-                value={form.title}
-                onChange={handleChange}
-                placeholder="Media title"
-                style={{ width: "100%", padding: 10, borderRadius: 6, border: "1px solid #ddd" }}
-                required
-              />
-            </div>
-
-            <div>
-              <label style={{ display: "block", marginBottom: 4, fontWeight: "500" }}>Type</label>
-              <select
-                name="type"
-                value={form.type}
-                onChange={handleChange}
-                style={{ width: "100%", padding: 10, borderRadius: 6, border: "1px solid #ddd" }}
-              >
-                <option value="video">Video</option>
-                <option value="audio">Audio</option>
-                <option value="pdf">PDF</option>
-                <option value="image">Image</option>
-              </select>
-            </div>
-
-            <div>
-              <label style={{ display: "block", marginBottom: 8, fontWeight: "500" }}>Source</label>
-              <div style={{ display: "flex", gap: 16, marginBottom: 12 }}>
-                <label>
-                  <input
-                    type="radio"
-                    value="url"
-                    checked={uploadOption === "url"}
-                    onChange={() => setUploadOption("url")}
-                    style={{ marginRight: 6 }}
-                  />
-                  URL
-                </label>
-                <label>
-                  <input
-                    type="radio"
-                    value="file"
-                    checked={uploadOption === "file"}
-                    onChange={() => setUploadOption("file")}
-                    style={{ marginRight: 6 }}
-                  />
-                  Upload File
-                </label>
-              </div>
-
-              {uploadOption === "url" ? (
+      {/* Create Form - Styled same as AdminAddResourcePage */}
+      {showAddForm && (
+        <div style={styles.formContainer}>
+          <h2 style={styles.formTitle}>Add New Media</h2>
+          <form onSubmit={handleSubmit} style={styles.form}>
+            <div style={styles.formRow}>
+              <div style={styles.formGroup}>
+                <label style={styles.label}>Title *</label>
                 <input
                   type="text"
-                  name="url"
-                  value={form.url}
+                  name="title"
+                  value={form.title}
                   onChange={handleChange}
-                  placeholder="Media URL"
-                  style={{ width: "100%", padding: 10, borderRadius: 6, border: "1px solid #ddd" }}
+                  placeholder="Media title"
+                  style={styles.input}
+                  required
                 />
-              ) : (
+              </div>
+
+              <div style={styles.formGroup}>
+                <label style={styles.label}>Type *</label>
+                <select
+                  name="type"
+                  value={form.type}
+                  onChange={handleChange}
+                  style={styles.input}
+                >
+                  <option value="video">Video</option>
+                  <option value="audio">Audio</option>
+                  <option value="pdf">PDF</option>
+                  <option value="image">Image</option>
+                </select>
+              </div>
+              </div>
+
+            <div style={styles.formGroup}>
+              <label style={styles.label}>Source *</label>
+              <div style={{ display: 'flex', gap: '16px' }}>
+                <label style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                    <input
+                      type="radio"
+                      value="url"
+                    checked={uploadOption === 'url'}
+                    onChange={() => setUploadOption('url')}
+                    />
+                    URL
+                  </label>
+                <label style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                    <input
+                      type="radio"
+                      value="file"
+                    checked={uploadOption === 'file'}
+                    onChange={() => setUploadOption('file')}
+                    />
+                    Upload File
+                  </label>
+                </div>
+
+              {uploadOption === 'url' ? (
+                  <input
+                    type="text"
+                    name="url"
+                    value={form.url}
+                    onChange={handleChange}
+                    placeholder="Media URL"
+                  style={styles.input}
+                    required
+                  />
+                ) : (
+                  <input
+                    type="file"
+                    name="file"
+                  accept={form.type === 'image' ? 'image/*' : form.type === 'audio' ? 'audio/*' : form.type === 'pdf' ? 'application/pdf' : form.type === 'video' ? 'video/*' : '*'}
+                    onChange={handleChange}
+                  style={styles.input}
+                  required={uploadOption === 'file'}
+                  />
+                )}
+              </div>
+
+            <div style={styles.formGroup}>
+              <label style={styles.label}>Tags (comma separated)</label>
                 <input
-                  type="file"
-                  name="file"
-                  accept={form.type === "image" ? "image/*" : form.type === "audio" ? "audio/*" : form.type === "pdf" ? "application/pdf" : form.type === "video" ? "video/*" : "*"}
+                  type="text"
+                  name="tags"
+                  value={form.tags}
                   onChange={handleChange}
-                  style={{ width: "100%", padding: 10, borderRadius: 6, border: "1px solid #ddd" }}
-                  required={uploadOption === "file"}
+                  placeholder="tag1, tag2, tag3"
+                style={styles.input}
                 />
-              )}
+              </div>
+
+            <div style={styles.formGroup}>
+              <label style={styles.label}>Transcript (optional)</label>
+                <textarea
+                  name="transcript"
+                  value={form.transcript}
+                  onChange={handleChange}
+                  placeholder="Transcript text"
+                  rows={3}
+                style={styles.textarea}
+                />
             </div>
 
-            <div>
-              <label style={{ display: "block", marginBottom: 4, fontWeight: "500" }}>Tags (comma separated)</label>
-              <input
-                type="text"
-                name="tags"
-                value={form.tags}
-                onChange={handleChange}
-                placeholder="tag1, tag2, tag3"
-                style={{ width: "100%", padding: 10, borderRadius: 6, border: "1px solid #ddd" }}
-              />
+            <div style={styles.formActions}>
+              <button
+                type="button"
+                onClick={() => {
+                  setForm({ title: "", type: "video", url: "", tags: "", transcript: "", file: null });
+                  setUploadOption('url');
+                  setShowAddForm(false);
+                }}
+                style={styles.cancelButton}
+              >
+                Cancel
+              </button>
+            <button
+              type="submit"
+              disabled={loading}
+              style={{
+                  ...styles.submitButton,
+                  ...(loading && styles.buttonDisabled)
+                }}
+              >
+                {loading ? 'Creating...' : 'Create Multimedia'}
+            </button>
             </div>
-
-            <div style={{ gridColumn: "1 / -1" }}>
-              <label style={{ display: "block", marginBottom: 4, fontWeight: "500" }}>Transcript (optional)</label>
-              <textarea
-                name="transcript"
-                value={form.transcript}
-                onChange={handleChange}
-                placeholder="Transcript text"
-                rows={3}
-                style={{ width: "100%", padding: 10, borderRadius: 6, border: "1px solid #ddd" }}
-              />
-            </div>
-          </div>
-
-          <button
-            type="submit"
-            disabled={loading}
-            style={{
-              background: "#28a745", 
-              color: "#fff", 
-              padding: "10px 20px", 
-              borderRadius: "6px",
-              border: "none", 
-              fontWeight: "bold", 
-              cursor: "pointer",
-              marginTop: 16
-            }}
-          >
-            {loading ? "Creating..." : "Create Multimedia"}
-          </button>
-        </form>
-      </details>
-
-      {/* Media List Header */}
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
-        <h3 style={{ margin: 0 }}>All Media ({items.length})</h3>
-        <div style={{ fontSize: "0.9rem", color: "#666" }}>
-          {viewMode === "grid" ? "Grid view" : "List view"}
+          </form>
         </div>
-      </div>
+      )}
 
-      {items.length === 0 ? (
+      {!showAddForm && (
+        <div style={styles.searchContainer}>
+          <input
+            type="text"
+            placeholder="Search multimedia..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            style={styles.searchInput}
+          />
+          <span style={styles.resourceCount}>
+            {filteredItems.length} item(s) found
+          </span>
+        </div>
+      )}
+
+      {filteredItems.length === 0 ? (
         <div style={{
           background: "#f8f9fa", 
           padding: 40, 
@@ -409,23 +425,29 @@ export default function AdminMultimediaPage() {
           textAlign: "center",
           color: "#606060"
         }}>
-          <p>No multimedia content found</p>
+          <p>{searchTerm ? "No multimedia found matching your search" : "No multimedia content found"}</p>
+          {!searchTerm && (
+            <button
+              onClick={() => setShowAddForm(true)}
+              style={{
+                background: "#28a745",
+                color: "white",
+                border: "none",
+                padding: "10px 20px",
+                borderRadius: "6px",
+                cursor: "pointer",
+                marginTop: "16px"
+              }}
+            >
+              Add Your First Media
+            </button>
+          )}
         </div>
       ) : viewMode === "grid" ? (
         /* Grid View */
-        <div style={{ 
-          display: "grid", 
-          gridTemplateColumns: "repeat(auto-fill, minmax(300px, 1fr))", 
-          gap: 20 
-        }}>
-          {items.map(item => (
-            <div key={item.media_id} style={{
-              background: "#fff", 
-              borderRadius: 12, 
-              overflow: "hidden",
-              boxShadow: "0 2px 8px rgba(0,0,0,0.1)",
-              transition: "transform 0.2s, box-shadow 0.2s",
-            }}>
+        <div style={styles.gridContainer}>
+          {filteredItems.map(item => (
+            <div key={item._id || item.media_id} style={styles.gridCard}>
               {/* Thumbnail */}
               <div style={{ 
                 position: "relative", 
@@ -461,6 +483,23 @@ export default function AdminMultimediaPage() {
                 }}>
                   {item.type}
                 </div>
+
+                {/* Rating */}
+                {item.rating_avg > 0 && (
+                  <div style={{
+                    position: "absolute",
+                    bottom: "8px",
+                    left: "8px",
+                    backgroundColor: "rgba(0,0,0,0.7)",
+                    color: "white",
+                    padding: "4px 8px",
+                    borderRadius: "4px",
+                    fontSize: "12px",
+                    fontWeight: "500"
+                  }}>
+                    ⭐ {item.rating_avg} ({item.rating_count})
+                  </div>
+                )}
               </div>
               
               {/* Content details */}
@@ -487,8 +526,8 @@ export default function AdminMultimediaPage() {
                   marginBottom: 12,
                   minHeight: 28
                 }}>
-                  {item.tags && item.tags.slice(0, 2).map(tag => (
-                    <span key={tag} style={{
+                  {item.tags && Array.isArray(item.tags) && item.tags.slice(0, 2).map((tag, index) => (
+                    <span key={index} style={{
                       background: "#e8f4fd", 
                       color: "#0984e3", 
                       padding: "2px 6px",
@@ -496,10 +535,10 @@ export default function AdminMultimediaPage() {
                       fontSize: "11px", 
                       display: "inline-block"
                     }}>
-                      #{tag.length > 12 ? tag.substring(0, 12) + '...' : tag}
+                      #{typeof tag === 'string' && tag.length > 12 ? tag.substring(0, 12) + '...' : tag}
                     </span>
                   ))}
-                  {item.tags && item.tags.length > 2 && (
+                  {item.tags && Array.isArray(item.tags) && item.tags.length > 2 && (
                     <span style={{
                       background: "#f0f0f0", 
                       color: "#666", 
@@ -511,6 +550,18 @@ export default function AdminMultimediaPage() {
                       +{item.tags.length - 2}
                     </span>
                   )}
+                </div>
+                
+                <div style={{ 
+                  display: "flex", 
+                  justifyContent: "space-between",
+                  alignItems: "center",
+                  fontSize: "12px",
+                  color: "#666",
+                  marginBottom: "12px"
+                }}>
+                  <span>{formatDate(item.createdAt)}</span>
+                  <span>{item.views_count || 0} views</span>
                 </div>
                 
                 {/* Action Buttons */}
@@ -538,21 +589,21 @@ export default function AdminMultimediaPage() {
                     Edit
                   </button>
                   <button
-                    onClick={() => handleDelete(item.media_id)}
-                    disabled={deletingId === item.media_id}
+                    onClick={() => handleDelete(item._id || item.media_id)}
+                    disabled={deletingId === (item._id || item.media_id)}
                     style={{
-                      background: deletingId === item.media_id ? "#ccc" : "#dc3545",
+                      background: deletingId === (item._id || item.media_id) ? "#ccc" : "#dc3545",
                       color: "#fff",
                       border: "none",
                       padding: "6px 12px",
                       borderRadius: "4px",
-                      cursor: deletingId === item.media_id ? "not-allowed" : "pointer",
+                      cursor: deletingId === (item._id || item.media_id) ? "not-allowed" : "pointer",
                       fontSize: "12px",
                       fontWeight: "500",
                       flex: 1
                     }}
                   >
-                    {deletingId === item.media_id ? "Deleting..." : "Delete"}
+                    {deletingId === (item._id || item.media_id) ? "Deleting..." : "Delete"}
                   </button>
                 </div>
               </div>
@@ -560,141 +611,51 @@ export default function AdminMultimediaPage() {
           ))}
         </div>
       ) : (
-        /* List View */
-        <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
-          {items.map(item => (
-            <div key={item.media_id} style={{
-              background: "#fff", 
-              padding: 16, 
-              borderRadius: 12, 
-              boxShadow: "0 2px 8px rgba(0,0,0,0.1)",
-              display: "flex",
-              gap: 16
-            }}>
-              {/* Thumbnail */}
-              <div style={{ 
-                width: 160, 
-                height: 90, 
-                backgroundColor: "#000",
-                borderRadius: 8,
-                overflow: "hidden",
-                flexShrink: 0
-              }}>
-                <img 
-                  src={getThumbnail(item)} 
-                  alt={item.title}
-                  style={{
-                    width: "100%",
-                    height: "100%",
-                    objectFit: "cover"
-                  }}
-                />
+        /* List View - table style */
+        <div style={styles.listContainer}>
+          <div style={styles.tableHeader}>
+            <div style={styles.tableCell}>Title</div>
+            <div style={styles.tableCell}>Type</div>
+            <div style={styles.tableCell}>Views</div>
+            <div style={styles.tableCell}>Created</div>
+            <div style={styles.tableCell}>Actions</div>
+          </div>
+          {filteredItems.map(item => (
+            <div key={item._id || item.media_id} style={styles.tableRow}>
+              <div style={styles.tableCell}>
+                <div style={styles.resourceTitle}>{item.title}</div>
+                <div style={styles.resourceDescription}>
+                  {item.transcript ? (item.transcript.length > 100 ? `${item.transcript.substring(0, 100)}...` : item.transcript) : ''}
               </div>
-              
-              {/* Content details */}
-              <div style={{ flex: 1, minWidth: 0 }}>
-                <h4 style={{ 
-                  margin: "0 0 8px", 
-                  fontSize: "16px",
-                  fontWeight: "500",
-                  color: "#0f0f0f"
-                }}>
-                  {item.title}
-                </h4>
-                
-                <div style={{ 
-                  display: "flex", 
-                  alignItems: "center",
-                  gap: 8,
-                  marginBottom: 8
-                }}>
-                  <span style={{
-                    background: "#e8f4fd",
-                    color: "#0984e3",
-                    padding: "2px 8px",
-                    borderRadius: "4px",
-                    fontSize: "12px",
-                    fontWeight: "500"
-                  }}>
-                    {item.type.toUpperCase()}
-                  </span>
-                  
-                  <span style={{ fontSize: "12px", color: "#666" }}>
-                    {new Date(item.createdAt).toLocaleDateString()}
-                  </span>
                 </div>
-                
-                <div style={{ 
-                  display: "flex", 
-                  flexWrap: "wrap",
-                  gap: "4px",
-                  marginBottom: 12
-                }}>
-                  {item.tags && item.tags.slice(0, 3).map(tag => (
-                    <span key={tag} style={{
-                      background: "#f0f0f0", 
-                      color: "#666", 
-                      padding: "2px 6px",
-                      borderRadius: "4px", 
-                      fontSize: "11px", 
-                      display: "inline-block"
-                    }}>
-                      #{tag.length > 15 ? tag.substring(0, 15) + '...' : tag}
-                    </span>
-                  ))}
-                  {item.tags && item.tags.length > 3 && (
-                    <span style={{
-                      background: "#f0f0f0", 
-                      color: "#666", 
-                      padding: "2px 6px",
-                      borderRadius: "4px", 
-                      fontSize: "11px", 
-                      display: "inline-block"
-                    }}>
-                      +{item.tags.length - 3}
-                    </span>
-                  )}
+              <div style={styles.tableCell}>
+                <span style={styles.categoryBadge}>{(item.type || '').toUpperCase()}</span>
                 </div>
+              <div style={styles.tableCell}>
+                <span style={styles.viewsCount}>{item.views_count || 0}</span>
               </div>
-              
-              {/* Action Buttons */}
-              <div style={{ 
-                display: "flex", 
-                flexDirection: "column",
-                gap: "8px",
-                justifyContent: "center"
-              }}>
+              <div style={styles.tableCell}>
+                {formatDate(item.createdAt)}
+              </div>
+              <div style={styles.tableCell}>
+                <div style={styles.actionButtons}>
                 <button
                   onClick={() => openEditModal(item)}
-                  style={{
-                    background: "#ffc107",
-                    color: "#000",
-                    border: "none",
-                    padding: "6px 12px",
-                    borderRadius: "4px",
-                    cursor: "pointer",
-                    fontSize: "12px",
-                    fontWeight: "500"
-                  }}
+                    style={styles.editButton}
                 >
                   Edit
                 </button>
                 <button
-                  onClick={() => handleDelete(item.media_id)}
-                  disabled={deletingId === item.media_id}
+                  onClick={() => handleDelete(item._id || item.media_id)}
+                  disabled={deletingId === (item._id || item.media_id)}
                   style={{
-                    background: deletingId === item.media_id ? "#ccc" : "#dc3545",
-                    color: "#fff",
-                    border: "none",
-                    padding: "6px 12px",
-                    borderRadius: "4px",
-                    cursor: deletingId === item.media_id ? "not-allowed" : "pointer",
-                    fontSize: "12px",
-                    fontWeight: "500"
-                  }}
-                >
-                  {deletingId === item.media_id ? "Deleting..." : "Delete"}
+                      ...styles.deleteButton,
+                      ...(deletingId === (item._id || item.media_id) ? styles.buttonDisabled : {})
+                    }}
+                  >
+                    {deletingId === (item._id || item.media_id) ? 'Deleting...' : 'Delete'}
                 </button>
+                </div>
               </div>
             </div>
           ))}
@@ -746,28 +707,28 @@ export default function AdminMultimediaPage() {
               </button>
             </div>
 
-            <form onSubmit={handleEditSubmit}>
-              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16, marginBottom: 16 }}>
-                <div>
-                  <label style={{ display: "block", marginBottom: 4, fontWeight: "500" }}>Title</label>
+            <form onSubmit={handleEditSubmit} style={styles.form}>
+              <div style={styles.formRow}>
+                <div style={styles.formGroup}>
+                  <label style={styles.label}>Title *</label>
                   <input
                     type="text"
                     name="title"
                     value={editForm.title}
                     onChange={handleEditChange}
                     placeholder="Media title"
-                    style={{ width: "100%", padding: 10, borderRadius: 6, border: "1px solid #ddd" }}
+                    style={styles.input}
                     required
                   />
                 </div>
 
-                <div>
-                  <label style={{ display: "block", marginBottom: 4, fontWeight: "500" }}>Type</label>
+                <div style={styles.formGroup}>
+                  <label style={styles.label}>Type *</label>
                   <select
                     name="type"
                     value={editForm.type}
                     onChange={handleEditChange}
-                    style={{ width: "100%", padding: 10, borderRadius: 6, border: "1px solid #ddd" }}
+                    style={styles.input}
                   >
                     <option value="video">Video</option>
                     <option value="audio">Audio</option>
@@ -777,98 +738,94 @@ export default function AdminMultimediaPage() {
                 </div>
               </div>
 
-              <div style={{ marginBottom: 16 }}>
-                <label style={{ display: "block", marginBottom: 8, fontWeight: "500" }}>Source</label>
-                <div style={{ display: "flex", gap: 16, marginBottom: 12 }}>
-                  <label>
+              <div style={styles.formGroup}>
+                <label style={styles.label}>Source *</label>
+                <div style={{ display: 'flex', gap: '16px' }}>
+                  <label style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
                     <input
                       type="radio"
                       value="url"
-                      checked={editUploadOption === "url"}
-                      onChange={() => setEditUploadOption("url")}
-                      style={{ marginRight: 6 }}
+                      checked={editUploadOption === 'url'}
+                      onChange={() => setEditUploadOption('url')}
                     />
                     URL
                   </label>
-                  <label>
+                  <label style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
                     <input
                       type="radio"
                       value="file"
-                      checked={editUploadOption === "file"}
-                      onChange={() => setEditUploadOption("file")}
-                      style={{ marginRight: 6 }}
+                      checked={editUploadOption === 'file'}
+                      onChange={() => setEditUploadOption('file')}
                     />
                     Upload File
                   </label>
                 </div>
 
-                {editUploadOption === "url" ? (
+                {editUploadOption === 'url' ? (
                   <input
                     type="text"
                     name="url"
                     value={editForm.url}
                     onChange={handleEditChange}
                     placeholder="Media URL"
-                    style={{ width: "100%", padding: 10, borderRadius: 6, border: "1px solid #ddd" }}
+                    style={styles.input}
                   />
                 ) : (
                   <div>
                     <input
                       type="file"
                       name="file"
-                      accept={editForm.type === "image" ? "image/*" : editForm.type === "audio" ? "audio/*" : editForm.type === "pdf" ? "application/pdf" : editForm.type === "video" ? "video/*" : "*"}
+                      accept={editForm.type === 'image' ? 'image/*' : editForm.type === 'audio' ? 'audio/*' : editForm.type === 'pdf' ? 'application/pdf' : editForm.type === 'video' ? 'video/*' : '*'}
                       onChange={handleEditChange}
-                      style={{ width: "100%", padding: 10, borderRadius: 6, border: "1px solid #ddd", marginBottom: 8 }}
+                      style={styles.input}
                     />
-                    <div style={{ fontSize: "0.8rem", color: "#757575" }}>
+                    <div style={{ fontSize: '0.8rem', color: '#757575', marginTop: '8px' }}>
                       Current: {editForm.url}
                     </div>
                   </div>
                 )}
               </div>
 
-              <div style={{ marginBottom: 16 }}>
-                <label style={{ display: "block", marginBottom: 4, fontWeight: "500" }}>Tags (comma separated)</label>
+              <div style={styles.formGroup}>
+                <label style={styles.label}>Tags (comma separated)</label>
                 <input
                   type="text"
                   name="tags"
                   value={editForm.tags}
                   onChange={handleEditChange}
                   placeholder="tag1, tag2, tag3"
-                  style={{ width: "100%", padding: 10, borderRadius: 6, border: "1px solid #ddd" }}
+                  style={styles.input}
                 />
               </div>
 
-              <div style={{ marginBottom: 20 }}>
-                <label style={{ display: "block", marginBottom: 4, fontWeight: "500" }}>Transcript (optional)</label>
+              <div style={styles.formGroup}>
+                <label style={styles.label}>Transcript (optional)</label>
                 <textarea
                   name="transcript"
                   value={editForm.transcript}
                   onChange={handleEditChange}
                   placeholder="Transcript text"
                   rows={3}
-                  style={{ width: "100%", padding: 10, borderRadius: 6, border: "1px solid #ddd" }}
+                  style={styles.textarea}
                 />
               </div>
 
-              <div style={{ display: "flex", gap: "12px" }}>
+              <div style={styles.formActions}>
                 <button
                   type="submit"
                   disabled={loading}
                   style={{
-                    background: "#28a745", color: "#fff", padding: "10px 20px", borderRadius: "6px",
-                    border: "none", fontWeight: "bold", cursor: "pointer", flex: 1
+                    ...styles.submitButton,
+                    ...(loading && styles.buttonDisabled),
+                    flex: 1
                   }}
                 >
-                  {loading ? "Updating..." : "Update"}
+                  {loading ? 'Updating...' : 'Update'}
                 </button>
                 <button
                   type="button"
                   onClick={() => setIsEditModalOpen(false)}
-                  style={{
-                    background: "#6c757d", color: "#fff", padding: "10px 20px", borderRadius: "6px",
-                    border: "none", fontWeight: "bold", cursor: "pointer"
-                  }}
+                  style={styles.cancelButton}
                 >
                   Cancel
                 </button>
@@ -880,3 +837,384 @@ export default function AdminMultimediaPage() {
     </div>
   );
 }
+
+const styles = {
+  container: {
+    padding: '20px',
+    maxWidth: '1200px',
+    margin: '0 auto',
+    fontFamily: "'Segoe UI', Tahoma, Geneva, Verdana, sans-serif"
+  },
+  header: {
+    display: 'flex',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: '20px',
+    flexWrap: 'wrap',
+    gap: '15px'
+  },
+  pageTitle: {
+    color: '#2c3e50',
+    margin: '0'
+  },
+  controls: {
+    display: 'flex',
+    gap: '15px',
+    alignItems: 'center'
+  },
+  toggleButton: {
+    padding: '10px 20px',
+    backgroundColor: '#4b6cb7',
+    color: 'white',
+    border: 'none',
+    borderRadius: '6px',
+    cursor: 'pointer',
+    fontWeight: '500',
+    transition: 'background-color 0.3s ease'
+  },
+  viewControls: {
+    display: 'flex',
+    gap: '8px'
+  },
+  viewButton: {
+    padding: '8px 16px',
+    backgroundColor: '#f8f9fa',
+    color: '#6c757d',
+    border: '1px solid #e9ecef',
+    borderRadius: '6px',
+    cursor: 'pointer',
+    fontWeight: '500',
+    transition: 'all 0.3s ease'
+  },
+  activeViewButton: {
+    backgroundColor: '#4b6cb7',
+    color: 'white',
+    borderColor: '#4b6cb7'
+  },
+  loadingContainer: {
+    display: 'flex',
+    flexDirection: 'column',
+    justifyContent: 'center',
+    alignItems: 'center',
+    minHeight: '50vh',
+    color: '#666'
+  },
+  spinner: {
+    width: '40px',
+    height: '40px',
+    border: '4px solid #f3f3f3',
+    borderTop: '4px solid #4b6cb7',
+    borderRadius: '50%',
+    animation: 'spin 1s linear infinite',
+    marginBottom: '15px'
+  },
+  message: {
+    padding: '12px 20px',
+    borderRadius: '6px',
+    marginBottom: '20px',
+    display: 'flex',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    fontWeight: '500'
+  },
+  successMessage: {
+    backgroundColor: '#d4edda',
+    color: '#155724',
+    border: '1px solid #c3e6cb'
+  },
+  errorMessage: {
+    backgroundColor: '#f8d7da',
+    color: '#721c24',
+    border: '1px solid #f5c6cb'
+  },
+  messageClose: {
+    background: 'none',
+    border: 'none',
+    fontSize: '20px',
+    cursor: 'pointer',
+    color: 'inherit'
+  },
+  formContainer: {
+    backgroundColor: 'white',
+    padding: '30px',
+    borderRadius: '8px',
+    boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)',
+    marginBottom: '20px'
+  },
+  formTitle: {
+    textAlign: 'center',
+    color: '#333',
+    marginBottom: '30px',
+    fontSize: '24px',
+    fontWeight: '600'
+  },
+  form: {
+    display: 'flex',
+    flexDirection: 'column',
+    gap: '20px'
+  },
+  formRow: {
+    display: 'grid',
+    gridTemplateColumns: '1fr 1fr',
+    gap: '20px'
+  },
+  formGroup: {
+    display: 'flex',
+    flexDirection: 'column',
+    gap: '8px'
+  },
+  label: {
+    fontWeight: '600',
+    color: '#333',
+    fontSize: '14px'
+  },
+  input: {
+    padding: '12px',
+    border: '1px solid #ddd',
+    borderRadius: '4px',
+    fontSize: '16px',
+    outline: 'none',
+    transition: 'border-color 0.3s ease'
+  },
+  textarea: {
+    padding: '12px',
+    border: '1px solid #ddd',
+    borderRadius: '4px',
+    fontSize: '16px',
+    outline: 'none',
+    resize: 'vertical',
+    minHeight: '100px',
+    transition: 'border-color 0.3s ease'
+  },
+  formActions: {
+    display: 'flex',
+    justifyContent: 'flex-end',
+    gap: '15px',
+    marginTop: '10px'
+  },
+  cancelButton: {
+    padding: '12px 24px',
+    backgroundColor: '#f8f9fa',
+    color: '#6c757d',
+    border: '1px solid #e9ecef',
+    borderRadius: '4px',
+    cursor: 'pointer',
+    fontWeight: '500',
+    transition: 'all 0.3s ease'
+  },
+  submitButton: {
+    padding: '12px 24px',
+    backgroundColor: '#4b6cb7',
+    color: 'white',
+    border: 'none',
+    borderRadius: '4px',
+    cursor: 'pointer',
+    fontWeight: '500',
+    transition: 'background-color 0.3s ease'
+  },
+  buttonDisabled: {
+    backgroundColor: '#6c757d',
+    cursor: 'not-allowed'
+  },
+  searchContainer: {
+    display: 'flex',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: '20px',
+    flexWrap: 'wrap',
+    gap: '15px'
+  },
+  searchInput: {
+    padding: '12px 16px',
+    border: '1px solid #ddd',
+    borderRadius: '6px',
+    fontSize: '16px',
+    minWidth: '300px',
+    outline: 'none',
+    transition: 'border-color 0.3s ease'
+  },
+  resourceCount: {
+    color: '#6c757d',
+    fontSize: '14px'
+  },
+  emptyState: {
+    textAlign: 'center',
+    padding: '40px',
+    color: '#6c757d',
+    backgroundColor: '#f8f9fa',
+    borderRadius: '8px'
+  },
+  listContainer: {
+    backgroundColor: 'white',
+    borderRadius: '8px',
+    overflow: 'hidden',
+    boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)'
+  },
+  tableHeader: {
+    display: 'grid',
+    gridTemplateColumns: '2fr 1fr 0.5fr 1fr 1fr',
+    padding: '15px 20px',
+    backgroundColor: '#f8f9fa',
+    fontWeight: '600',
+    color: '#495057',
+    borderBottom: '1px solid #e9ecef'
+  },
+  tableRow: {
+    display: 'grid',
+    gridTemplateColumns: '2fr 1fr 0.5fr 1fr 1fr',
+    padding: '15px 20px',
+    borderBottom: '1px solid #e9ecef',
+    alignItems: 'center',
+    transition: 'background-color 0.2s ease'
+  },
+  tableRowHover: {
+    backgroundColor: '#f8f9fa'
+  },
+  tableCell: {
+    padding: '0 10px'
+  },
+  resourceTitle: {
+    fontWeight: '600',
+    color: '#2c3e50',
+    marginBottom: '5px'
+  },
+  resourceDescription: {
+    color: '#6c757d',
+    fontSize: '14px'
+  },
+  categoryBadge: {
+    padding: '4px 10px',
+    backgroundColor: '#e7f3ff',
+    color: '#007bff',
+    borderRadius: '12px',
+    fontSize: '12px',
+    fontWeight: '500'
+  },
+  viewsCount: {
+    fontWeight: '600',
+    color: '#495057'
+  },
+  actionButtons: {
+    display: 'flex',
+    gap: '10px'
+  },
+  editButton: {
+    padding: '6px 12px',
+    backgroundColor: '#28a745',
+    color: 'white',
+    border: 'none',
+    borderRadius: '4px',
+    cursor: 'pointer',
+    fontSize: '14px',
+    transition: 'background-color 0.3s ease'
+  },
+  deleteButton: {
+    padding: '6px 12px',
+    backgroundColor: '#dc3545',
+    color: 'white',
+    border: 'none',
+    borderRadius: '4px',
+    cursor: 'pointer',
+    fontSize: '14px',
+    transition: 'background-color 0.3s ease'
+  },
+  gridContainer: {
+    display: 'grid',
+    gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))',
+    gap: '20px'
+  },
+  gridCard: {
+    backgroundColor: 'white',
+    borderRadius: '8px',
+    padding: '20px',
+    boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)',
+    transition: 'transform 0.2s ease, box-shadow 0.2s ease'
+  },
+  gridCardHover: {
+    transform: 'translateY(-5px)',
+    boxShadow: '0 8px 15px rgba(0, 0, 0, 0.1)'
+  },
+  cardHeader: {
+    display: 'flex',
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
+    marginBottom: '15px'
+  },
+  cardTitle: {
+    margin: '0',
+    color: '#2c3e50',
+    fontSize: '18px',
+    fontWeight: '600',
+    flex: '1'
+  },
+  cardCategory: {
+    padding: '4px 8px',
+    backgroundColor: '#e7f3ff',
+    color: '#007bff',
+    borderRadius: '12px',
+    fontSize: '12px',
+    fontWeight: '500',
+    marginLeft: '10px'
+  },
+  cardDescription: {
+    color: '#6c757d',
+    marginBottom: '15px',
+    lineHeight: '1.5'
+  },
+  cardMeta: {
+    display: 'flex',
+    justifyContent: 'space-between',
+    marginBottom: '15px',
+    fontSize: '14px',
+    color: '#6c757d'
+  },
+  cardTags: {
+    display: 'flex',
+    flexWrap: 'wrap',
+    gap: '8px',
+    marginBottom: '15px'
+  },
+  tag: {
+    padding: '4px 8px',
+    backgroundColor: '#f8f9fa',
+    color: '#495057',
+    borderRadius: '4px',
+    fontSize: '12px',
+    border: '1px solid #e9ecef'
+  },
+  cardActions: {
+    display: 'flex',
+    gap: '10px'
+  },
+  cardEditButton: {
+    padding: '8px 16px',
+    backgroundColor: '#28a745',
+    color: 'white',
+    border: 'none',
+    borderRadius: '4px',
+    cursor: 'pointer',
+    fontSize: '14px',
+    flex: '1',
+    transition: 'background-color 0.3s ease'
+  },
+  cardDeleteButton: {
+    padding: '8px 16px',
+    backgroundColor: '#dc3545',
+    color: 'white',
+    border: 'none',
+    borderRadius: '4px',
+    cursor: 'pointer',
+    fontSize: '14px',
+    flex: '1',
+    transition: 'background-color 0.3s ease'
+  }
+};
+
+// Add CSS animation for spinner
+const styleSheet = document.styleSheets[0];
+styleSheet.insertRule(`
+  @keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+  }
+`, styleSheet.cssRules.length);
