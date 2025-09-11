@@ -18,6 +18,12 @@ import AdminSuccessStoriesPage from './dashboard/dashboardPages/AdminSuccessStor
 import MultimediaPage from './layouts/pages/MultiMediaPage'
 import AdminMultimediaPage from './dashboard/dashboardPages/AdminMultimediaPage'
 import MultimediaDetailPage from './layouts/pages/MultimediaDetailPage'
+import ResourcesPage from './layouts/pages/ResourcesPage'
+import CareerBankPage from './layouts/pages/CareerBankPage'
+import InterestQuizPage from './layouts/pages/InterestQuizPage'
+import BookMarkpage from './layouts/pages/BookMarkpage'
+import FeedbackForm from './layouts/pages/FeedBackForm'
+import ResourceDetailsPage from './layouts/pages/ResourceDetailPage'
 
 
 export default function App() {
@@ -56,8 +62,20 @@ export default function App() {
           element: <MultimediaDetailPage />
         },
         {
+          path: '/resources',
+          element: <ResourcesPage />
+        },
+        {
+          path: '/resources/:id',
+          element: <ResourceDetailsPage />
+        },
+        {
           path: '/about',
           element: <AboutPage />
+        },
+        {
+          path: '/feedback',
+          element: <FeedbackForm />
         },
         {
           path: '/contact',
@@ -70,6 +88,18 @@ export default function App() {
         {
           path: '/success-stories',
           element: <SuccessStoriesPage />
+        },
+        {
+          path: '/career-bank',
+          element: <CareerBankPage />
+        },
+        {
+          path: '/interest-quiz',
+          element: <InterestQuizPage />
+        },
+        {
+          path: '/my-bookmarks',
+          element: <BookMarkpage />
         }
       ]
     },

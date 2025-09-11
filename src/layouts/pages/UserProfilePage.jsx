@@ -45,7 +45,16 @@ export default function UserProfilePage() {
 
   if (!user) {
     return (
-      <div className="profile-loading">
+      <div
+        style={{
+          display: "flex",
+          justifyContent: "center",
+          alignItems: "center",
+          height: "100vh",
+          fontSize: "1.2rem",
+          color: "#555",
+        }}
+      >
         <p>Loading profile...</p>
       </div>
     );
@@ -86,12 +95,45 @@ export default function UserProfilePage() {
   };
 
   return (
-    <div className="profile-container">
-      <div className="profile-card">
+    <div
+      style={{
+        padding: "40px",
+        backgroundColor: "#f4f7f9",
+        minHeight: "100vh",
+        display: "flex",
+        justifyContent: "center",
+        alignItems: "center",
+      }}
+    >
+      <div
+        style={{
+          backgroundColor: "#fff",
+          borderRadius: "12px",
+          boxShadow: "0 4px 20px rgba(0, 0, 0, 0.05)",
+          width: "100%",
+          maxWidth: "700px",
+          padding: "40px",
+        }}
+      >
         {/* Header Section */}
-        <div className="profile-header">
+        <div
+          style={{
+            display: "flex",
+            alignItems: "center",
+            gap: "25px",
+            borderBottom: "1px solid #eee",
+            paddingBottom: "25px",
+            marginBottom: "25px",
+          }}
+        >
           <img
-            className="profile-avatar"
+            style={{
+              width: "100px",
+              height: "100px",
+              borderRadius: "50%",
+              objectFit: "cover",
+              border: "4px solid #f0f4f7",
+            }}
             src={
               userProfile?.profile_image
                 ? `${apiurl}/${userProfile?.profile_image}`
@@ -100,31 +142,75 @@ export default function UserProfilePage() {
             alt="Profile"
           />
           <div>
-            <h2 className="profile-name">{user.username}</h2>
-            <p className="profile-email">{user.email}</p>
-            <span className="profile-status">Active Member</span>
+            <h2
+              style={{
+                fontSize: "2rem",
+                color: "#2c3e50",
+                margin: "0 0 5px 0",
+              }}
+            >
+              {user.username}
+            </h2>
+            <p
+              style={{
+                fontSize: "1rem",
+                color: "#7f8c8d",
+                margin: "0 0 10px 0",
+              }}
+            >
+              {user.email}
+            </p>
+            <span
+              style={{
+                backgroundColor: "#e8f6f3",
+                color: "#27ae60",
+                padding: "4px 12px",
+                borderRadius: "20px",
+                fontSize: "0.85rem",
+                fontWeight: "bold",
+              }}
+            >
+              Active Member
+            </span>
           </div>
         </div>
 
         {/* Details Section */}
-        <div className="profile-details">
-          <h3>Profile Details</h3>
-          <ul>
-            <li>
-              <strong>Education Level:</strong>{" "}
+        <div style={{ marginBottom: "30px" }}>
+          <h3
+            style={{
+              fontSize: "1.5rem",
+              color: "#34495e",
+              borderBottom: "2px solid #3498db",
+              paddingBottom: "10px",
+              marginBottom: "20px",
+            }}
+          >
+            Profile Details
+          </h3>
+          <ul
+            style={{
+              listStyle: "none",
+              padding: "0",
+              margin: "0",
+            }}
+          >
+            <li style={{ marginBottom: "15px", fontSize: "1.1rem" }}>
+              <strong style={{ color: "#555" }}>Education Level:</strong>{" "}
               {userProfile?.education_level || "Not specified"}
             </li>
-            <li>
-              <strong>Interests:</strong>{" "}
+            <li style={{ marginBottom: "15px", fontSize: "1.1rem" }}>
+              <strong style={{ color: "#555" }}>Interests:</strong>{" "}
               {userProfile?.interests && Array.isArray(userProfile.interests)
                 ? userProfile.interests.join(", ")
                 : userProfile?.interests || "Not specified"}
             </li>
-            <li>
-              <strong>Role:</strong> {user.role || "User"}
+            <li style={{ marginBottom: "15px", fontSize: "1.1rem" }}>
+              <strong style={{ color: "#555" }}>Role:</strong>{" "}
+              {user.role || "User"}
             </li>
-            <li>
-              <strong>Last Updated:</strong>{" "}
+            <li style={{ marginBottom: "15px", fontSize: "1.1rem" }}>
+              <strong style={{ color: "#555" }}>Last Updated:</strong>{" "}
               {userProfile?.updated_at
                 ? new Date(userProfile.updated_at).toLocaleDateString()
                 : "Never"}
@@ -132,8 +218,22 @@ export default function UserProfilePage() {
           </ul>
         </div>
 
-        <div className="profile-actions">
-          <button onClick={() => setShowEdit(true)} className="profile-edit-btn">
+        <div style={{ textAlign: "center" }}>
+          <button
+            onClick={() => setShowEdit(true)}
+            style={{
+              padding: "12px 30px",
+              backgroundColor: "#3498db",
+              color: "#fff",
+              border: "none",
+              borderRadius: "25px",
+              cursor: "pointer",
+              fontSize: "1rem",
+              fontWeight: "bold",
+              boxShadow: "0 4px 15px rgba(52, 152, 219, 0.4)",
+              transition: "background-color 0.3s ease",
+            }}
+          >
             Edit Profile
           </button>
         </div>
@@ -141,11 +241,46 @@ export default function UserProfilePage() {
 
       {/* Edit Modal */}
       {showEdit && (
-        <div className="profile-modal-overlay">
-          <div className="profile-modal">
-            <h3>Edit Profile</h3>
+        <div
+          style={{
+            position: "fixed",
+            top: "0",
+            left: "0",
+            width: "100%",
+            height: "100%",
+            backgroundColor: "rgba(0, 0, 0, 0.5)",
+            display: "flex",
+            justifyContent: "center",
+            alignItems: "center",
+            zIndex: "1000",
+          }}
+        >
+          <div
+            style={{
+              backgroundColor: "#fff",
+              padding: "30px",
+              borderRadius: "12px",
+              boxShadow: "0 5px 20px rgba(0, 0, 0, 0.2)",
+              width: "100%",
+              maxWidth: "500px",
+              display: "flex",
+              flexDirection: "column",
+              gap: "20px",
+            }}
+          >
+            <h3
+              style={{
+                fontSize: "1.5rem",
+                color: "#2c3e50",
+                marginBottom: "10px",
+              }}
+            >
+              Edit Profile
+            </h3>
 
-            <label>Profile Image</label>
+            <label style={{ color: "#555", fontWeight: "bold" }}>
+              Profile Image
+            </label>
             <input
               type="file"
               accept="image/*"
@@ -157,14 +292,27 @@ export default function UserProfilePage() {
                 }
                 setFormData({ ...formData, profile_image: file });
               }}
+              style={{
+                padding: "8px",
+                border: "1px solid #ddd",
+                borderRadius: "8px",
+              }}
             />
 
-            <label>Education Level</label>
+            <label style={{ color: "#555", fontWeight: "bold" }}>
+              Education Level
+            </label>
             <select
               value={formData.education_level}
               onChange={(e) =>
                 setFormData({ ...formData, education_level: e.target.value })
               }
+              style={{
+                padding: "10px",
+                border: "1px solid #ddd",
+                borderRadius: "8px",
+                fontSize: "1rem",
+              }}
             >
               <option value="">Select education level</option>
               <option value="High School">High School</option>
@@ -174,7 +322,9 @@ export default function UserProfilePage() {
               <option value="Other">Other</option>
             </select>
 
-            <label>Interests</label>
+            <label style={{ color: "#555", fontWeight: "bold" }}>
+              Interests
+            </label>
             <textarea
               value={formData.interests}
               onChange={(e) =>
@@ -182,13 +332,51 @@ export default function UserProfilePage() {
               }
               placeholder="Separate interests with commas"
               rows={3}
+              style={{
+                padding: "10px",
+                border: "1px solid #ddd",
+                borderRadius: "8px",
+                fontSize: "1rem",
+                resize: "vertical",
+              }}
             />
 
-            <div className="profile-modal-actions">
-              <button onClick={() => setShowEdit(false)} className="cancel-btn">
+            <div
+              style={{
+                display: "flex",
+                justifyContent: "flex-end",
+                gap: "10px",
+                marginTop: "20px",
+              }}
+            >
+              <button
+                onClick={() => setShowEdit(false)}
+                style={{
+                  padding: "10px 20px",
+                  backgroundColor: "#ecf0f1",
+                  color: "#7f8c8d",
+                  border: "none",
+                  borderRadius: "20px",
+                  cursor: "pointer",
+                  fontWeight: "bold",
+                  transition: "background-color 0.3s ease",
+                }}
+              >
                 Cancel
               </button>
-              <button onClick={handleUpdate} className="save-btn">
+              <button
+                onClick={handleUpdate}
+                style={{
+                  padding: "10px 20px",
+                  backgroundColor: "#2ecc71",
+                  color: "#fff",
+                  border: "none",
+                  borderRadius: "20px",
+                  cursor: "pointer",
+                  fontWeight: "bold",
+                  transition: "background-color 0.3s ease",
+                }}
+              >
                 Save
               </button>
             </div>

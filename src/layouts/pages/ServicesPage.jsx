@@ -1,5 +1,4 @@
 import React from "react";
-import "./ServicesPages.css";
 
 export default function ServicesPages() {
   const services = [

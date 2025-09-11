@@ -1,26 +1,58 @@
 import React, { useEffect, useState } from "react";
 import axios from "axios";
 import { toast } from "react-toastify";
-import { useParams } from "react-router-dom";
+import { useParams, Link } from "react-router-dom";
 import { apiurl } from "../../api";
+import {
+  ArrowLeft,
+  Video as VideoIcon,
+  Mic as AudioIcon,
+  FileText as PdfIcon,
+  Image as ImageIcon,
+  Star as StarIcon,
+  Play as PlayIcon,
+  Volume2,
+  Share2,
+  Download,
+  FileText,
+} from "lucide-react";
 
 export default function MultimediaDetailPage() {
   const [multimedia, setMultimedia] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [rating, setRating] = useState(0);
+  const [relatedContent, setRelatedContent] = useState([]);
+  const [popularContent, setPopularContent] = useState([]);
   const [showTranscript, setShowTranscript] = useState(false);
-  const [videoDimensions, setVideoDimensions] = useState({ width: 16, height: 9 });
-  
   const { id } = useParams();
 
-  // Fetch single multimedia item
+  // Function to generate random content for the sidebar to match the UI.
+  // This is a placeholder since the API does not provide related/popular content endpoints.
+  const generateRandomContent = (sourceItems, count, excludeId = null) => {
+    if (!sourceItems || sourceItems.length === 0) return [];
+    const filteredItems = sourceItems.filter(item => item.media_id !== excludeId);
+    if (filteredItems.length <= count) {
+      return [...filteredItems];
+    }
+    const shuffled = [...filteredItems].sort(() => 0.5 - Math.random());
+    return shuffled.slice(0, count);
+  };
+
   useEffect(() => {
     const fetchMultimedia = async () => {
       try {
         setLoading(true);
-        const response = await axios.get(`${apiurl}/api/multimedia/${id}`);
-        setMultimedia(response.data);
+        // Fetch the specific multimedia item and all items for the sidebar
+        const [multimediaRes, allItemsRes] = await Promise.all([
+          axios.get(`${apiurl}/api/multimedia/${id}`),
+          axios.get(`${apiurl}/api/multimedia`),
+        ]);
+        setMultimedia(multimediaRes.data);
+
+        const allItems = allItemsRes.data;
+        setRelatedContent(generateRandomContent(allItems, 4, id));
+        setPopularContent(generateRandomContent(allItems, 4, id));
+
         setLoading(false);
       } catch (err) {
         setError("Failed to load multimedia");
@@ -33,7 +65,6 @@ export default function MultimediaDetailPage() {
     fetchMultimedia();
   }, [id]);
 
-  // Function to get the correct URL for display
   const getMediaUrl = (url) => {
     if (url && url.startsWith('uploads/')) {
       return `${apiurl}/${url}`;
@@ -41,69 +72,52 @@ export default function MultimediaDetailPage() {
     return url;
   };
 
-  // Function to handle video metadata load and get dimensions
-  const handleVideoLoad = (e) => {
-    const video = e.target;
-    const width = video.videoWidth;
-    const height = video.videoHeight;
-    setVideoDimensions({ width, height });
-  };
-
-  // Calculate aspect ratio and container styles
-  const getVideoContainerStyle = () => {
-    const aspectRatio = videoDimensions.width / videoDimensions.height;
-    const isPortrait = aspectRatio < 1;
-    
-    if (isPortrait) {
-      // For portrait videos, we'll center them in a landscape container
-      return {
-        container: {
-          width: "100%",
-          height: 0,
-          paddingBottom: "56.25%", // 16:9 aspect ratio
-          position: "relative",
-          backgroundColor: "#000",
-          borderRadius: "12px",
-          overflow: "hidden",
-          marginBottom: "24px"
-        },
-        video: {
-          position: "absolute",
-          top: "50%",
-          left: "50%",
-          transform: "translate(-50%, -50%)",
-          height: "100%",
-          width: "auto",
-          maxWidth: "none"
-        }
-      };
-    } else {
-      // For landscape videos, standard responsive layout
-      return {
-        container: {
-          width: "100%",
-          position: "relative",
-          backgroundColor: "#000",
-          borderRadius: "12px",
-          overflow: "hidden",
-          marginBottom: "24px"
-        },
-        video: {
-          width: "100%",
-          height: "auto",
-          display: "block"
-        }
-      };
+  const getMediaIcon = (type) => {
+    switch (type) {
+      case 'video':
+        return <VideoIcon size={20} style={{ marginRight: '8px' }} />;
+      case 'audio':
+        return <AudioIcon size={20} style={{ marginRight: '8px' }} />;
+      case 'pdf':
+        return <PdfIcon size={20} style={{ marginRight: '8px' }} />;
+      case 'image':
+        return <ImageIcon size={20} style={{ marginRight: '8px' }} />;
+      default:
+        return null;
     }
   };
 
-  // Submit rating
+  const renderStarRating = (avgRating, ratingCount) => {
+    const filledStars = Math.round(avgRating);
+    const starColor = '#f5c518';
+    return (
+      <div style={{ display: 'flex', alignItems: 'center' }}>
+        {[...Array(5)].map((_, i) => (
+          <StarIcon
+            key={i}
+            size={18}
+            style={{
+              color: i < filledStars ? starColor : '#e0e0e0',
+              fill: i < filledStars ? starColor : 'none',
+              marginRight: '2px',
+            }}
+          />
+        ))}
+        <span style={{ fontSize: '1rem', color: '#333', marginLeft: '8px', fontWeight: 'bold' }}>
+          {avgRating ? avgRating.toFixed(1) : "0.0"}
+        </span>
+        <span style={{ fontSize: '0.9rem', color: '#888', marginLeft: '4px' }}>
+          ({ratingCount || 0} ratings)
+        </span>
+      </div>
+    );
+  };
+
   const handleRate = async (value) => {
     try {
       await axios.post(`${apiurl}/api/multimedia/${id}/rate`, { rating: value });
       toast.success("Thank you for your feedback!");
       
-      // Refresh the data to show updated rating
       const response = await axios.get(`${apiurl}/api/multimedia/${id}`);
       setMultimedia(response.data);
     } catch (err) {
@@ -114,261 +128,281 @@ export default function MultimediaDetailPage() {
 
   if (loading) {
     return (
-      <div style={{ 
-        display: "flex", 
-        justifyContent: "center", 
-        alignItems: "center", 
-        height: "50vh" 
-      }}>
-        <div>Loading multimedia content...</div>
+      <div style={{ display: "flex", justifyContent: "center", alignItems: "center", height: "50vh" }}>
+        <p>Loading multimedia content...</p>
       </div>
     );
   }
 
   if (error || !multimedia) {
     return (
-      <div style={{ 
-        display: "flex", 
-        justifyContent: "center", 
-        alignItems: "center", 
-        height: "50vh" 
-      }}>
-        <div>{error || "Multimedia not found"}</div>
+      <div style={{ display: "flex", justifyContent: "center", alignItems: "center", height: "50vh" }}>
+        <p>{error || "Multimedia not found"}</p>
       </div>
     );
   }
 
-  const videoStyles = getVideoContainerStyle();
-
   return (
-    <div style={{ maxWidth: 900, margin: "0 auto", padding: 32 }}>
-      <h1 style={{ marginBottom: 24 }}>{multimedia.title}</h1>
-      
-      <div style={{ 
-        background: "#fff", 
-        padding: 24, 
-        borderRadius: 12, 
-        boxShadow: "0 2px 8px #dfe6e9",
-        marginBottom: 24
+    <div style={{ backgroundColor: '#f9f9f9', minHeight: '100vh', padding: '2rem', fontFamily: 'Inter, sans-serif' }}>
+      <Link to="/multimedia" style={{ display: 'flex', alignItems: 'center', textDecoration: 'none', color: '#6a5acd', marginBottom: '1.5rem', fontWeight: 'bold' }}>
+        <ArrowLeft size={16} style={{ marginRight: '8px' }} />
+        Back to Media Library
+      </Link>
+
+      <div style={{
+        display: 'grid',
+        gridTemplateColumns: 'minmax(0, 2fr) 1fr',
+        gap: '2rem',
+        maxWidth: '1200px',
+        margin: '0 auto',
       }}>
-        {/* Media display based on type */}
-        <div style={{ marginBottom: 24 }}>
-          {multimedia.type === "video" && (
-            multimedia.url.startsWith('uploads/') ? (
-              <div style={videoStyles.container}>
-                <video
-                  controls
-                  style={videoStyles.video}
-                  onLoadedMetadata={handleVideoLoad}
-                >
-                  <source src={getMediaUrl(multimedia.url)} />
-                  Your browser does not support the video tag.
-                </video>
-              </div>
-            ) : (
-              <div style={{
-                width: "100%",
-                height: 0,
-                paddingBottom: "56.25%", // 16:9 aspect ratio
-                position: "relative",
-                backgroundColor: "#000",
-                borderRadius: "12px",
-                overflow: "hidden",
-                marginBottom: "24px"
-              }}>
-                <iframe
-                  src={getMediaUrl(multimedia.url)}
-                  title={multimedia.title}
-                  style={{
-                    position: "absolute",
-                    top: 0,
-                    left: 0,
-                    width: "100%",
-                    height: "100%",
-                    border: "none"
-                  }}
-                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                  allowFullScreen
-                />
-              </div>
-            )
-          )}
-          
-          {multimedia.type === "audio" && (
-            <div style={{ textAlign: "center" }}>
-              <audio controls style={{ width: "100%", maxWidth: 500 }}>
-                <source src={getMediaUrl(multimedia.url)} />
-                Your browser does not support the audio element.
-              </audio>
-            </div>
-          )}
-          
-          {multimedia.type === "image" && (
-            <div style={{
-              width: "100%",
-              textAlign: "center",
-              backgroundColor: "#000",
-              borderRadius: "12px",
-              padding: "20px 0",
-              marginBottom: "24px"
-            }}>
-              <img
-                src={getMediaUrl(multimedia.url)}
-                alt={multimedia.title}
-                style={{ 
-                  maxWidth: "100%", 
-                  maxHeight: "500px",
-                  height: "auto"
-                }}
-              />
-            </div>
-          )}
-          
-          {multimedia.type === "pdf" && (
-            <div style={{ textAlign: "center" }}>
-              <a
-                href={getMediaUrl(multimedia.url)}
-                target="_blank"
-                rel="noopener noreferrer"
-                style={{
-                  display: "inline-block",
-                  background: "#0984e3",
-                  color: "#fff",
-                  padding: "12px 24px",
-                  borderRadius: "8px",
-                  textDecoration: "none",
-                  fontWeight: "bold",
-                  margin: "10px 0"
-                }}
-              >
-                Open PDF Document
-              </a>
-              <p style={{ color: "#636e72", fontSize: "0.9rem" }}>
-                Click the button above to view the PDF document
-              </p>
-            </div>
-          )}
-        </div>
-
-        {/* Metadata */}
-        <div style={{ marginBottom: 16 }}>
-          <div style={{ 
-            display: "flex", 
-            alignItems: "center", 
-            marginBottom: 12 
+        {/* Main Content Column */}
+        <div>
+          {/* Media Player Container */}
+          <div style={{
+            background: '#fff',
+            borderRadius: '12px',
+            boxShadow: '0 4px 12px rgba(0,0,0,0.05)',
+            padding: '1.5rem',
+            marginBottom: '1.5rem',
           }}>
-            <span style={{ 
-              background: "#dfe6e9", 
-              color: "#636e72", 
-              padding: "4px 12px", 
-              borderRadius: "16px", 
-              fontSize: "0.9rem",
-              fontWeight: "500",
-              marginRight: 12
+            {/* Conditional Media Display */}
+            <div style={{
+              position: 'relative',
+              width: '100%',
+              paddingBottom: '56.25%',
+              backgroundColor: '#6a5acd',
+              borderRadius: '8px',
+              overflow: 'hidden',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              marginBottom: '1.5rem'
             }}>
-              {multimedia.type.toUpperCase()}
-            </span>
-            <span style={{ color: "#636e72", fontSize: "0.9rem" }}>
-              Created: {new Date(multimedia.createdAt).toLocaleDateString()}
-            </span>
-          </div>
-
-          {/* Tags */}
-          <div style={{ marginBottom: 16 }}>
-            {multimedia.tags && multimedia.tags.map((tag, index) => (
-              <span 
-                key={index}
-                style={{
-                  background: "#dff9fb", 
-                  color: "#0984e3", 
-                  padding: "4px 12px",
-                  borderRadius: "999px", 
-                  fontSize: "0.85rem", 
-                  marginRight: 8,
-                  marginBottom: 8,
-                  display: "inline-block"
-                }}
-              >
-                #{tag}
+              {multimedia.type === "video" && (
+                multimedia.url.startsWith('uploads/') ? (
+                  <video controls style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%' }}>
+                    <source src={getMediaUrl(multimedia.url)} />
+                    Your browser does not support the video tag.
+                  </video>
+                ) : (
+                  <iframe
+                    src={getMediaUrl(multimedia.url)}
+                    title={multimedia.title}
+                    style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', border: 'none' }}
+                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                    allowFullScreen
+                  />
+                )
+              )}
+              {multimedia.type === "audio" && (
+                <audio controls style={{ width: "100%", maxWidth: '500px' }}>
+                  <source src={getMediaUrl(multimedia.url)} />
+                  Your browser does not support the audio element.
+                </audio>
+              )}
+              {multimedia.type === "image" && (
+                <img
+                  src={getMediaUrl(multimedia.url)}
+                  alt={multimedia.title}
+                  style={{ maxWidth: '100%', maxHeight: '100%', objectFit: 'contain' }}
+                />
+              )}
+              {multimedia.type === "pdf" && (
+                <div style={{ textAlign: "center", color: 'white' }}>
+                  <a href={getMediaUrl(multimedia.url)} target="_blank" rel="noopener noreferrer" style={{ color: 'white', textDecoration: 'underline' }}>
+                    Open PDF Document
+                  </a>
+                </div>
+              )}
+              
+              {/* Play icon overlay for visual effect */}
+              {multimedia.type !== "pdf" && (
+                <PlayIcon size={64} color="white" fill="rgba(255,255,255,0.2)" style={{ position: 'absolute', zIndex: 1 }} />
+              )}
+              
+              <span style={{ position: 'absolute', top: '1rem', right: '1rem', color: 'white', backgroundColor: 'rgba(0,0,0,0.5)', padding: '4px 8px', borderRadius: '4px', textTransform: 'uppercase', fontSize: '0.8rem' }}>
+                {multimedia.type}
               </span>
-            ))}
+            </div>
+
+            {/* Media Controls (simplified as this is a detail page) */}
+            <div style={{ display: 'flex', gap: '1rem', marginBottom: '1.5rem', flexWrap: 'wrap' }}>
+              {/* <button style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.75rem 1.25rem', borderRadius: '2rem', background: '#6a5acd', color: 'white', border: 'none', cursor: 'pointer', fontWeight: 'bold' }}>
+                <PlayIcon size={18} /> Play
+              </button> */}
+              {/* <button style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.75rem 1.25rem', borderRadius: '2rem', background: '#e8e8e8', color: '#333', border: 'none', cursor: 'pointer' }}>
+                <Volume2 size={18} /> Volume
+              </button> */}
+              {multimedia.transcript && (
+                <button
+                  onClick={() => setShowTranscript(!showTranscript)}
+                  style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.75rem 1.25rem', borderRadius: '2rem', background: '#e8e8e8', color: '#333', border: 'none', cursor: 'pointer' }}
+                >
+                  <FileText size={18} /> Transcript
+                </button>
+              )}
+              {/* <button style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.75rem 1.25rem', borderRadius: '2rem', background: '#e8e8e8', color: '#333', border: 'none', cursor: 'pointer' }}>
+                <Share2 size={18} /> Share
+              </button> */}
+              {/* <button style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.75rem 1.25rem', borderRadius: '2rem', background: '#e8e8e8', color: '#333', border: 'none', cursor: 'pointer' }}>
+                <Download size={18} /> Download
+              </button> */}
+            </div>
+
+            {/* Title and Metadata */}
+            <h1 style={{ fontSize: '2rem', fontWeight: 'bold', color: '#333', marginBottom: '0.5rem' }}>
+              {multimedia.title}
+            </h1>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '1.5rem', color: '#666', marginBottom: '1.5rem' }}>
+              <span style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
+                {getMediaIcon(multimedia.type)} {multimedia.type}
+              </span>
+              <span style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
+                <StarIcon size={16} color="#f5c518" /> {multimedia.rating_avg ? multimedia.rating_avg.toFixed(1) : '0.0'}
+              </span>
+              <span style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
+                <FileText size={16} color="#666" /> {new Date(multimedia.createdAt).toLocaleDateString()}
+              </span>
+            </div>
+
+            {/* Tags */}
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.75rem', marginBottom: '1.5rem' }}>
+              {multimedia.tags && multimedia.tags.map((tag, index) => (
+                <span key={index} style={{ backgroundColor: '#e8f0fe', color: '#1a73e8', padding: '6px 16px', borderRadius: '20px', fontSize: '0.9rem', fontWeight: 'bold' }}>
+                  #{tag}
+                </span>
+              ))}
+            </div>
+
+            {/* Transcript */}
+            {multimedia.transcript && (
+                <div style={{ marginBottom: 24 }}>
+                <button
+                    onClick={() => setShowTranscript(!showTranscript)}
+                    style={{
+                    background: "#dfe6e9",
+                    color: "#2d3436",
+                    padding: "10px 20px",
+                    borderRadius: "6px",
+                    border: "none",
+                    fontWeight: "bold",
+                    cursor: "pointer",
+                    marginBottom: 12
+                    }}
+                >
+                    {showTranscript ? "Hide Transcript" : "Show Transcript"}
+                </button>
+                {showTranscript && (
+                    <div style={{
+                    background: "#f5f6fa",
+                    padding: 16,
+                    borderRadius: 8,
+                    fontSize: "1rem",
+                    color: "#2d3436",
+                    lineHeight: 1.5
+                    }}>
+                    {multimedia.transcript}
+                    </div>
+                )}
+                </div>
+            )}
+            
+            {/* Rating Section */}
+            <div style={{
+              background: '#f8f8f8',
+              padding: '1.5rem',
+              borderRadius: '8px',
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '0.75rem'
+            }}>
+              <h3 style={{ fontSize: '1.25rem', fontWeight: 'bold', color: '#333' }}>Rate this content</h3>
+              <div style={{ display: "flex", alignItems: "center", marginBottom: 8 }}>
+                {[1, 2, 3, 4, 5].map((val) => (
+                  <span
+                    key={val}
+                    onClick={() => handleRate(val)}
+                    style={{
+                      cursor: "pointer",
+                      color: val <= Math.round(multimedia.rating_avg || 0) ? "#fdcb6e" : "#b2bec3",
+                      fontSize: "1.8rem",
+                      marginRight: 8
+                    }}
+                  >
+                    ★
+                  </span>
+                ))}
+              </div>
+              <div style={{ color: "#636e72", fontSize: "0.95rem" }}>
+                Average: {multimedia.rating_avg ? multimedia.rating_avg.toFixed(1) : "0.0"} 
+                ({multimedia.rating_count || 0} ratings)
+              </div>
+            </div>
           </div>
         </div>
 
-        {/* Transcript */}
-        {multimedia.transcript && (
-          <div style={{ marginBottom: 24 }}>
-            <button
-              onClick={() => setShowTranscript(!showTranscript)}
-              style={{
-                background: "#0984e3", 
-                color: "#fff", 
-                padding: "8px 16px",
-                borderRadius: "6px", 
-                border: "none", 
-                fontWeight: "bold", 
-                cursor: "pointer",
-                marginBottom: 12
-              }}
-            >
-              {showTranscript ? "Hide Transcript" : "Show Transcript"}
-            </button>
-            {showTranscript && (
-              <div style={{
-                background: "#f5f6fa", 
-                padding: 16,
-                borderRadius: 8, 
-                fontSize: "1rem", 
-                color: "#2d3436",
-                lineHeight: 1.5
-              }}>
-                {multimedia.transcript}
-              </div>
-            )}
+        {/* Sidebar Column */}
+        <div>
+          {/* Related Content Section */}
+          <div style={{ background: '#fff', borderRadius: '12px', boxShadow: '0 4px 12px rgba(0,0,0,0.05)', padding: '1.5rem', marginBottom: '1.5rem' }}>
+            <h3 style={{ fontSize: '1.25rem', fontWeight: 'bold', color: '#333', marginBottom: '1rem' }}>Related Content</h3>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+              {relatedContent.map((item, index) => (
+                <Link key={index} to={`/multimedia/${item.media_id}`} style={{ display: 'flex', alignItems: 'center', gap: '1rem', textDecoration: 'none', color: '#333' }}>
+                  <div style={{
+                    width: '60px',
+                    height: '60px',
+                    backgroundColor: '#6a5acd',
+                    borderRadius: '8px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    flexShrink: 0
+                  }}>
+                    {getMediaIcon(item.type)}
+                  </div>
+                  <div>
+                    <h4 style={{ fontSize: '1rem', fontWeight: 'bold', margin: 0, lineHeight: 1.2 }}>{item.title}</h4>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.9rem', color: '#666', marginTop: '0.25rem' }}>
+                      <StarIcon size={14} color="#f5c518" /> {item.rating_avg ? item.rating_avg.toFixed(1) : 'N/A'}
+                    </div>
+                  </div>
+                </Link>
+              ))}
+            </div>
           </div>
-        )}
 
-        {/* Rating */}
-        <div style={{ marginBottom: 16 }}>
-          <h3 style={{ marginBottom: 8 }}>Rate this content</h3>
-          <div style={{ display: "flex", alignItems: "center", marginBottom: 8 }}>
-            {[1, 2, 3, 4, 5].map((val) => (
-              <span
-                key={val}
-                onClick={() => handleRate(val)}
-                style={{
-                  cursor: "pointer",
-                  color: val <= Math.round(multimedia.rating_avg || 0) ? "#fdcb6e" : "#b2bec3",
-                  fontSize: "1.8rem",
-                  marginRight: 8
-                }}
-              >
-                ★
-              </span>
-            ))}
-          </div>
-          <div style={{ color: "#636e72", fontSize: "0.95rem" }}>
-            Average: {multimedia.rating_avg ? multimedia.rating_avg.toFixed(1) : "0.0"} 
-            ({multimedia.rating_count || 0} ratings)
+          {/* Popular This Week Section */}
+          <div style={{ background: '#fff', borderRadius: '12px', boxShadow: '0 4px 12px rgba(0,0,0,0.05)', padding: '1.5rem' }}>
+            <h3 style={{ fontSize: '1.25rem', fontWeight: 'bold', color: '#333', marginBottom: '1rem' }}>Popular This Week</h3>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+              {popularContent.map((item, index) => (
+                <Link key={index} to={`/multimedia/${item.media_id}`} style={{ display: 'flex', alignItems: 'center', gap: '1rem', textDecoration: 'none', color: '#333' }}>
+                  <div style={{
+                    width: '60px',
+                    height: '60px',
+                    backgroundColor: '#6a5acd',
+                    borderRadius: '8px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    flexShrink: 0
+                  }}>
+                    {getMediaIcon(item.type)}
+                  </div>
+                  <div>
+                    <h4 style={{ fontSize: '1rem', fontWeight: 'bold', margin: 0, lineHeight: 1.2 }}>{item.title}</h4>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.9rem', color: '#666', marginTop: '0.25rem' }}>
+                      <StarIcon size={14} color="#f5c518" /> {item.rating_avg ? item.rating_avg.toFixed(1) : 'N/A'}
+                    </div>
+                  </div>
+                </Link>
+              ))}
+            </div>
           </div>
         </div>
       </div>
-
-      {/* Back button */}
-      <button
-        onClick={() => window.history.back()}
-        style={{
-          background: "#dfe6e9", 
-          color: "#2d3436", 
-          padding: "10px 20px",
-          borderRadius: "6px", 
-          border: "none", 
-          fontWeight: "bold", 
-          cursor: "pointer"
-        }}
-      >
-        ← Back to Library
-      </button>
     </div>
   );
 }
