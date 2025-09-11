@@ -76,9 +76,9 @@ export default function LoginPage() {
             <label className="remember">
               <input type="checkbox" /> Remember me
             </label>
-            <a href="/auth/forgot" className="forgot-link">
+            <Link to="/password-reset" className="forgot-link">
               Forgot Password?
-            </a>
+            </Link>
           </div>
 
           <button type="submit" className="login-btn">

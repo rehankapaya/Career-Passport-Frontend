@@ -10,6 +10,7 @@ import { UserContext } from './context/UserContext'
 import SignupPage from './auth/SignupPage'
 import LoginPage from './auth/LoginPage'
 import AdminLoginPage from './auth/AdminLoginPage'
+import ForgotPasswordPage from './auth/ForgotPasswordPage'
 import UserProfilePage from './layouts/pages/UserProfilePage'
 import ServicesPages from './layouts/pages/ServicesPage'
 import SuccessStoriesPage from './layouts/pages/SuccessStoriesPage'
@@ -29,6 +30,10 @@ export default function App() {
     {
       path: '/login',
       element: <LoginPage />
+    },
+    {
+      path:'/password-reset',
+      element:<ForgotPasswordPage/>
     },
     {
       path: '/',
