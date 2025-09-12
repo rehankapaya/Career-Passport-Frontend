@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import axios from "axios";
 import { toast } from "react-toastify";
-import { useParams, Link } from "react-router-dom";
+import { useParams, Link, useLocation } from "react-router-dom";
 import { apiurl } from "../../api";
 import {
   ArrowLeft,
@@ -18,6 +18,8 @@ import {
 } from "lucide-react";
 
 export default function MultimediaDetailPage() {
+  const {state} = useLocation()
+  console.log(state)
   const [multimedia, setMultimedia] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -47,7 +49,7 @@ export default function MultimediaDetailPage() {
           axios.get(`${apiurl}/api/multimedia/${id}`),
           axios.get(`${apiurl}/api/multimedia`),
         ]);
-        setMultimedia(multimediaRes.data);
+        setMultimedia(state?state:multimediaRes.data);
 
         const allItems = allItemsRes.data;
         setRelatedContent(generateRandomContent(allItems, 4, id));
@@ -187,7 +189,7 @@ export default function MultimediaDetailPage() {
                   </video>
                 ) : (
                   <iframe
-                    src={getMediaUrl(multimedia.url)}
+                    src={multimedia.url}
                     title={multimedia.title}
                     style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', border: 'none' }}
                     allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"

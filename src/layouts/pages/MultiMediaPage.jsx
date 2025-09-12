@@ -70,8 +70,8 @@ export default function MultimediaPage() {
     setFilteredItems(result);
   }, [selectedCategory, searchQuery, items]);
 
-  const handleViewDetails = (id) => {
-    navigate(`/multimedia/${id}`);
+  const handleViewDetails = (item) => {
+    navigate(`/multimedia/${item.media_id}`, { state: item});
   };
 
   const getMediaIcon = (type) => {
@@ -273,7 +273,7 @@ export default function MultimediaPage() {
                   cursor: "pointer",
                   position: 'relative'
                 }}
-                onClick={() => handleViewDetails(item.media_id)}
+                onClick={() => handleViewDetails(item)}
               >
                 {/* Thumbnail Section */}
                 <div style={{
@@ -390,7 +390,7 @@ export default function MultimediaPage() {
                 cursor: 'pointer',
                 position: 'relative'
               }}
-              onClick={() => handleViewDetails(item.media_id)}
+              onClick={() => handleViewDetails(item)}
             >
               {/* Bookmark absolute on suggestion card remains */}
               <BookmarkButton mediaId={item.media_id} size={18} />
