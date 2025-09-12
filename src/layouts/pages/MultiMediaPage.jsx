@@ -34,6 +34,41 @@ export default function MultimediaPage() {
     return shuffled.slice(0, count);
   };
 
+  // Function to check if URL is from Google Drive
+  const isDriveUrl = (url) => {
+    return url && (url.includes('drive.google.com') || url.includes('docs.google.com'));
+  };
+
+  // Function to extract Google Drive file ID
+  const getDriveFileId = (url) => {
+    if (!url) return null;
+    
+    // Handle different Google Drive URL formats
+    const match = url.match(/\/d\/([^\/]+)/) || url.match(/id=([^&]+)/) || url.match(/folders\/([^\/]+)/);
+    return match ? match[1] : null;
+  };
+
+  // Function to get Google Drive thumbnail URL
+  const getDriveThumbnailUrl = (url) => {
+    const fileId = getDriveFileId(url);
+    if (!fileId) return "https://via.placeholder.com/320x180/000000/FFFFFF?text=Drive+Video";
+    
+    return `https://lh3.googleusercontent.com/d/${fileId}=s220?authuser=0`;
+  };
+
+  // Function to get Google Drive embed URL
+  const getDriveEmbedUrl = (url, options = {}) => {
+    const fileId = getDriveFileId(url);
+    if (!fileId) return url;
+    
+    const params = new URLSearchParams();
+    if (options.autoplay) params.append('autoplay', '1');
+    if (options.muted) params.append('mute', '1');
+    if (options.loop) params.append('loop', '1');
+    
+    return `https://drive.google.com/file/d/${fileId}/preview${params.toString() ? '?' + params.toString() : ''}`;
+  };
+
   useEffect(() => {
     setLoading(true);
     axios.get(`${apiurl}/api/multimedia`)
@@ -94,6 +129,8 @@ export default function MultimediaPage() {
       if (item.url && (item.url.includes('youtube.com') || item.url.includes('youtu.be'))) {
         const videoId = item.url.match(/(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([^"&?\/\s]{11})/);
         return videoId ? `https://img.youtube.com/vi/${videoId[1]}/mqdefault.jpg` : "https://via.placeholder.com/320x180/000000/FFFFFF?text=Video";
+      } else if (item.url && isDriveUrl(item.url)) {
+        return getDriveThumbnailUrl(item.url);
       } else if (item.url && item.url.startsWith('uploads/')) {
         return "https://via.placeholder.com/320x180/000000/FFFFFF?text=Video";
       }
@@ -324,6 +361,23 @@ export default function MultimediaPage() {
                       <span style={{ textTransform: 'uppercase', fontWeight: 600, marginTop: '8px' }}>{item.type}</span>
                     </div>
                   )}
+                  {/* Drive badge for Google Drive videos */}
+                  {item.type === 'video' && isDriveUrl(item.url) && (
+                    <div style={{
+                      position: 'absolute',
+                      top: '10px',
+                      left: '10px',
+                      backgroundColor: '#4688F1',
+                      color: 'white',
+                      padding: '4px 8px',
+                      borderRadius: '4px',
+                      fontSize: '0.7rem',
+                      fontWeight: 'bold',
+                      zIndex: 2
+                    }}>
+                      Google Drive
+                    </div>
+                  )}
                 </div>
 
                 {/* Content details */}
@@ -410,6 +464,23 @@ export default function MultimediaPage() {
                 <span style={{ position: 'absolute', top: '10px', left: '10px', backgroundColor: '#333', color: '#fff', padding: '4px 8px', borderRadius: '4px', fontSize: '0.8rem', textTransform: 'capitalize' }}>{item.type}</span>
                 {item.video_length && (
                   <span style={{ position: 'absolute', bottom: '10px', right: '10px', backgroundColor: '#333', color: '#fff', padding: '4px 8px', borderRadius: '4px', fontSize: '0.8rem' }}>{item.video_length}</span>
+                )}
+                {/* Drive badge for Google Drive videos in suggestions */}
+                {item.type === 'video' && isDriveUrl(item.url) && (
+                  <div style={{
+                    position: 'absolute',
+                    top: '10px',
+                    right: '10px',
+                    backgroundColor: '#4688F1',
+                    color: 'white',
+                    padding: '4px 8px',
+                    borderRadius: '4px',
+                    fontSize: '0.7rem',
+                    fontWeight: 'bold',
+                    zIndex: 2
+                  }}>
+                    Google Drive
+                  </div>
                 )}
               </div>
               <div style={{ padding: '1rem' }}>
