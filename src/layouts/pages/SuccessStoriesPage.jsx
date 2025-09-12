@@ -4,9 +4,14 @@ import { toast } from "react-toastify";
 import { apiurl } from "../../api";
 import { useBookmark } from "../../hooks/useBookmark";
 import { Bookmark, BookmarkCheck } from "lucide-react";
+import { useContext } from "react";
+import { UserContext } from "../../context/UserContext";
+import { useNavigate } from "react-router-dom";
 
 export default function SuccessStoriesPage() {
   const [stories, setStories] = useState([]);
+  const {user}=useContext(UserContext)
+  const navigate = useNavigate()
   const [form, setForm] = useState({
     rname: "",
     domain: "",
@@ -39,6 +44,13 @@ export default function SuccessStoriesPage() {
   // Submit new story
   const handleSubmit = async e => {
     e.preventDefault();
+
+    if(!user){
+      navigate("/login")
+      toast.error("Please login to submit a story")
+      return;
+    }
+
     setLoading(true);
     const data = new FormData();
     data.append("rname", form.rname);

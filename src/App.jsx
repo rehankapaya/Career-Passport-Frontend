@@ -101,7 +101,7 @@ export default function App() {
         },
         {
           path: '/my-bookmarks',
-          element: <BookMarkpage />
+          element: user?<BookMarkpage />:<Navigate to={"/login"}/>,
         }
       ]
     },

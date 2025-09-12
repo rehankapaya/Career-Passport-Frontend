@@ -1,13 +1,13 @@
 import React, { useContext, useState } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
-import ReactDOM from 'react-dom/client';
+import { useNavigate, Link, useLocation } from 'react-router-dom';
 import { UserContext } from '../context/UserContext';
 
-// The Navbar component with all styling converted to inline style attributes.
 export default function NavbarComponent() {
   const [isDropdownVisible, setDropdownVisible] = useState(false);
-  const navigate = useNavigate()
-  const { userlogout } = useContext(UserContext)
+  const navigate = useNavigate();
+  const location = useLocation();
+  const { user, userlogout } = useContext(UserContext);
+
   const navItems = [
     { name: 'Home', to: '/' },
     { name: 'Resources', to: '/resources' },
@@ -15,11 +15,12 @@ export default function NavbarComponent() {
     { name: 'Interest Quiz', to: '/interest-quiz' },
     { name: 'Multimedia Hub', to: '/multimedia' },
     { name: 'My Bookmarks', to: '/my-bookmarks' },
+    { name: 'Success Stories', to: '/success-stories' },
     { name: 'About', to: '/about' },
     { name: 'Contact', to: '/contact' },
   ];
 
-  const activeLink = '/about';
+  const activeLink = location.pathname;
 
   return (
     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '1rem 2rem', borderBottom: '1px solid #e5e7eb', backgroundColor: '#fff' }}>
@@ -44,66 +45,126 @@ export default function NavbarComponent() {
 
       {/* Navigation Links */}
       <nav style={{ display: 'flex', alignItems: 'center', gap: '2rem' }}>
-        {navItems.map((item) => (
+        {navItems.map((item) => {
+          const isActive = item.to === activeLink;
+          return (
+            <Link
+              key={item.name}
+              to={item.to}
+              style={{
+                position: 'relative',
+                color: isActive ? '#2563eb' : '#4b5563',
+                fontWeight: isActive ? '500' : 'normal',
+                textDecoration: 'none'
+              }}
+            >
+              {item.name}
+              <span
+                style={{
+                  position: 'absolute',
+                  left: 0,
+                  bottom: '-8px',
+                  width: '100%',
+                  height: '2px',
+                  backgroundColor: '#2563eb',
+                  transform: `scaleX(${isActive ? 1 : 0})`,
+                  transformOrigin: 'left',
+                  transition: 'transform 150ms ease'
+                }}
+              />
+            </Link>
+          );
+        })}
+      </nav>
+
+      {/* Right side: If user -> Welcome + dropdown; else -> Login/Sign up */}
+      {user ? (
+        <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+          <span style={{ color: '#4b5563' }}>
+            Welcome{user.name ? `, ${user.name}` : user.email ? `, ${user.email}` : '' }
+          </span>
+
+          <div
+            style={{ position: 'relative', cursor: 'pointer' }}
+            onClick={() => setDropdownVisible(!isDropdownVisible)}
+          >
+            <svg
+              style={{ width: '2rem', height: '2rem', color: '#6b7280' }}
+              fill="currentColor"
+              viewBox="0 0 20 20"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <path
+                fillRule="evenodd"
+                d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-6-3a2 2 0 11-4 0 2 2 0 014 0zm-2 4a5 5 0 00-4.546 2.916A5.98 5.98 0 0010 16a5.979 5.979 0 004.546-2.084A5 5 0 0010 11z"
+                clipRule="evenodd"
+              />
+            </svg>
+
+            <div
+              style={{
+                position: 'absolute',
+                right: 0,
+                marginTop: '0.5rem',
+                width: '12rem',
+                backgroundColor: '#fff',
+                border: '1px solid #e5e7eb',
+                borderRadius: '0.375rem',
+                boxShadow: '0 10px 15px -3px rgba(0,0,0,0.1), 0 4px 6px -2px rgba(0,0,0,0.05)',
+                zIndex: 10,
+                opacity: isDropdownVisible ? 1 : 0,
+                pointerEvents: isDropdownVisible ? 'auto' : 'none',
+                transition: 'opacity 0.2s ease-in-out'
+              }}
+            >
+              <Link to="/profile" style={{ display: 'block', padding: '0.5rem 1rem', color: '#4b5563', textDecoration: 'none' }}>Profile</Link>
+              <Link to="/settings" style={{ display: 'block', padding: '0.5rem 1rem', color: '#4b5563', textDecoration: 'none' }}>Settings</Link>
+              <button
+                onClick={() => { userlogout(); navigate('/login'); }}
+                style={{
+                  display: 'block',
+                  width: '100%',
+                  padding: '0.5rem 1rem',
+                  textAlign: 'left',
+                  background: 'transparent',
+                  border: 'none',
+                  color: '#4b5563',
+                  cursor: 'pointer'
+                }}
+              >
+                Logout
+              </button>
+            </div>
+          </div>
+        </div>
+      ) : (
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
           <Link
-            key={item.name}
-            to={item.to}
+            to="/login"
             style={{
-              position: 'relative',
-              color: item.to === activeLink ? '#2563eb' : '#4b5563',
-              fontWeight: item.to === activeLink ? '500' : 'normal',
+              padding: '0.5rem 0.9rem',
+              border: '1px solid #e5e7eb',
+              borderRadius: '0.375rem',
+              color: '#374151',
               textDecoration: 'none'
             }}
           >
-            {item.name}
-            {item.to === activeLink && (
-              <span style={{ position: 'absolute', left: '0', bottom: '-8px', width: '100%', height: '2px', backgroundColor: '#2563eb', transform: 'scaleX(1)' }}></span>
-            )}
-            {item.to !== activeLink && (
-              <span style={{ position: 'absolute', left: '0', bottom: '-8px', width: '100%', height: '2px', backgroundColor: '#2563eb', transform: 'scaleX(0)' }}></span>
-            )}
+            Login
           </Link>
-        ))}
-      </nav>
-
-      {/* Welcome and User Icon */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-        <span style={{ color: '#4b5563' }}>Welcome, Alex</span>
-        <div style={{ position: 'relative', cursor: 'pointer' }} onClick={() => setDropdownVisible(!isDropdownVisible)}>
-          <svg
-            style={{ width: '2rem', height: '2rem', color: '#6b7280' }}
-            fill="currentColor"
-            viewBox="0 0 20 20"
-            xmlns="http://www.w3.org/2000/svg"
-          >
-            <path
-              fillRule="evenodd"
-              d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-6-3a2 2 0 11-4 0 2 2 0 014 0zm-2 4a5 5 0 00-4.546 2.916A5.98 5.98 0 0010 16a5.979 5.979 0 004.546-2.084A5 5 0 0010 11z"
-              clipRule="evenodd"
-            />
-          </svg>
-          <div
+          <Link
+            to="/signup"
             style={{
-              position: 'absolute',
-              right: '0',
-              marginTop: '0.5rem',
-              width: '12rem',
-              backgroundColor: '#fff',
-              border: '1px solid #e5e7eb',
+              padding: '0.5rem 0.9rem',
               borderRadius: '0.375rem',
-              boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)',
-              zIndex: '10',
-              opacity: isDropdownVisible ? '1' : '0',
-              pointerEvents: isDropdownVisible ? 'auto' : 'none',
-              transition: 'opacity 0.3s ease-in-out'
+              backgroundColor: '#2563eb',
+              color: '#fff',
+              textDecoration: 'none'
             }}
           >
-            <Link to="/profile" style={{ display: 'block', padding: '0.5rem 1rem', color: '#4b5563', textDecoration: 'none' }}>Profile</Link>
-            <Link to="/settings" style={{ display: 'block', padding: '0.5rem 1rem', color: '#4b5563', textDecoration: 'none' }}>Settings</Link>
-            <Link onClick={() => { userlogout(), navigate('/login') }} style={{ display: 'block', padding: '0.5rem 1rem', color: '#4b5563', textDecoration: 'none' }}>Logout</Link>
-          </div>
+            Sign up
+          </Link>
         </div>
-      </div>
+      )}
     </div>
   );
 }

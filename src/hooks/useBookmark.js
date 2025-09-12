@@ -1,12 +1,15 @@
 import { useState, useEffect } from 'react';
 import axios from 'axios';
 import { apiurl } from '../api';
+import { useContext } from 'react';
+import { UserContext } from '../context/UserContext';
+import { toast } from 'react-toastify';
 
 export const useBookmark = (itemType, itemId) => {
   const [isBookmarked, setIsBookmarked] = useState(false);
   const [loading, setLoading] = useState(false);
   const [bookmarkId, setBookmarkId] = useState(null);
-
+  const { user } = useContext(UserContext)
   const getAuthConfig = (extra = {}) => {
     const token = localStorage.getItem('token');
     return {
@@ -37,6 +40,9 @@ export const useBookmark = (itemType, itemId) => {
   const toggleBookmark = async () => {
     if (!itemId) return;
 
+    if(!user){
+      toast.error("To Bookmark Please login")
+    } 
     setLoading(true);
     try {
       const response = await axios.post(
