@@ -26,6 +26,7 @@ import FeedbackForm from './layouts/pages/FeedBackForm'
 import ResourceDetailsPage from './layouts/pages/ResourceDetailPage'
 import AdminAddResourcePage from './dashboard/dashboardPages/AdminAddResourcePage'
 import AdminFeedbackPage from './dashboard/dashboardPages/AdminFeedbackPage'
+import AdminCareerBankPage from './dashboard/dashboardPages/AdminCareerBankPage'
 
 
 export default function App() {
@@ -116,7 +117,7 @@ export default function App() {
         { index: true, element: <h1>Admin Dashboard Home</h1>
         },
         { path: 'manage-users', element: <h1>Manage Users</h1> },
-        { path: 'careers', element: <h1>Careers</h1> },
+        { path: 'admincareerbank', element: <AdminCareerBankPage/>},
         { path: 'addresource', element: <AdminAddResourcePage /> },
         { path: 'adminmultimedia', element: <AdminMultimediaPage/> },
         { path: 'adminsuccessstories', element: <AdminSuccessStoriesPage/> },

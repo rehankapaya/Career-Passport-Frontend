@@ -107,7 +107,7 @@ export default function DashboardSidebar() {
           </span>
         </Link>
         <Link
-          to="careers"
+          to="admincareerbank"
           style={{
             display: "flex",
             alignItems: "center",
