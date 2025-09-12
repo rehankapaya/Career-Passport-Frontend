@@ -8,18 +8,19 @@ export default function NavbarComponent() {
   const location = useLocation();
   const { user, userlogout } = useContext(UserContext);
 
+  // Main Navigation + Dashboard
   const mainNavItems = [
     { name: 'Home', to: '/' },
     { name: 'Resources', to: '/resources' },
     { name: 'About', to: '/about' },
     { name: 'Contact', to: '/contact' },
+    { name: 'Dashboard', to: '/user-dashboard' }, // 🔹 Added Dashboard here
   ];
 
   const resourceNavItems = [
     { name: 'Career Bank', to: '/career-bank' },
     { name: 'Interest Quiz', to: '/interest-quiz' },
     { name: 'Multimedia Hub', to: '/multimedia' },
-    { name: 'My Bookmarks', to: '/my-bookmarks' },
     { name: 'Success Stories', to: '/success-stories' },
   ];
 
@@ -45,7 +46,9 @@ export default function NavbarComponent() {
               d="M9.75 17L9 20l-1 1h6l-1-1-1.25-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"
             />
           </svg>
-          <span style={{ fontSize: '1.25rem', fontWeight: '600', color: '#1f2937' }}>NextStep Navigator</span>
+          <span style={{ fontSize: '1.25rem', fontWeight: '600', color: '#1f2937' }}>
+            NextStep Navigator
+          </span>
         </div>
 
         {/* Main Navigation Links */}
@@ -86,12 +89,14 @@ export default function NavbarComponent() {
         {user ? (
           <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
             <span style={{ color: '#4b5563' }}>
-              Welcome{user.name ? `, ${user.name}` : user.email ? `, ${user.email}` : '' }
+              Welcome{user.name ? `, ${user.name}` : user.email ? `, ${user.email}` : ''}
             </span>
 
+            {/* 🔹 Profile with hover dropdown */}
             <div
               style={{ position: 'relative', cursor: 'pointer' }}
-              onClick={() => setDropdownVisible(!isDropdownVisible)}
+              onMouseEnter={() => setDropdownVisible(true)}
+              onMouseLeave={() => setDropdownVisible(false)}
             >
               <svg
                 style={{ width: '2rem', height: '2rem', color: '#6b7280' }}
@@ -115,17 +120,41 @@ export default function NavbarComponent() {
                   backgroundColor: '#fff',
                   border: '1px solid #e5e7eb',
                   borderRadius: '0.375rem',
-                  boxShadow: '0 10px 15px -3px rgba(0,0,0,0.1), 0 4px 6px -2px rgba(0,0,0,0.05)',
-                  zIndex: 10,
+                  boxShadow:
+                    '0 10px 15px -3px rgba(0,0,0,0.1), 0 4px 6px -2px rgba(0,0,0,0.05)',
+                  zIndex: 9999,
                   opacity: isDropdownVisible ? 1 : 0,
                   pointerEvents: isDropdownVisible ? 'auto' : 'none',
                   transition: 'opacity 0.2s ease-in-out'
                 }}
               >
-                <Link to="/profile" style={{ display: 'block', padding: '0.5rem 1rem', color: '#4b5563', textDecoration: 'none' }}>Profile</Link>
-                <Link to="/settings" style={{ display: 'block', padding: '0.5rem 1rem', color: '#4b5563', textDecoration: 'none' }}>Settings</Link>
+                <Link
+                  to="/profile"
+                  style={{
+                    display: 'block',
+                    padding: '0.5rem 1rem',
+                    color: '#4b5563',
+                    textDecoration: 'none'
+                  }}
+                >
+                  Profile
+                </Link>
+                <Link
+                  to="/settings"
+                  style={{
+                    display: 'block',
+                    padding: '0.5rem 1rem',
+                    color: '#4b5563',
+                    textDecoration: 'none'
+                  }}
+                >
+                  Settings
+                </Link>
                 <button
-                  onClick={() => { userlogout(); navigate('/login'); }}
+                  onClick={() => {
+                    userlogout();
+                    navigate('/login');
+                  }}
                   style={{
                     display: 'block',
                     width: '100%',

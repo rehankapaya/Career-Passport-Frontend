@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-import { useParams } from 'react-router-dom';
+import { Link, useParams } from 'react-router-dom';
 import './ResourceDetailsPage.css';
 import { useBookmark } from '../../hooks/useBookmark';
 import { Bookmark, BookmarkCheck } from 'lucide-react';
@@ -23,6 +23,7 @@ export default function ResourceDetailsPage() {
       setLoading(true);
       setError('');
       const response = await axios.get(`http://localhost:5000/api/resources/${id}`);
+      console.log(response.data)
       setResource(response.data);
     } catch (error) {
       setError('Failed to fetch resource. Please try again.');
@@ -158,46 +159,72 @@ export default function ResourceDetailsPage() {
                 </button>
               </div>
 
-              {viewMode === 'preview' ? (
-                <div className="preview-section">
-                  <h3>Document Preview</h3>
-                  <div className="preview-container">
-                    {resource.file_url && resource.file_url.toLowerCase().endsWith('.pdf') ? (
-                      <iframe 
-                        src={resource.file_url} 
-                        className="document-preview"
-                        title="Document Preview"
-                      />
-                    ) : (
-                      <div className="preview-not-available">
-                        <p>Preview is not available for this file type.</p>
-                        <p>Please download the file to view its contents.</p>
-                      </div>
-                    )}
-                  </div>
-                </div>
-              ) : (
-                <div className="download-section">
-                  <h3>Download Resource</h3>
-                  <div className="download-info">
-                    <div className="file-type">{getFileType(resource.file_url)}</div>
-                    <p>Click the button below to download this resource to your device.</p>
-                  </div>
-                  <div className="download-actions">
-                    <button onClick={handleDownload} className="download-button">
-                      Download Now
-                    </button>
-                    <a 
-                      href={resource.file_url} 
-                      target="_blank" 
-                      rel="noopener noreferrer"
-                      className="open-link"
-                    >
-                      Open in New Tab
-                    </a>
-                  </div>
-                </div>
-              )}
+   {viewMode === 'preview' ? (
+  <div className="preview-section">
+    <h3>Document Preview</h3>
+    <div className="preview-container">
+      {resource.file_url ? (
+        <iframe
+          src={
+            resource.file_url.includes("drive.google.com")
+              ? `https://drive.google.com/file/d/${
+                  resource.file_url.split("/d/")[1].split("/")[0]
+                }/preview`
+              : resource.file_url
+          }
+          className="document-preview"
+          title="Document Preview"
+        />
+      ) : (
+        <p>No file available.</p>
+      )}
+    </div>
+  </div>
+) : (
+  <div className="download-section">
+  <h3>Download Resource</h3>
+  <div className="download-info">
+    <div className="file-type">{getFileType(resource.file_url)}</div>
+    <p>Click the button below to download this resource to your device.</p>
+  </div>
+  <div className="download-actions">
+    <button
+      onClick={() => {
+        let fileUrl = resource.file_url;
+
+        // Agar Google Drive ka link hai to download link me convert karo
+        if (fileUrl.includes("drive.google.com")) {
+          const fileId = fileUrl.match(/\/d\/(.*?)\//)?.[1];
+          if (fileId) {
+            fileUrl = `https://drive.google.com/uc?export=download&id=${fileId}`;
+          }
+        }
+
+        const link = document.createElement("a");
+        link.href = fileUrl;
+        link.setAttribute("download", resource.title || "resource");
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+      }}
+      className="download-button"
+    >
+      Download Now
+    </button>
+
+    <Link
+      to={resource.file_url}
+      target="_blank"
+      rel="noopener noreferrer"
+      className="open-link"
+    >
+      Open in New Tab
+    </Link>
+  </div>
+
+  </div>
+)}
+
             </div>
 
             {/* Tags */}

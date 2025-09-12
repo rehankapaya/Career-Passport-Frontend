@@ -14,9 +14,12 @@ import {
 } from "lucide-react";
 import { useBookmark } from "../../hooks/useBookmark";
 import { Bookmark, BookmarkCheck } from "lucide-react";
+import { UserContext } from "../../context/UserContext";
+import { useContext } from "react";
 
 export default function MultimediaPage() {
   const [items, setItems] = useState([]);
+  const { user } = useContext(UserContext);
   const [filteredItems, setFilteredItems] = useState([]);
   const [suggestedItems, setSuggestedItems] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -24,6 +27,25 @@ export default function MultimediaPage() {
   const [searchQuery, setSearchQuery] = useState("");
   const navigate = useNavigate();
 
+
+
+  async function saveHistory(resource) {
+    try {
+      const payload = {
+        userId: user._id,
+        categoryType: "multimedia",
+        itemId: resource._id || resource.resource_id || resource.media_id,
+        title: resource.title,
+        subCategory: resource.type || null,
+        meta: resource,
+      };
+
+      let res = await axios.post(`${apiurl}/api/history`, payload);
+      console.log("History saved:", payload);
+    } catch (err) {
+      console.error("Error saving history", err);
+    }
+  }
   const allCategories = ["all", "video", "audio", "pdf", "image"];
 
   const generateRandomSuggestions = (sourceItems, count) => {
@@ -42,7 +64,7 @@ export default function MultimediaPage() {
   // Function to extract Google Drive file ID
   const getDriveFileId = (url) => {
     if (!url) return null;
-    
+
     // Handle different Google Drive URL formats
     const match = url.match(/\/d\/([^\/]+)/) || url.match(/id=([^&]+)/) || url.match(/folders\/([^\/]+)/);
     return match ? match[1] : null;
@@ -52,7 +74,7 @@ export default function MultimediaPage() {
   const getDriveThumbnailUrl = (url) => {
     const fileId = getDriveFileId(url);
     if (!fileId) return "https://via.placeholder.com/320x180/000000/FFFFFF?text=Drive+Video";
-    
+
     return `https://lh3.googleusercontent.com/d/${fileId}=s220?authuser=0`;
   };
 
@@ -60,12 +82,12 @@ export default function MultimediaPage() {
   const getDriveEmbedUrl = (url, options = {}) => {
     const fileId = getDriveFileId(url);
     if (!fileId) return url;
-    
+
     const params = new URLSearchParams();
     if (options.autoplay) params.append('autoplay', '1');
     if (options.muted) params.append('mute', '1');
     if (options.loop) params.append('loop', '1');
-    
+
     return `https://drive.google.com/file/d/${fileId}/preview${params.toString() ? '?' + params.toString() : ''}`;
   };
 
@@ -106,7 +128,8 @@ export default function MultimediaPage() {
   }, [selectedCategory, searchQuery, items]);
 
   const handleViewDetails = (item) => {
-    navigate(`/multimedia/${item.media_id}`, { state: item});
+    saveHistory(item);
+    navigate(`/multimedia/${item.media_id}`, { state: item });
   };
 
   const getMediaIcon = (type) => {

@@ -4,10 +4,31 @@ import { apiurl } from '../../api';
 import { Link } from 'react-router-dom';
 import { useBookmark } from '../../hooks/useBookmark';
 import { Bookmark, BookmarkCheck } from 'lucide-react';
+import { useContext } from 'react';
+import { UserContext } from '../../context/UserContext';
 
 // Resource Card Component with Bookmark
 const ResourceCard = ({ resource }) => {
     const { isBookmarked, loading, toggleBookmark } = useBookmark('resource', resource.resource_id);
+    const { user } = useContext(UserContext)
+    async function saveHistory() {
+        try {
+            const payload = {
+                userId: user._id,
+                categoryType: "resources",   // "resources" | "careers" | "multimedia"
+                itemId: resource._id || resource.resource_id || resource.career_id,
+                title: resource.title,
+                subCategory: resource.category || null, // sirf resources ke liye
+                meta: resource, // agar extra data store karna chaho
+            };
+
+            let res = await axios.post(`${apiurl}/api/history`, payload);
+            console.log(res)
+            console.log("History saved:", payload);
+        } catch (err) {
+            console.error("Error saving history", err);
+        }
+    }
 
     return (
         <div style={{ backgroundColor: '#ffffff', borderRadius: '0.5rem', padding: '1.5rem', boxShadow: '0 1px 2px 0 rgba(0,0,0,0.05)', display: 'flex', flexDirection: 'column', justifyContent: 'space-between', position: 'relative' }}>
@@ -30,7 +51,7 @@ const ResourceCard = ({ resource }) => {
             >
                 {isBookmarked ? <BookmarkCheck size={20} /> : <Bookmark size={20} />}
             </button>
-            
+
             <div>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', color: '#6b7280', fontSize: '0.875rem', marginBottom: '0.5rem' }}>
                     <span style={{ fontSize: '1.5rem' }}>📄</span>
@@ -40,7 +61,7 @@ const ResourceCard = ({ resource }) => {
                 <p style={{ color: '#4b5563', fontSize: '0.875rem' }}>{resource.description}</p>
             </div>
             <div style={{ marginTop: '1rem' }}>
-                <Link to={`/resources/${resource.resource_id}`} style={{ width: '100%', backgroundColor: '#1f2937', color: '#ffffff', padding: '0.75rem 1rem', borderRadius: '0.375rem', cursor: 'pointer', border: 'none', textDecoration: 'none', display: 'block', textAlign: 'center' }}>
+                <Link onClick={saveHistory} to={`/resources/${resource.resource_id}`} style={{ width: '100%', backgroundColor: '#1f2937', color: '#ffffff', padding: '0.75rem 1rem', borderRadius: '0.375rem', cursor: 'pointer', border: 'none', textDecoration: 'none', display: 'block', textAlign: 'center' }}>
                     Read Article
                 </Link>
             </div>
@@ -49,17 +70,8 @@ const ResourceCard = ({ resource }) => {
 };
 
 export default function ResourcesPage() {
-        const [resources, setResources] = useState([]);
-    const articles = [
-        { title: 'Complete Guide to Resume Writing', readTime: '5 min read', description: 'Learn how to craft a compelling resume that catches recruiters’ eyes and gets you interviews.' },
-        { title: 'Networking Strategies for Career Growth', readTime: '5 min read', description: 'Discover effective networking techniques to build professional relationships and advance your career.' },
-        { title: 'Interview Preparation Masterclass', readTime: '5 min read', description: 'Master the art of interviewing with proven tips and common question preparation techniques.' },
-        { title: 'Salary Negotiation Tactics', readTime: '5 min read', description: 'Learn how to negotiate your salary confidently and secure the compensation you deserve.' },
-        { title: 'Building Your Personal Brand', readTime: '10 min read', description: 'Establish a strong professional identity and online presence to attract new opportunities.' },
-        { title: 'Remote Work Best Practices', readTime: '4 min read', description: 'Tips and strategies for succeeding in remote work environments and maintaining productivity.' },
-        { title: 'Career Change at Any Age', readTime: '8 min read', description: 'Practical advice for making successful career transitions, regardless of your current stage in life.' },
-        { title: 'Digital Skills for Modern Careers', readTime: '6 min read', description: 'Essential digital competencies every professional needs in today’s technology-driven workplace.' }
-    ];
+    const [resources, setResources] = useState([]);
+
 
     const featuredResources = [
         { title: 'Career Planning Toolkit', description: 'Comprehensive guides and worksheets to map your career journey from start to success.' },
@@ -69,16 +81,16 @@ export default function ResourcesPage() {
 
     const fetchResources = async () => {
         try {
-                const response = await axios.get(`${apiurl}/api/resources`);
-                console.log(response.data);
-            
+            const response = await axios.get(`${apiurl}/api/resources`);
+            console.log(response.data);
+
             setResources(response.data);
         } catch (error) {
             console.error('Fetch error:', error);
-        } 
+        }
     };
 
-     useEffect(() => {
+    useEffect(() => {
         fetchResources();
     }, []);
 
