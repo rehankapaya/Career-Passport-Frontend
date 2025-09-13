@@ -17,6 +17,7 @@ export default function UserProvider({children}) {
     const userlogout =() =>{
         setUser(null);
         localStorage.removeItem("user")
+        localStorage.removeItem("token")
     }
      
   return (
