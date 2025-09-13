@@ -10,9 +10,9 @@ import CareerProvider from './context/CareerContext.jsx'
 
 createRoot(document.getElementById('root')).render(
   <UserProvider>
-    <CareerProvider>
-    <App />
-    <ToastContainer/>
-  </CareerProvider>
-  </UserProvider>,
+      <CareerProvider>
+        <App />
+        <ToastContainer />
+      </CareerProvider>
+  </UserProvider >,
 )

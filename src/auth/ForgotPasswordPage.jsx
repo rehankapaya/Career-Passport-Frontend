@@ -3,7 +3,7 @@ import axios from "axios";
 import { apiurl } from "../api";
 import { toast } from "react-toastify";
 import { Link } from "react-router-dom";
-
+import { Mail, KeyRound, Lock, RotateCcw, CheckCircle2, Shield } from "lucide-react";
 
 export default function ForgotPasswordPage() {
   const [step, setStep] = useState(1);
@@ -13,309 +13,419 @@ export default function ForgotPasswordPage() {
   const [confirmPassword, setConfirmPassword] = useState("");
   const [loading, setLoading] = useState(false);
 
-// Handle email submission
+  const brand = "#0a66c2";
+  const brandDark = "#004182";
+
   const handleEmailSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
-    
     try {
-      const response = await axios.post(`${apiurl}/api/users/forgot-password`, { email });
-      console.log("OTP sent:", response.data);
-      toast.success("OTP sent to your email!");
+      await axios.post(`${apiurl}/api/users/forgot-password`, { email });
+      toast.success("OTP sent to your email");
       setStep(2);
     } catch (error) {
-      console.error("Failed to send OTP:", error);
       toast.error(error.response?.data?.message || "Failed to send OTP");
     } finally {
       setLoading(false);
     }
   };
 
-  // Handle OTP verification
   const handleOtpSubmit = async (e) => {
     e.preventDefault();
-    
     if (newPassword !== confirmPassword) {
       toast.error("Passwords don't match");
       return;
     }
-    
     setLoading(true);
-    
     try {
-      const response = await axios.post(`${apiurl}/api/users/reset-password`, {
-        email,
-        otp,
-        newPassword
-      });
-      console.log("Password reset:", response.data);
-      toast.success("Password reset successfully!");
+      await axios.post(`${apiurl}/api/users/reset-password`, { email, otp, newPassword });
+      toast.success("Password reset successfully");
       setStep(3);
     } catch (error) {
-      console.error("Failed to reset password:", error);
       toast.error(error.response?.data?.message || "Failed to reset password");
     } finally {
       setLoading(false);
     }
   };
 
-  // Resend OTP
   const handleResendOtp = async () => {
     setLoading(true);
-    
     try {
-      const response = await axios.post(`${apiurl}/api/users/forgot-password`, { email });
-      console.log("OTP resent:", response.data);
-      toast.success("New OTP sent to your email!");
+      await axios.post(`${apiurl}/api/users/forgot-password`, { email });
+      toast.success("New OTP sent");
     } catch (error) {
-      console.error("Failed to resend OTP:", error);
       toast.error(error.response?.data?.message || "Failed to resend OTP");
     } finally {
       setLoading(false);
     }
   };
 
-  const containerStyle = {
-    display: 'flex',
-    justifyContent: 'center',
-    alignItems: 'center',
-    minHeight: '100vh',
-    backgroundColor: '#1a1a1a',
-    fontFamily: 'sans-serif',
-    padding: '2rem'
+  const inputBase = {
+    width: "100%",
+    maxWidth: "100%",
+    boxSizing: "border-box",
+    padding: "0.85rem 0.95rem 0.85rem 2.35rem",
+    borderRadius: "10px",
+    border: "1px solid #d0d7de",
+    background: "#fff",
+    outline: "none",
+    transition: "box-shadow .15s ease, border-color .15s ease"
   };
 
-  const cardStyle = {
-    backgroundColor: '#2d2d2d',
-    padding: '2.5rem',
-    borderRadius: '1rem',
-    boxShadow: '0 4px 10px rgba(0, 0, 0, 0.5)',
-    width: '100%',
-    maxWidth: '24rem',
-    textAlign: 'center'
+  const focusOn = (e) => {
+    e.currentTarget.style.boxShadow = "0 0 0 3px rgba(10,102,194,0.15)";
+    e.currentTarget.style.borderColor = brand;
   };
-
-  const titleStyle = {
-    fontSize: '2rem',
-    fontWeight: 'bold',
-    marginBottom: '0.5rem',
-    color: '#e0e0e0'
-  };
-
-  const subtitleStyle = {
-    color: '#a0a0a0',
-    marginBottom: '1.5rem'
-  };
-
-  const formStyle = {
-    display: 'flex',
-    flexDirection: 'column',
-    gap: '1rem'
-  };
-
-  const formGroupStyle = {
-    display: 'flex',
-    flexDirection: 'column',
-    alignItems: 'flex-start'
-  };
-
-  const labelStyle = {
-    marginBottom: '0.5rem',
-    color: '#e0e0e0',
-    textAlign: 'left',
-    fontWeight: '500'
-  };
-
-  const inputStyle = {
-    width: '100%',
-    padding: '0.75rem',
-    borderRadius: '0.5rem',
-    border: '1px solid #444',
-    backgroundColor: '#3b3b3b',
-    color: '#e0e0e0',
-    outline: 'none',
-    boxSizing: 'border-box'
-  };
-
-  const buttonStyle = {
-    width: '100%',
-    padding: '0.75rem',
-    backgroundColor: '#007bff',
-    color: '#fff',
-    border: 'none',
-    borderRadius: '0.5rem',
-    fontWeight: 'bold',
-    cursor: 'pointer',
-    marginTop: '0.5rem',
-    fontSize: '1rem'
-  };
-
-  const footerStyle = {
-    marginTop: '1.5rem',
-    color: '#a0a0a0',
-    fontSize: '0.875rem'
-  };
-  
-  const linkStyle = {
-    color: '#007bff',
-    textDecoration: 'none',
-    fontWeight: 'bold'
-  };
-
-  const resendContainerStyle = {
-    marginTop: '1rem',
-    color: '#a0a0a0',
-    fontSize: '0.875rem'
-  };
-
-  const resendButtonStyle = {
-    backgroundColor: 'transparent',
-    border: 'none',
-    color: '#007bff',
-    textDecoration: 'none',
-    cursor: 'pointer',
-    fontWeight: 'bold',
-    padding: '0',
-    marginLeft: '0.25rem'
-  };
-
-  const successIconStyle = {
-    fontSize: '3rem',
-    color: '#28a745',
-    marginBottom: '1rem'
+  const focusOff = (e) => {
+    e.currentTarget.style.boxShadow = "none";
+    e.currentTarget.style.borderColor = "#d0d7de";
   };
 
   return (
-    
-      <div style={containerStyle}>
-        <div style={cardStyle}>
-          {step === 1 && (
-            <>
-              <h2 style={titleStyle}>Reset Your Password</h2>
-              <p style={subtitleStyle}>
-                Enter your email address and we'll send you an OTP to reset your password
-              </p>
+    <div
+      style={{
+        minHeight: "100vh",
+        backgroundColor: "#f3f2ef",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        padding: "2rem",
+        fontFamily: 'system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif',
+        color: "#1f2328"
+      }}
+    >
+      <div
+        style={{
+          width: "100%",
+          maxWidth: "28rem",
+          background: "#ffffff",
+          border: "1px solid #e9ecef",
+          borderRadius: "16px",
+          boxShadow: "0 18px 48px rgba(10,102,194,0.15)",
+          padding: "2.25rem",
+          textAlign: "center",
+          boxSizing: "border-box"
+        }}
+      >
+        <div
+          style={{
+            display: "inline-flex",
+            alignItems: "center",
+            justifyContent: "center",
+            width: "3rem",
+            height: "3rem",
+            borderRadius: "999px",
+            background: "#e7f0fa",
+            marginBottom: "0.85rem"
+          }}
+        >
+          <Shield size={22} color={brand} />
+        </div>
 
-              <form style={formStyle} onSubmit={handleEmailSubmit}>
-                <div style={formGroupStyle}>
-                  <label htmlFor="email" style={labelStyle}>Email Address</label>
+        {step === 1 && (
+          <>
+            <h2
+              style={{
+                fontSize: "1.9rem",
+                fontWeight: 800,
+                letterSpacing: "-0.3px",
+                marginBottom: "0.35rem"
+              }}
+            >
+              Reset Your Password
+            </h2>
+            <p
+              style={{
+                color: "#5a6b7b",
+                fontSize: "0.98rem",
+                lineHeight: 1.5,
+                marginBottom: "1.4rem"
+              }}
+            >
+              Pop in your email and we’ll send over a quick OTP.
+            </p>
+
+            <form onSubmit={handleEmailSubmit} style={{ display: "flex", flexDirection: "column", gap: "1rem", width: "100%" }}>
+              <div style={{ textAlign: "left", width: "100%" }}>
+                <label htmlFor="email" style={{ display: "block", fontWeight: 600, marginBottom: "0.5rem" }}>
+                  Email Address
+                </label>
+                <div style={{ position: "relative", width: "100%" }}>
+                  <div
+                    style={{
+                      position: "absolute",
+                      left: 12,
+                      top: "50%",
+                      transform: "translateY(-50%)",
+                      pointerEvents: "none",
+                      opacity: 0.9
+                    }}
+                  >
+                    <Mail size={18} color={brand} />
+                  </div>
                   <input
-                    type="email"
                     id="email"
-                    name="email"
+                    type="email"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
-                    placeholder="Enter your email"
+                    placeholder="you@example.com"
                     required
-                    style={inputStyle}
+                    style={inputBase}
+                    onFocus={focusOn}
+                    onBlur={focusOff}
                   />
                 </div>
+              </div>
 
-                <button 
-                  type="submit" 
-                  style={buttonStyle}
-                  disabled={loading}
-                >
-                  {loading ? "Sending..." : "Send OTP"}
-                </button>
-              </form>
-            </>
-          )}
+              <button
+                type="submit"
+                disabled={loading}
+                style={{
+                  width: "100%",
+                  padding: "0.95rem",
+                  backgroundColor: brand,
+                  color: "#fff",
+                  border: "none",
+                  borderRadius: "12px",
+                  fontWeight: 800,
+                  fontSize: "1rem",
+                  letterSpacing: "0.2px",
+                  cursor: "pointer",
+                  boxShadow: "0 10px 24px rgba(10,102,194,0.2)",
+                  transition: "background-color .15s ease"
+                }}
+                onMouseDown={(e) => (e.currentTarget.style.backgroundColor = brandDark)}
+                onMouseUp={(e) => (e.currentTarget.style.backgroundColor = brand)}
+              >
+                {loading ? "Sending..." : "Send OTP"}
+              </button>
+            </form>
+          </>
+        )}
 
-          {step === 2 && (
-            <>
-              <h2 style={titleStyle}>Verify OTP</h2>
-              <p style={subtitleStyle}>
-                Enter the OTP sent to {email} and your new password
-              </p>
+        {step === 2 && (
+          <>
+            <h2
+              style={{
+                fontSize: "1.9rem",
+                fontWeight: 800,
+                letterSpacing: "-0.3px",
+                marginBottom: "0.35rem"
+              }}
+            >
+              Verify OTP
+            </h2>
+            <p
+              style={{
+                color: "#5a6b7b",
+                fontSize: "0.98rem",
+                lineHeight: 1.5,
+                marginBottom: "1.4rem"
+              }}
+            >
+              Enter the code sent to {email} and set a new password.
+            </p>
 
-              <form style={formStyle} onSubmit={handleOtpSubmit}>
-                <div style={formGroupStyle}>
-                  <label htmlFor="otp" style={labelStyle}>OTP Code</label>
+            <form onSubmit={handleOtpSubmit} style={{ display: "flex", flexDirection: "column", gap: "1rem", width: "100%" }}>
+              <div style={{ textAlign: "left", width: "100%" }}>
+                <label htmlFor="otp" style={{ display: "block", fontWeight: 600, marginBottom: "0.5rem" }}>
+                  OTP Code
+                </label>
+                <div style={{ position: "relative", width: "100%" }}>
+                  <div
+                    style={{
+                      position: "absolute",
+                      left: 12,
+                      top: "50%",
+                      transform: "translateY(-50%)",
+                      pointerEvents: "none",
+                      opacity: 0.9
+                    }}
+                  >
+                    <KeyRound size={18} color={brand} />
+                  </div>
                   <input
-                    type="text"
                     id="otp"
-                    name="otp"
+                    type="text"
                     value={otp}
                     onChange={(e) => setOtp(e.target.value)}
-                    placeholder="Enter 6-digit OTP"
+                    placeholder="6-digit code"
                     required
-                    style={inputStyle}
+                    style={inputBase}
+                    onFocus={focusOn}
+                    onBlur={focusOff}
                   />
                 </div>
+              </div>
 
-                <div style={formGroupStyle}>
-                  <label htmlFor="newPassword" style={labelStyle}>New Password</label>
+              <div style={{ textAlign: "left", width: "100%" }}>
+                <label htmlFor="newPassword" style={{ display: "block", fontWeight: 600, marginBottom: "0.5rem" }}>
+                  New Password
+                </label>
+                <div style={{ position: "relative", width: "100%" }}>
+                  <div
+                    style={{
+                      position: "absolute",
+                      left: 12,
+                      top: "50%",
+                      transform: "translateY(-50%)",
+                      pointerEvents: "none",
+                      opacity: 0.9
+                    }}
+                  >
+                    <Lock size={18} color={brand} />
+                  </div>
                   <input
-                    type="password"
                     id="newPassword"
-                    name="newPassword"
+                    type="password"
                     value={newPassword}
                     onChange={(e) => setNewPassword(e.target.value)}
-                    placeholder="Enter new password"
+                    placeholder="Create a new password"
                     required
-                    style={inputStyle}
+                    style={inputBase}
+                    onFocus={focusOn}
+                    onBlur={focusOff}
                   />
                 </div>
+              </div>
 
-                <div style={formGroupStyle}>
-                  <label htmlFor="confirmPassword" style={labelStyle}>Confirm Password</label>
+              <div style={{ textAlign: "left", width: "100%" }}>
+                <label htmlFor="confirmPassword" style={{ display: "block", fontWeight: 600, marginBottom: "0.5rem" }}>
+                  Confirm Password
+                </label>
+                <div style={{ position: "relative", width: "100%" }}>
+                  <div
+                    style={{
+                      position: "absolute",
+                      left: 12,
+                      top: "50%",
+                      transform: "translateY(-50%)",
+                      pointerEvents: "none",
+                      opacity: 0.9
+                    }}
+                  >
+                    <Lock size={18} color={brand} />
+                  </div>
                   <input
-                    type="password"
                     id="confirmPassword"
-                    name="confirmPassword"
+                    type="password"
                     value={confirmPassword}
                     onChange={(e) => setConfirmPassword(e.target.value)}
-                    placeholder="Confirm new password"
+                    placeholder="Type it again"
                     required
-                    style={inputStyle}
+                    style={inputBase}
+                    onFocus={focusOn}
+                    onBlur={focusOff}
                   />
                 </div>
+              </div>
 
-                <button 
-                  type="submit" 
-                  style={buttonStyle}
+              <button
+                type="submit"
+                disabled={loading}
+                style={{
+                  width: "100%",
+                  padding: "0.95rem",
+                  backgroundColor: brand,
+                  color: "#fff",
+                  border: "none",
+                  borderRadius: "12px",
+                  fontWeight: 800,
+                  fontSize: "1rem",
+                  letterSpacing: "0.2px",
+                  cursor: "pointer",
+                  boxShadow: "0 10px 24px rgba(10,102,194,0.2)",
+                  transition: "background-color .15s ease"
+                }}
+                onMouseDown={(e) => (e.currentTarget.style.backgroundColor = brandDark)}
+                onMouseUp={(e) => (e.currentTarget.style.backgroundColor = brand)}
+              >
+                {loading ? "Resetting..." : "Reset Password"}
+              </button>
+
+              <div style={{ marginTop: "0.75rem", color: "#5a6b7b", fontSize: "0.92rem" }}>
+                Didn’t get it?
+                <button
+                  type="button"
+                  onClick={handleResendOtp}
                   disabled={loading}
+                  style={{
+                    background: "transparent",
+                    border: "none",
+                    color: brand,
+                    fontWeight: 700,
+                    cursor: "pointer",
+                    marginLeft: "0.35rem",
+                    display: "inline-flex",
+                    alignItems: "center",
+                    gap: ".35rem",
+                    padding: 0
+                  }}
                 >
-                  {loading ? "Resetting..." : "Reset Password"}
+                  <RotateCcw size={16} />
+                  Resend OTP
                 </button>
-                
-                <div style={resendContainerStyle}>
-                  <p>
-                    Didn't receive the OTP?{" "}
-                    <button 
-                      type="button" 
-                      onClick={handleResendOtp}
-                      style={resendButtonStyle}
-                      disabled={loading}
-                    >
-                      Resend OTP
-                    </button>
-                  </p>
-                </div>
-              </form>
-            </>
-          )}
+              </div>
+            </form>
+          </>
+        )}
 
-          {step === 3 && (
-            <>
-              <h2 style={titleStyle}>Password Reset Successful!</h2>
-              <div style={successIconStyle}>✓</div>
-              <p style={subtitleStyle}>
-                Your password has been reset successfully. You can now login with your new password.
-              </p>
-              
-              <Link to="/login" style={{...buttonStyle, display: 'block', textAlign: 'center'}}>
-                Back to Login
-              </Link>
-            </>
-          )}
+        {step === 3 && (
+          <>
+            <div style={{ marginBottom: "0.6rem" }}>
+              <CheckCircle2 size={48} color="#16a34a" />
+            </div>
+            <h2
+              style={{
+                fontSize: "1.9rem",
+                fontWeight: 800,
+                letterSpacing: "-0.3px",
+                marginBottom: "0.35rem"
+              }}
+            >
+              Password Reset
+            </h2>
+            <p
+              style={{
+                color: "#5a6b7b",
+                fontSize: "0.98rem",
+                lineHeight: 1.5,
+                marginBottom: "1.2rem"
+              }}
+            >
+              All set. You can log in with your new password now.
+            </p>
 
-          <p style={footerStyle}>
-            Remember your password? <Link to="/login" style={linkStyle}>Login here</Link>
-          </p>
-        </div>
+            <Link
+              to="/login"
+              style={{
+                display: "inline-block",
+                width: "100%",
+                textAlign: "center",
+                padding: "0.95rem",
+                backgroundColor: brand,
+                color: "#fff",
+                borderRadius: "12px",
+                fontWeight: 800,
+                letterSpacing: "0.2px",
+                textDecoration: "none",
+                boxShadow: "0 10px 24px rgba(10,102,194,0.2)"
+              }}
+              onMouseDown={(e) => (e.currentTarget.style.backgroundColor = brandDark)}
+              onMouseUp={(e) => (e.currentTarget.style.backgroundColor = brand)}
+            >
+              Back to Login
+            </Link>
+          </>
+        )}
+
+        <p style={{ marginTop: "1.25rem", color: "#5a6b7b", fontSize: "0.95rem" }}>
+          Remember your password?{" "}
+          <Link to="/login" style={{ color: brand, fontWeight: 700, textDecoration: "none" }}>
+            Login here
+          </Link>
+        </p>
       </div>
-    
+    </div>
   );
 }

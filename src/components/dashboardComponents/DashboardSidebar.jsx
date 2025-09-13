@@ -1,320 +1,150 @@
 import React, { useState } from "react";
+import { NavLink } from "react-router-dom";
 import {
   Home,
   Briefcase,
   FileText,
   Video,
   Trophy,
-  Bookmark,
   MessageSquare,
   Settings,
+  Bookmark,
+  Menu
 } from "lucide-react";
-import { Link } from "react-router-dom";
 
 export default function DashboardSidebar() {
   const [collapsed, setCollapsed] = useState(false);
+  const brand = "#0A66C2";
+  const deep = "#004182";
+  const ink = "#1D2226";
+  const haze = "#F3F6F8";
+  const line = "#E6E9EC";
+
+  const items = [
+    { to: "", label: "Dashboard", icon: <Home size={18} />, exact: true },
+    { to: "admincareerbank", label: "Career Bank", icon: <Briefcase size={18} /> },
+    { to: "quiz", label: "Quiz History", icon: <FileText size={18} /> },
+    { to: "adminmultimedia", label: "Multimedia", icon: <Video size={18} /> },
+    { to: "adminsuccessstories", label: "Success Stories", icon: <Trophy size={18} /> },
+    { to: "addresource", label: "Resources", icon: <Bookmark size={18} /> },
+    { to: "adminfeedback", label: "Feedback", icon: <MessageSquare size={18} /> },
+  ];
+
+  const baseItem = {
+    display: "flex",
+    alignItems: "center",
+    gap: 10,
+    padding: "10px 14px",
+    textDecoration: "none",
+    color: ink,
+    borderRadius: 10,
+    transition: "background .15s ease,border-color .15s ease,color .15s ease",
+  };
+  
+  const activeItem = {
+    border: "1px solid transparent",
+    background: "#E9F1FF",
+    borderColor: "#D0E6FB",
+    color: brand,
+    fontWeight: 800
+  };
+
+  const labelStyle = {
+    opacity: collapsed ? 0 : 1,
+    transition: "opacity .2s ease",
+    whiteSpace: "nowrap",
+    overflow: "hidden",
+    fontWeight: 600,
+    fontSize: 14
+  };
+
+  const iconWrap = {
+    width: 28,
+    height: 28,
+    borderRadius: 8,
+    display: "inline-flex",
+    alignItems: "center",
+    justifyContent: "center",
+    background: haze,
+    color: deep,
+    boxShadow: "inset 0 0 0 1px " + line
+  };
 
   return (
     <aside
       style={{
-        width: collapsed ? "60px" : "250px",
-        backgroundColor: "#fff",
+        width: collapsed ? 64 : 260,
+        background: "linear-gradient(180deg,#F3F6F8 0%,#FFFFFF 55%)",
         height: "100vh",
-        boxShadow: "2px 0 5px rgba(0, 0, 0, 0.1)",
+        boxShadow: "0 12px 30px rgba(0,0,0,0.06)",
         display: "flex",
         flexDirection: "column",
-        padding: "20px 0",
-        transition: "width 0.3s ease",
+        padding: 12,
+        transition: "width .25s ease",
         overflow: "hidden",
-        fontFamily: "'Segoe UI', Tahoma, Geneva, Verdana, sans-serif",
-        color: "#2c3e50",
+        fontFamily: "system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif",
+        color: ink,
+        borderRight: "1px solid " + line,
+        position: "sticky",
+        top: 0
       }}
     >
-      {/* Toggle Button */}
       <div
         style={{
-          padding: "0 20px 10px",
-          marginBottom: "20px",
+          padding: "6px 8px 10px",
+          marginBottom: 8,
           display: "flex",
           justifyContent: "flex-start",
-          alignItems: "center",
+          alignItems: "center"
         }}
       >
         <button
-          onClick={() => setCollapsed(!collapsed)}
+          onClick={() => setCollapsed((s) => !s)}
           style={{
-            background: "none",
-            border: "none",
+            background: haze,
+            border: "1px solid " + line,
             cursor: "pointer",
-            padding: "0",
-            display: "flex",
+            padding: 8,
+            display: "inline-flex",
             alignItems: "center",
-            color: "#555",
+            justifyContent: "center",
+            color: brand,
+            borderRadius: 10
           }}
         >
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            width="24"
-            height="24"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-          >
-            <line x1="3" y1="12" x2="21" y2="12"></line>
-            <line x1="3" y1="6" x2="21" y2="6"></line>
-            <line x1="3" y1="18" x2="21" y2="18"></line>
-          </svg>
+          <Menu size={18} />
         </button>
       </div>
 
-      {/* Sidebar Menu */}
-      <nav
+      <nav style={{ display: "grid", gap: 6, flexGrow: 1 }}>
+        {items.map((it, i) =>
+          it.divider ? (
+            <div key={"d"+i} style={{ height: 1, background: line, margin: "8px 6px" }} />
+          ) : (
+            <NavLink
+              key={it.to || i}
+              to={it.to}
+              end={it.exact || false}
+              style={({ isActive }) => ({ ...baseItem, ...(isActive ? activeItem : {}) })}
+            >
+              <span style={iconWrap}>{it.icon}</span>
+              <span style={labelStyle}>{it.label}</span>
+            </NavLink>
+          )
+        )}
+      </nav>
+
+      <div
         style={{
-          flexGrow: "1",
-          display: "flex",
-          flexDirection: "column",
-          gap: "8px",
+          marginTop: "auto",
+          padding: 8,
+          color: "#56687A",
+          fontSize: 12,
+          textAlign: collapsed ? "center" : "left"
         }}
       >
-        <Link
-          to=""
-          style={{
-            display: "flex",
-            alignItems: "center",
-            padding: "10px 20px",
-            color: "#007bff",
-            textDecoration: "none",
-            backgroundColor: "#e7f3ff",
-            borderLeft: "4px solid #007bff",
-            transition: "all 0.3s ease",
-            gap: "10px",
-          }}
-        >
-          <Home size={20} />
-          <span
-            style={{
-              opacity: collapsed ? 0 : 1,
-              transition: "opacity 0.3s ease",
-              whiteSpace: "nowrap",
-              overflow: "hidden",
-              fontWeight: 600,
-            }}
-          >
-            Dashboard
-          </span>
-        </Link>
-        <Link
-          to="admincareerbank"
-          style={{
-            display: "flex",
-            alignItems: "center",
-            padding: "10px 20px",
-            color: "#555",
-            textDecoration: "none",
-            transition: "all 0.3s ease",
-            gap: "10px",
-          }}
-        >
-          <Briefcase size={20} />
-          <span
-            style={{
-              opacity: collapsed ? 0 : 1,
-              transition: "opacity 0.3s ease",
-              whiteSpace: "nowrap",
-              overflow: "hidden",
-              fontWeight: 500,
-            }}
-          >
-            Career Bank
-          </span>
-        </Link>
-        <Link
-          to="quiz"
-          style={{
-            display: "flex",
-            alignItems: "center",
-            padding: "10px 20px",
-            color: "#555",
-            textDecoration: "none",
-            transition: "all 0.3s ease",
-            gap: "10px",
-          }}
-        >
-          <FileText size={20} />
-          <span
-            style={{
-              opacity: collapsed ? 0 : 1,
-              transition: "opacity 0.3s ease",
-              whiteSpace: "nowrap",
-              overflow: "hidden",
-              fontWeight: 500,
-            }}
-          >
-            Quiz History
-          </span>
-        </Link>
-        <Link
-          to="adminmultimedia"
-          style={{
-            display: "flex",
-            alignItems: "center",
-            padding: "10px 20px",
-            color: "#555",
-            textDecoration: "none",
-            transition: "all 0.3s ease",
-            gap: "10px",
-          }}
-        >
-          <Video size={20} />
-          <span
-            style={{
-              opacity: collapsed ? 0 : 1,
-              transition: "opacity 0.3s ease",
-              whiteSpace: "nowrap",
-              overflow: "hidden",
-              fontWeight: 500,
-            }}
-          >
-            Multimedia
-          </span>
-        </Link>
-        <Link
-          to="adminsuccessstories"
-          style={{
-            display: "flex",
-            alignItems: "center",
-            padding: "10px 20px",
-            color: "#555",
-            textDecoration: "none",
-            transition: "all 0.3s ease",
-            gap: "10px",
-          }}
-        >
-          <Trophy size={20} />
-          <span
-            style={{
-              opacity: collapsed ? 0 : 1,
-              transition: "opacity 0.3s ease",
-              whiteSpace: "nowrap",
-              overflow: "hidden",
-              fontWeight: 500,
-            }}
-          >
-            Success Stories
-          </span>
-        </Link>
-        <Link
-          to="addresource"
-          style={{
-            display: "flex",
-            alignItems: "center",
-            padding: "10px 20px",
-            color: "#555",
-            textDecoration: "none",
-            transition: "all 0.3s ease",
-            gap: "10px",
-          }}
-        >
-          <FileText size={20} />
-          <span
-            style={{
-              opacity: collapsed ? 0 : 1,
-              transition: "opacity 0.3s ease",
-              whiteSpace: "nowrap",
-              overflow: "hidden",
-              fontWeight: 500,
-            }}
-          >
-            Resources
-          </span>
-        </Link>
-        <Link
-          to="bookmarks"
-          style={{
-            display: "flex",
-            alignItems: "center",
-            padding: "10px 20px",
-            color: "#555",
-            textDecoration: "none",
-            transition: "all 0.3s ease",
-            gap: "10px",
-          }}
-        >
-          <Bookmark size={20} />
-          <span
-            style={{
-              opacity: collapsed ? 0 : 1,
-              transition: "opacity 0.3s ease",
-              whiteSpace: "nowrap",
-              overflow: "hidden",
-              fontWeight: 500,
-            }}
-          >
-            Bookmarks
-          </span>
-        </Link>
-        <Link
-          to="adminfeedback"
-          style={{
-            display: "flex",
-            alignItems: "center",
-            padding: "10px 20px",
-            color: "#555",
-            textDecoration: "none",
-            transition: "all 0.3s ease",
-            gap: "10px",
-          }}
-        >
-          <MessageSquare size={20} />
-          <span
-            style={{
-              opacity: collapsed ? 0 : 1,
-              transition: "opacity 0.3s ease",
-              whiteSpace: "nowrap",
-              overflow: "hidden",
-              fontWeight: 500,
-            }}
-          >
-            Feedback
-          </span>
-        </Link>
-
-        {/* Admin Only */}
-        <div
-          style={{
-            borderTop: "1px solid #e9ecef",
-            margin: "10px 20px",
-          }}
-        ></div>
-        <Link
-          to="admin"
-          style={{
-            display: "flex",
-            alignItems: "center",
-            padding: "10px 20px",
-            color: "#555",
-            textDecoration: "none",
-            transition: "all 0.3s ease",
-            gap: "10px",
-          }}
-        >
-          <Settings size={20} />
-          <span
-            style={{
-              opacity: collapsed ? 0 : 1,
-              transition: "opacity 0.3s ease",
-              whiteSpace: "nowrap",
-              overflow: "hidden",
-              fontWeight: 500,
-            }}
-          >
-            Admin Panel
-          </span>
-        </Link>
-      </nav>
+        <span style={{ opacity: 0.9 }}>made for you</span>
+      </div>
     </aside>
   );
 }

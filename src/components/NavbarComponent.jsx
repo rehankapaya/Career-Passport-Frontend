@@ -1,244 +1,432 @@
-import React, { useContext, useState, useRef, useEffect } from 'react';
-import { useNavigate, Link, useLocation } from 'react-router-dom';
-import { UserContext } from '../context/UserContext';
+import React, { useContext, useState, useRef, useEffect } from "react";
+import { useNavigate, Link, useLocation } from "react-router-dom";
+import { UserContext } from "../context/UserContext";
+import {
+  Compass,
+  Home,
+  Info,
+  Phone,
+  MessageSquare,
+  LayoutDashboard,
+  BookOpen,
+  Briefcase,
+  BrainCircuit,
+  Film,
+  Trophy,
+  ChevronDown,
+  User as UserIcon,
+  LogOut,
+  Menu,
+  X
+} from "lucide-react";
 
 export default function NavbarComponent() {
-  const [isDropdownVisible, setDropdownVisible] = useState(false);
-  const dropdownRef = useRef(null); // 🔹 Ref for profile + dropdown
+  const [open, setOpen] = useState(false);
+  const [mobileOpen, setMobileOpen] = useState(false);
+  const [isMobile, setIsMobile] = useState(typeof window !== "undefined" ? window.innerWidth < 960 : false);
+  const wrapRef = useRef(null);
+  const [headerH, setHeaderH] = useState(0);
+  const menuRef = useRef(null);
   const navigate = useNavigate();
   const location = useLocation();
   const { user, userlogout } = useContext(UserContext);
 
-  // Close dropdown if clicked outside
   useEffect(() => {
-    const handleClickOutside = (event) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
-        setDropdownVisible(false);
-      }
+    const onClick = (e) => {
+      if (menuRef.current && !menuRef.current.contains(e.target)) setOpen(false);
     };
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
+    document.addEventListener("mousedown", onClick);
+    return () => document.removeEventListener("mousedown", onClick);
   }, []);
 
-  // Main Navigation + Dashboard
+  useEffect(() => {
+    const measure = () => setHeaderH(wrapRef.current ? wrapRef.current.offsetHeight : 0);
+    const onResize = () => {
+      setIsMobile(window.innerWidth < 960);
+      measure();
+    };
+    measure();
+    window.addEventListener("resize", onResize);
+    return () => window.removeEventListener("resize", onResize);
+  }, [open, mobileOpen]);
+
   const mainNavItems = [
-    { name: 'Home', to: '/' },
-    { name: 'About', to: '/about' },
-    { name: 'Contact', to: '/contact' },
-    { name: 'Feedback', to: '/feedback' },
-    { name: 'Dashboard', to: '/user-dashboard' },
-  ];
-  
-  const resourceNavItems = [
-    { name: 'Resources', to: '/resources' },
-    { name: 'Career Bank', to: '/career-bank' },
-    { name: 'Interest Quiz', to: '/quiz' },
-    { name: 'Multimedia Hub', to: '/multimedia' },
-    { name: 'Success Stories', to: '/success-stories' },
+    { name: "Home", to: "/", icon: <Home size={16} /> },
+    { name: "About", to: "/about", icon: <Info size={16} /> },
+    { name: "Contact", to: "/contact", icon: <Phone size={16} /> },
+    { name: "Feedback", to: "/feedback", icon: <MessageSquare size={16} /> },
+    { name: "Dashboard", to: "/user-dashboard", icon: <LayoutDashboard size={16} /> }
   ];
 
+  const resourceNavItems = [
+    { name: "Resources", to: "/resources", icon: <BookOpen size={16} /> },
+    { name: "Career Bank", to: "/career-bank", icon: <Briefcase size={16} /> },
+    { name: "Interest Quiz", to: "/quiz", icon: <BrainCircuit size={16} /> },
+    { name: "Multimedia Hub", to: "/multimedia", icon: <Film size={16} /> },
+    { name: "Success Stories", to: "/success-stories", icon: <Trophy size={16} /> }
+  ];
+
+  const primary = "#0A66C2";
+  const text = "#1D2226";
   const activeLink = location.pathname;
+  const filteredMain = user ? mainNavItems : mainNavItems.filter(i => i.name !== "Feedback" && i.name !== "Dashboard");
+
+  const linkStyle = (isActive) => ({
+    position: "relative",
+    display: "flex",
+    alignItems: "center",
+    gap: 8,
+    color: isActive ? primary : "#4B5563",
+    fontWeight: isActive ? 600 : 500,
+    textDecoration: "none",
+    padding: "6px 0"
+  });
 
   return (
-    <div style={{ borderBottom: '1px solid #e5e7eb', backgroundColor: '#fff' }}>
-      {/* Top Navigation Bar */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '1rem 2rem' }}>
-        {/* Logo and App Name */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-          <svg
-            style={{ width: '2rem', height: '2rem', color: '#2563eb' }}
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
-            xmlns="http://www.w3.org/2000/svg"
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth="2"
-              d="M9.75 17L9 20l-1 1h6l-1-1-1.25-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"
-            />
-          </svg>
-          <span style={{ fontSize: '1.25rem', fontWeight: '600', color: '#1f2937' }}>
-            NextStep Navigator
-          </span>
-        </div>
+    <>
+      <div
+        ref={wrapRef}
+        style={{
+          position: "fixed",
+          top: 0,
+          left: 0,
+          right: 0,
+          zIndex: 1000,
+          background: "#FFFFFF",
+          borderBottom: "1px solid #E6E9EC",
+          backdropFilter: "saturate(180%) blur(6px)",
+          boxShadow: "0 6px 18px rgba(0,0,0,0.06)"
+        }}
+      >
+        <div
+          style={{
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center",
+            padding: "12px 16px",
+            maxWidth: 1200,
+            margin: "0 auto",
+            fontFamily: "system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif",
+            color: text
+          }}
+        >
+          <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+            <div style={{ width: 36, height: 36, borderRadius: 8, background: primary, color: "#fff", display: "grid", placeItems: "center", boxShadow: "0 4px 10px rgba(10,102,194,0.25)" }}>
+              <Compass size={18} />
+            </div>
+            <span style={{ fontSize: 18, fontWeight: 700, letterSpacing: "0.2px" }}>NextStep Navigator</span>
+          </div>
 
-        {/* Main Navigation Links */}
-        <nav style={{ display: 'flex', alignItems: 'center', gap: '2rem' }}>
-          {mainNavItems.map((item) => {
-            const isActive = item.to === activeLink;
-            return (
-              <Link
-                key={item.name}
-                to={item.to}
-                style={{
-                  position: 'relative',
-                  color: isActive ? '#2563eb' : '#4b5563',
-                  fontWeight: isActive ? '500' : 'normal',
-                  textDecoration: 'none'
-                }}
-              >
-                {item.name}
-                <span
-                  style={{
-                    position: 'absolute',
-                    left: 0,
-                    bottom: '-8px',
-                    width: '100%',
-                    height: '2px',
-                    backgroundColor: '#2563eb',
-                    transform: `scaleX(${isActive ? 1 : 0})`,
-                    transformOrigin: 'left',
-                    transition: 'transform 150ms ease'
-                  }}
-                />
-              </Link>
-            );
-          })}
-        </nav>
+          {!isMobile && (
+            <nav style={{ display: "flex", alignItems: "center", gap: 22 }}>
+              {filteredMain.map((item) => {
+                const isActive = item.to === activeLink;
+                return (
+                  <Link key={item.name} to={item.to} style={linkStyle(isActive)}>
+                    {item.icon}
+                    <span>{item.name}</span>
+                    <span
+                      style={{
+                        position: "absolute",
+                        left: 0,
+                        bottom: -6,
+                        width: "100%",
+                        height: 2,
+                        backgroundColor: primary,
+                        transform: `scaleX(${isActive ? 1 : 0})`,
+                        transformOrigin: "left",
+                        transition: "transform 140ms ease"
+                      }}
+                    />
+                  </Link>
+                );
+              })}
+            </nav>
+          )}
 
-        {/* Right side: If user -> Welcome + dropdown; else -> Login/Sign up */}
-        {user ? (
-          <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-            <span style={{ color: '#4b5563' }}>
-              Welcome{user.name ? `, ${user.name}` : user.email ? `, ${user.email}` : ''}
-            </span>
-
-            {/* 🔹 Profile with click dropdown */}
-            <div
-              ref={dropdownRef}
-              style={{ position: 'relative', cursor: 'pointer' }}
-              onClick={() => setDropdownVisible((prev) => !prev)}
-            >
-              <svg
-                style={{ width: '2rem', height: '2rem', color: '#6b7280' }}
-                fill="currentColor"
-                viewBox="0 0 20 20"
-                xmlns="http://www.w3.org/2000/svg"
-              >
-                <path
-                  fillRule="evenodd"
-                  d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-6-3a2 2 0 11-4 0 2 2 0 014 0zm-2 4a5 5 0 00-4.546 2.916A5.98 5.98 0 0010 16a5.979 5.979 0 004.546-2.084A5 5 0 0010 11z"
-                  clipRule="evenodd"
-                />
-              </svg>
-
-              <div
-                style={{
-                  position: 'absolute',
-                  right: 0,
-                  marginTop: '0.5rem',
-                  width: '12rem',
-                  backgroundColor: '#fff',
-                  border: '1px solid #e5e7eb',
-                  borderRadius: '0.375rem',
-                  boxShadow:
-                    '0 10px 15px -3px rgba(0,0,0,0.1), 0 4px 6px -2px rgba(0,0,0,0.05)',
-                  zIndex: 9999,
-                  opacity: isDropdownVisible ? 1 : 0,
-                  pointerEvents: isDropdownVisible ? 'auto' : 'none',
-                  transition: 'opacity 0.2s ease-in-out'
-                }}
-              >
-                <Link
-                  to="/profile"
-                  style={{
-                    display: 'block',
-                    padding: '0.5rem 1rem',
-                    color: '#4b5563',
-                    textDecoration: 'none'
-                  }}
-                >
-                  Profile
-                </Link>
+          {!isMobile && user && (
+            <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+              <span style={{ color: "#6B7280", fontSize: 14 }}>Welcome{user.name ? `, ${user.name}` : user.email ? `, ${user.email}` : ""}</span>
+              <div ref={menuRef} style={{ position: "relative" }}>
                 <button
-                  onClick={() => {
-                    userlogout();
-                    navigate('/login');
-                  }}
+                  onClick={() => setOpen(v => !v)}
                   style={{
-                    display: 'block',
-                    width: '100%',
-                    padding: '0.5rem 1rem',
-                    textAlign: 'left',
-                    background: 'transparent',
-                    border: 'none',
-                    color: '#4b5563',
-                    cursor: 'pointer'
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 8,
+                    background: "transparent",
+                    border: "1px solid #E6E9EC",
+                    padding: "6px 10px",
+                    borderRadius: 20,
+                    cursor: "pointer",
+                    color: "#6B7280"
                   }}
                 >
-                  Logout
+                  <div style={{ width: 28, height: 28, borderRadius: "50%", background: "#F3F6F8", display: "grid", placeItems: "center", color: "#4B5563" }}>
+                    <UserIcon size={16} />
+                  </div>
+                  <ChevronDown size={16} />
                 </button>
+
+                <div
+                  style={{
+                    position: "absolute",
+                    right: 0,
+                    marginTop: 8,
+                    width: 200,
+                    background: "#fff",
+                    border: "1px solid #E6E9EC",
+                    borderRadius: 10,
+                    boxShadow: "0 12px 24px rgba(0,0,0,0.08)",
+                    zIndex: 9999,
+                    overflow: "hidden",
+                    opacity: open ? 1 : 0,
+                    pointerEvents: open ? "auto" : "none",
+                    transition: "opacity 180ms ease"
+                  }}
+                >
+                  <Link
+                    to="/profile"
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: 10,
+                      padding: "10px 12px",
+                      color: "#4B5563",
+                      textDecoration: "none",
+                      fontSize: 14
+                    }}
+                  >
+                    <UserIcon size={16} />
+                    Profile
+                  </Link>
+                  <button
+                    onClick={() => {
+                      userlogout();
+                      navigate("/login");
+                    }}
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: 10,
+                      width: "100%",
+                      padding: "10px 12px",
+                      background: "transparent",
+                      border: "none",
+                      color: "#4B5563",
+                      cursor: "pointer",
+                      fontSize: 14
+                    }}
+                  >
+                    <LogOut size={16} />
+                    Logout
+                  </button>
+                </div>
               </div>
             </div>
+          )}
+
+          {isMobile && (
+            <button
+              onClick={() => setMobileOpen((s) => !s)}
+              aria-label="Toggle menu"
+              style={{
+                display: "inline-flex",
+                alignItems: "center",
+                justifyContent: "center",
+                width: 40,
+                height: 40,
+                borderRadius: 10,
+                border: "1px solid #E6E9EC",
+                background: "#FFFFFF",
+                color: "#4B5563",
+                cursor: "pointer",
+                boxShadow: "0 2px 8px rgba(0,0,0,0.06)"
+              }}
+            >
+              {mobileOpen ? <X size={20} /> : <Menu size={20} />}
+            </button>
+          )}
+        </div>
+
+        {!isMobile && (
+          <div style={{ borderTop: "1px solid #E6E9EC", padding: "10px 24px", background: "#FFFFFF" }}>
+            <nav style={{ display: "flex", alignItems: "center", gap: 24, justifyContent: "center", maxWidth: 1200, margin: "0 auto" }}>
+              {resourceNavItems.map((item) => {
+                const isActive = item.to === activeLink;
+                return (
+                  <Link key={item.name} to={item.to} style={linkStyle(isActive)}>
+                    {item.icon}
+                    <span>{item.name}</span>
+                    <span
+                      style={{
+                        position: "absolute",
+                        left: 0,
+                        bottom: -6,
+                        width: "100%",
+                        height: 2,
+                        backgroundColor: primary,
+                        transform: `scaleX(${isActive ? 1 : 0})`,
+                        transformOrigin: "left",
+                        transition: "transform 140ms ease"
+                      }}
+                    />
+                  </Link>
+                );
+              })}
+            </nav>
           </div>
-        ) : (
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-            <Link
-              to="/login"
-              style={{
-                padding: '0.5rem 0.9rem',
-                border: '1px solid #e5e7eb',
-                borderRadius: '0.375rem',
-                color: '#374151',
-                textDecoration: 'none'
-              }}
-            >
-              Login
-            </Link>
-            <Link
-              to="/signup"
-              style={{
-                padding: '0.5rem 0.9rem',
-                borderRadius: '0.375rem',
-                backgroundColor: '#2563eb',
-                color: '#fff',
-                textDecoration: 'none'
-              }}
-            >
-              Sign up
-            </Link>
+        )}
+
+        {isMobile && mobileOpen && (
+          <div
+            style={{
+              borderTop: "1px solid #E6E9EC",
+              background: "#FFFFFF",
+              boxShadow: "0 10px 24px rgba(0,0,0,0.06)",
+              padding: 12
+            }}
+          >
+            <nav style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+              {filteredMain.map((item) => {
+                const isActive = item.to === activeLink;
+                return (
+                  <Link
+                    key={item.name}
+                    to={item.to}
+                    onClick={() => setMobileOpen(false)}
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: 10,
+                      padding: "10px 12px",
+                      borderRadius: 10,
+                      textDecoration: "none",
+                      fontWeight: 600,
+                      color: isActive ? primary : "#1D2226",
+                      background: isActive ? "#E9F1FF" : "transparent",
+                      border: "1px solid " + (isActive ? "#D0E6FB" : "transparent")
+                    }}
+                  >
+                    {item.icon}
+                    <span>{item.name}</span>
+                  </Link>
+                );
+              })}
+
+              <div style={{ height: 1, background: "#E6E9EC", margin: "8px 0" }} />
+
+              {resourceNavItems.map((item) => {
+                const isActive = item.to === activeLink;
+                return (
+                  <Link
+                    key={item.name}
+                    to={item.to}
+                    onClick={() => setMobileOpen(false)}
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: 10,
+                      padding: "10px 12px",
+                      borderRadius: 10,
+                      textDecoration: "none",
+                      fontWeight: 600,
+                      color: isActive ? primary : "#1D2226",
+                      background: isActive ? "#E9F1FF" : "transparent",
+                      border: "1px solid " + (isActive ? "#D0E6FB" : "transparent")
+                    }}
+                  >
+                    {item.icon}
+                    <span>{item.name}</span>
+                  </Link>
+                );
+              })}
+
+              {!user ? (
+                <div style={{ display: "flex", gap: 8, marginTop: 8 }}>
+                  <Link
+                    to="/login"
+                    onClick={() => setMobileOpen(false)}
+                    style={{
+                      flex: 1,
+                      textAlign: "center",
+                      padding: "10px 12px",
+                      border: "1px solid #E6E9EC",
+                      borderRadius: 10,
+                      color: "#374151",
+                      textDecoration: "none",
+                      fontWeight: 700
+                    }}
+                  >
+                    Login
+                  </Link>
+                  <Link
+                    to="/signup"
+                    onClick={() => setMobileOpen(false)}
+                    style={{
+                      flex: 1,
+                      textAlign: "center",
+                      padding: "10px 12px",
+                      borderRadius: 10,
+                      backgroundColor: primary,
+                      color: "#fff",
+                      textDecoration: "none",
+                      fontWeight: 800,
+                      boxShadow: "0 4px 10px rgba(10,102,194,0.25)"
+                    }}
+                  >
+                    Sign up
+                  </Link>
+                </div>
+              ) : (
+                <div style={{ display: "flex", flexDirection: "column", gap: 6, marginTop: 8 }}>
+                  <Link
+                    to="/profile"
+                    onClick={() => setMobileOpen(false)}
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: 10,
+                      padding: "10px 12px",
+                      borderRadius: 10,
+                      textDecoration: "none",
+                      color: "#1D2226",
+                      border: "1px solid #E6E9EC"
+                    }}
+                  >
+                    <UserIcon size={16} />
+                    Profile
+                  </Link>
+                  <button
+                    onClick={() => {
+                      setMobileOpen(false);
+                      userlogout();
+                      navigate("/login");
+                    }}
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: 10,
+                      padding: "10px 12px",
+                      borderRadius: 10,
+                      border: "1px solid #E6E9EC",
+                      background: "#FFFFFF",
+                      color: "#1D2226",
+                      fontWeight: 600,
+                      cursor: "pointer"
+                    }}
+                  >
+                    <LogOut size={16} />
+                    Logout
+                  </button>
+                </div>
+              )}
+            </nav>
           </div>
         )}
       </div>
 
-      {/* Resource Navigation Bar with Divider */}
-      <div style={{ borderTop: '1px solid #e5e7eb', padding: '0.75rem 2rem' }}>
-        <nav style={{ display: 'flex', alignItems: 'center', gap: '2rem', justifyContent: 'center' }}>
-          {resourceNavItems.map((item) => {
-            const isActive = item.to === activeLink;
-            return (
-              <Link
-                key={item.name}
-                to={item.to}
-                style={{
-                  position: 'relative',
-                  color: isActive ? '#2563eb' : '#4b5563',
-                  fontWeight: isActive ? '500' : 'normal',
-                  textDecoration: 'none',
-                  fontSize: '0.95rem'
-                }}
-              >
-                {item.name}
-                <span
-                  style={{
-                    position: 'absolute',
-                    left: 0,
-                    bottom: '-6px',
-                    width: '100%',
-                    height: '2px',
-                    backgroundColor: '#2563eb',
-                    transform: `scaleX(${isActive ? 1 : 0})`,
-                    transformOrigin: 'left',
-                    transition: 'transform 150ms ease'
-                  }}
-                />
-              </Link>
-            );
-          })}
-        </nav>
-      </div>
-    </div>
+      <div style={{ height: headerH }} />
+    </>
   );
 }

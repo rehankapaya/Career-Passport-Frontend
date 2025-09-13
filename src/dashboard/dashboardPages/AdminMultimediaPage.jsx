@@ -2,6 +2,18 @@ import React, { useEffect, useState } from "react";
 import axios from "axios";
 import { toast } from "react-toastify";
 import { apiurl } from "../../api";
+import getThumbnail from './../../hooks/useThumbnail';
+import { Video as VideoIcon, Mic as AudioIcon, FileText as PdfIcon, Image as ImageIcon, Star as StarIcon, Search as SearchIcon, PlayCircle, Bookmark, BookmarkCheck } from "lucide-react";
+
+const getMediaIcon = (type) => {
+  const s = 18;
+  const m = { marginRight: 8 };
+  if (type === "video") return <VideoIcon size={56} style={{ position: "absolute", zIndex: 1, pointerEvents: "none", opacity: 0.9 }} />
+  if (type === "audio") return <AudioIcon size={s} style={{ position: "absolute", zIndex: 1, pointerEvents: "none", opacity: 0.9 }} />
+  if (type === "pdf") return <PdfIcon size={56} style={{ position: "absolute", zIndex: 1, pointerEvents: "none", opacity: 0.9 }} />
+  if (type === "image") return <ImageIcon size={56} style={{ position: "absolute", zIndex: 1, pointerEvents: "none", opacity: 0.9 }} />
+  return null;
+};
 
 export default function AdminMultimediaPage() {
   const [items, setItems] = useState([]);
@@ -242,59 +254,59 @@ export default function AdminMultimediaPage() {
   };
 
   // --- NEW: smarter thumbnails (YouTube, Drive, Images) ---
-  const getThumbnail = (item) => {
-    // Prefer a server-provided thumbnail if it exists
-    if (item.thumbnail_url) {
-      return item.thumbnail_url.startsWith("uploads/")
-        ? getMediaUrl(item.thumbnail_url)
-        : item.thumbnail_url;
-    }
+  // const getThumbnail = (item) => {
+  //   // Prefer a server-provided thumbnail if it exists
+  //   if (item.thumbnail_url) {
+  //     return item.thumbnail_url.startsWith("uploads/")
+  //       ? getMediaUrl(item.thumbnail_url)
+  //       : item.thumbnail_url;
+  //   }
 
-    const url = item.url || "";
+  //   const url = item.url || "";
 
-    // Type-specific logic
-    if (item.type === "image") {
-      if (!url) return placeholder("96aab5", "Image");
-      if (isDriveUrl(url)) return getDriveImageViewUrl(url);
-      return getMediaUrl(url);
-    }
+  //   // Type-specific logic
+  //   if (item.type === "image") {
+  //     if (!url) return placeholder("96aab5", "Image");
+  //     if (isDriveUrl(url)) return getDriveImageViewUrl(url);
+  //     return getMediaUrl(url);
+  //   }
 
-    if (item.type === "video") {
-      // YouTube
-      const yt = getYouTubeId(url);
-      if (yt) return `https://img.youtube.com/vi/${yt}/mqdefault.jpg`;
+  //   if (item.type === "video") {
+  //     // YouTube
+  //     const yt = getYouTubeId(url);
+  //     if (yt) return `https://img.youtube.com/vi/${yt}/mqdefault.jpg`;
 
-      // Google Drive video/pdf thumbnails
-      if (isDriveUrl(url)) {
-        const t = getDriveThumbnailUrl(url);
-        if (t) return t;
-      }
+  //     // Google Drive video/pdf thumbnails
+  //     if (isDriveUrl(url)) {
+  //       const t = getDriveThumbnailUrl(url);
+  //       if (t) return t;
+  //     }
 
-      // Local uploads (no built-in thumb) → placeholder
-      if (url && url.startsWith("uploads/")) {
-        return "https://via.placeholder.com/300x180/1f2937/ffffff?text=Video";
-      }
+  //     // Local uploads (no built-in thumb) → placeholder
+  //     if (url && url.startsWith("uploads/")) {
+  //       return "https://via.placeholder.com/300x180/1f2937/ffffff?text=Video";
+  //     }
 
-      // Unknown video host → generic
-      return "https://via.placeholder.com/300x180/1f2937/ffffff?text=Video";
-    }
+  //     // Unknown video host → generic
+  //     return "https://via.placeholder.com/300x180/1f2937/ffffff?text=Video";
+  //   }
 
-    if (item.type === "pdf") {
-      // Drive often returns a thumbnail for PDFs
-      if (isDriveUrl(url)) {
-        const t = getDriveThumbnailUrl(url);
-        if (t) return t;
-      }
-      return "https://via.placeholder.com/300x180/0ea5e9/ffffff?text=PDF";
-    }
+  //   if (item.type === "pdf") {
+  //     // Drive often returns a thumbnail for PDFs
+  //     if (isDriveUrl(url)) {
+  //       const t = getDriveThumbnailUrl(url);
+  //       if (t) return t;
+  //     }
+  //     return "https://via.placeholder.com/300x180/0ea5e9/ffffff?text=PDF";
+  //   }
 
-    if (item.type === "audio") {
-      return "https://via.placeholder.com/300x180/10b981/ffffff?text=Audio";
-    }
+  //   if (item.type === "audio") {
+  //     return "https://via.placeholder.com/300x180/10b981/ffffff?text=Audio";
+  //   }
 
-    // Fallback
-    return "https://via.placeholder.com/300x180/96aab5/ffffff?text=Media";
-  };
+  //   // Fallback
+  //   return "https://via.placeholder.com/300x180/96aab5/ffffff?text=Media";
+  // };
   // --------------------------------------------------------
 
   // Format date for display
@@ -410,12 +422,12 @@ export default function AdminMultimediaPage() {
                     form.type === "image"
                       ? "image/*"
                       : form.type === "audio"
-                      ? "audio/*"
-                      : form.type === "pdf"
-                      ? "application/pdf"
-                      : form.type === "video"
-                      ? "video/*"
-                      : "*"
+                        ? "audio/*"
+                        : form.type === "pdf"
+                          ? "application/pdf"
+                          : form.type === "video"
+                            ? "video/*"
+                            : "*"
                   }
                   onChange={handleChange}
                   style={styles.input}
@@ -522,62 +534,18 @@ export default function AdminMultimediaPage() {
           {filteredItems.map((item) => (
             <div key={item._id || item.media_id} style={styles.gridCard}>
               {/* Thumbnail */}
-              <div
-                style={{
-                  position: "relative",
-                  paddingBottom: "56.25%", // 16:9
-                  backgroundColor: "#000",
-                  overflow: "hidden",
-                }}
-              >
-                <img
-                  src={getThumbnail(item)}
-                  alt={item.title}
-                  style={{
-                    position: "absolute",
-                    top: 0,
-                    left: 0,
-                    width: "100%",
-                    height: "100%",
-                    objectFit: "cover",
-                  }}
-                  loading="lazy"
-                />
+              <div style={{ position: "relative", height: 180, overflow: "hidden", backgroundColor: "#000", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                  <>
+                    <img src={getThumbnail(item)} alt={item.title} style={{ width: "100%", height: "100%", objectFit: "cover", position: "absolute", inset: 0 }} />
+                    {item.type === "video" && (
+                      <PlayCircle size={56} style={{ position: "absolute", zIndex: 1, pointerEvents: "none", opacity: 0.9 }} />
+                    )}
+                   
 
-                {/* Media type indicator */}
-                <div
-                  style={{
-                    position: "absolute",
-                    top: "8px",
-                    right: "8px",
-                    backgroundColor: "rgba(0,0,0,0.7)",
-                    color: "white",
-                    padding: "4px 8px",
-                    borderRadius: "4px",
-                    fontSize: "12px",
-                    fontWeight: "500",
-                    textTransform: "uppercase",
-                  }}
-                >
-                  {item.type}
-                </div>
-
-                {/* Rating */}
-                {item.rating_avg > 0 && (
-                  <div
-                    style={{
-                      position: "absolute",
-                      bottom: "8px",
-                      left: "8px",
-                      backgroundColor: "rgba(0,0,0,0.7)",
-                      color: "white",
-                      padding: "4px 8px",
-                      borderRadius: "4px",
-                      fontSize: "12px",
-                      fontWeight: "500",
-                    }}
-                  >
-                    ⭐ {item.rating_avg} ({item.rating_count})
+                  </>
+                {item.type === "video" && isDriveUrl(item.url) && (
+                  <div style={{ position: "absolute", top: 10, left: 10, backgroundColor: "#0A66C2", color: "#FFFFFF", padding: "4px 8px", borderRadius: 6, fontSize: 11, fontWeight: 700, zIndex: 2 }}>
+                    Drive
                   </div>
                 )}
               </div>
@@ -719,12 +687,15 @@ export default function AdminMultimediaPage() {
             <div key={item._id || item.media_id} style={styles.tableRow}>
               <div style={{ ...styles.tableCell, display: "flex", alignItems: "center", gap: 10 }}>
                 {/* NEW: small thumbnail in list view */}
-                <img
-                  src={getThumbnail(item)}
-                  alt={item.title}
-                  style={{ width: 64, height: 40, objectFit: "cover", borderRadius: 4, flexShrink: 0 }}
-                  loading="lazy"
-                />
+                <>
+                  <img
+                    src={getThumbnail(item)}
+                    alt={item.title}
+                    style={{ width: 64, height: 40, objectFit: "cover", borderRadius: 4, flexShrink: 0 }}
+                    loading="lazy"
+                  />
+                </>
+
                 <div>
                   <div style={styles.resourceTitle}>{item.title}</div>
                   <div style={styles.resourceDescription}>
@@ -883,12 +854,12 @@ export default function AdminMultimediaPage() {
                         editForm.type === "image"
                           ? "image/*"
                           : editForm.type === "audio"
-                          ? "audio/*"
-                          : editForm.type === "pdf"
-                          ? "application/pdf"
-                          : editForm.type === "video"
-                          ? "video/*"
-                          : "*"
+                            ? "audio/*"
+                            : editForm.type === "pdf"
+                              ? "application/pdf"
+                              : editForm.type === "video"
+                                ? "video/*"
+                                : "*"
                       }
                       onChange={handleEditChange}
                       style={styles.input}

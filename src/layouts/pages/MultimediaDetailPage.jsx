@@ -13,6 +13,7 @@ import {
   Download,
   FileText
 } from "lucide-react";
+import getThumbnail from "../../hooks/useThumbnail";
 
 export default function MultimediaDetailPage() {
   const { state } = useLocation();
@@ -24,6 +25,7 @@ export default function MultimediaDetailPage() {
   const [showTranscript, setShowTranscript] = useState(false);
   const [audioErrored, setAudioErrored] = useState(false);
   const { id } = useParams();
+  
 
   const brandBlue = "#0A66C2";
   const brandDeep = "#004182";
@@ -374,7 +376,8 @@ export default function MultimediaDetailPage() {
               {relatedContent.map((item) => (
                 <Link key={item.media_id} to={`/multimedia/${item.media_id}`} style={{ display: "flex", alignItems: "center", gap: 12, textDecoration: "none", color: brandInk }}>
                   <div style={{ width: 56, height: 56, backgroundColor: chipBg, borderRadius: 10, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
-                    {getMediaIcon(item.type)}
+                    <img src={getThumbnail(item)} alt={item.title} style={{width:"100%"}}/>
+                    {/* {getMediaIcon(item.type)} */}
                   </div>
                   <div style={{ minWidth: 0 }}>
                     <h4 style={{ fontSize: 15, fontWeight: 700, margin: 0, lineHeight: 1.3, color: brandInk, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{item.title}</h4>
@@ -394,7 +397,7 @@ export default function MultimediaDetailPage() {
               {popularContent.map((item) => (
                 <Link key={item.media_id} to={`/multimedia/${item.media_id}`} style={{ display: "flex", alignItems: "center", gap: 12, textDecoration: "none", color: brandInk }}>
                   <div style={{ width: 56, height: 56, backgroundColor: chipBg, borderRadius: 10, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
-                    {getMediaIcon(item.type)}
+                   <img src={getThumbnail(item)} alt={item.title} style={{width:"100%"}}/>
                   </div>
                   <div style={{ minWidth: 0 }}>
                     <h4 style={{ fontSize: 15, fontWeight: 700, margin: 0, lineHeight: 1.3, color: brandInk, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{item.title}</h4>

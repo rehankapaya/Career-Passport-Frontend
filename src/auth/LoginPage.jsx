@@ -4,176 +4,239 @@ import { apiurl } from "../api";
 import { UserContext } from "../context/UserContext";
 import { toast } from "react-toastify";
 import { Link, useNavigate } from "react-router-dom";
+import { Compass, Mail, Lock, LogIn } from "lucide-react";
 
 export default function LoginPage() {
   const { userlogin } = useContext(UserContext);
   const navigate = useNavigate();
-
-  const [formData, setFormData] = useState({
-    email: "",
-    password: "",
-  });
-
+  const [formData, setFormData] = useState({ email: "", password: "" });
   const { email, password } = formData;
 
-  // input change
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
-  // form submit
   async function handleSubmit(e) {
     e.preventDefault();
-
     try {
       const response = await axios.post(`${apiurl}/api/user/login`, formData);
-      console.log("Login successful:", response.data);
-
-      toast.success("Login Successful 🎉");
+      toast.success("Login Successful");
       userlogin(response.data.user);
       navigate("/");
     } catch (error) {
-      console.error("Login failed:", error);
       toast.error(error.response?.data?.message || "Login Failed");
     }
   }
-  const inputStyle = {
-    width: '100%',
-    padding: '0.75rem',
-    borderRadius: '0.5rem',
-    border: '1px solid #444',
-    backgroundColor: '#3b3b3b',
-    color: '#e0e0e0',
-    outline: 'none',
-    boxSizing: 'border-box'
-  };
 
-  const labelStyle = {
-    display: 'block',
-    marginBottom: '0.5rem',
-    color: '#e0e0e0',
-    textAlign: 'left',
-    fontWeight: '500'
-  };
-
-  const buttonStyle = {
-    width: '100%',
-    padding: '0.75rem',
-    backgroundColor: '#007bff',
-    color: '#fff',
-    border: 'none',
-    borderRadius: '0.5rem',
-    fontWeight: 'bold',
-    cursor: 'pointer',
-    marginTop: '0.5rem',
-    fontSize: '1rem'
-  };
-
-  const linkStyle = {
-    color: '#007bff',
-    textDecoration: 'none',
-    fontWeight: 'bold'
-  };
-
-  const footerTextStyle = {
-    marginTop: '1.5rem',
-    color: '#a0a0a0',
-    fontSize: '0.875rem'
-  };
-
-  const loginOptionsStyle = {
-    display: 'flex',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    fontSize: '0.875rem',
-    color: '#a0a0a0',
-    marginTop: '0.5rem'
-  };
+  const primary = "#0A66C2";
+  const deep = "#004182";
+  const ink = "#1D2226";
+  const line = "#E6E9EC";
+  const haze = "#F3F6F8";
 
   return (
-    <div style={{
-      display: 'flex',
-      justifyContent: 'center',
-      alignItems: 'center',
-      minHeight: '100vh',
-      backgroundColor: '#1a1a1a',
-      fontFamily: 'sans-serif',
-      padding: '2rem'
-    }}>
-      <div style={{
-        backgroundColor: '#2d2d2d',
-        padding: '2.5rem',
-        borderRadius: '1rem',
-        boxShadow: '0 4px 10px rgba(0, 0, 0, 0.5)',
-        width: '100%',
-        maxWidth: '24rem',
-        textAlign: 'center'
-      }}>
-        <h2 style={{
-          fontSize: '2rem',
-          fontWeight: 'bold',
-          marginBottom: '0.5rem',
-          color: '#e0e0e0'
-        }}>
-          Welcome Back
+    <div
+      style={{
+        minHeight: "100vh",
+        display: "grid",
+        placeItems: "center",
+        background: haze,
+        fontFamily: 'system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif',
+        padding: 24
+      }}
+    >
+      <div
+        style={{
+          width: "100%",
+          maxWidth: 380,
+          background: "#fff",
+          border: "1px solid " + line,
+          borderRadius: 12,
+          boxShadow: "0 12px 28px rgba(0,0,0,0.08)",
+          padding: 24
+        }}
+      >
+        <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 16 }}>
+          <div
+            style={{
+              width: 36,
+              height: 36,
+              borderRadius: 8,
+              background: primary,
+              color: "#fff",
+              display: "grid",
+              placeItems: "center",
+              boxShadow: "0 6px 14px rgba(10,102,194,0.25)"
+            }}
+          >
+            <Compass size={18} />
+          </div>
+          <div style={{ fontSize: 18, fontWeight: 800, color: ink }}>NextStep Navigator</div>
+        </div>
+
+        <h2
+          style={{
+            margin: 0,
+            marginBottom: 6,
+            fontSize: 22,
+            fontWeight: 800,
+            color: deep,
+            letterSpacing: 0.2
+          }}
+        >
+          Welcome back
         </h2>
-        <p style={{
-          color: '#a0a0a0',
-          marginBottom: '1.5rem'
-        }}>
-          Login to continue your career journey ✨
-        </p>
+        <div style={{ color: "#6B7280", fontSize: 14, marginBottom: 18 }}>
+          Sign in to continue your journey
+        </div>
 
-        <form onSubmit={handleSubmit} style={{
-          display: 'flex',
-          flexDirection: 'column',
-          gap: '1rem'
-        }}>
+        <form onSubmit={handleSubmit} style={{ display: "grid", gap: 12 }}>
           <div>
-            <label htmlFor="email" style={labelStyle}>Email Address</label>
-            <input
-              type="email"
-              id="email"
-              name="email"
-              value={email}
-              onChange={handleChange}
-              placeholder="Enter your email"
-              required
-              style={inputStyle}
-            />
-          </div>
-
-          <div>
-            <label htmlFor="password" style={labelStyle}>Password</label>
-            <input
-              type="password"
-              id="password"
-              name="password"
-              value={password}
-              onChange={handleChange}
-              placeholder="Enter your password"
-              required
-              style={inputStyle}
-            />
-          </div>
-
-          <div style={loginOptionsStyle}>
-            <label style={{ margin: 0 }}>
-              <input type="checkbox" style={{ marginRight: '0.5rem' }} /> Remember me
+            <label
+              htmlFor="email"
+              style={{
+                display: "block",
+                marginBottom: 6,
+                color: "#374151",
+                fontWeight: 600,
+                fontSize: 13
+              }}
+            >
+              Email address
             </label>
-            <Link to="/password-reset" style={linkStyle}>
-              Forgot Password?
+            <div
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: 8,
+                border: "1px solid " + line,
+                background: "#fff",
+                borderRadius: 10,
+                padding: "10px 12px"
+              }}
+            >
+              <Mail size={18} style={{ color: primary }} />
+              <input
+                type="email"
+                id="email"
+                name="email"
+                value={email}
+                onChange={handleChange}
+                placeholder="you@example.com"
+                required
+                style={{
+                  flex: 1,
+                  border: "none",
+                  outline: "none",
+                  fontSize: 14,
+                  color: ink,
+                  background: "transparent"
+                }}
+              />
+            </div>
+          </div>
+
+          <div>
+            <label
+              htmlFor="password"
+              style={{
+                display: "block",
+                marginBottom: 6,
+                color: "#374151",
+                fontWeight: 600,
+                fontSize: 13
+              }}
+            >
+              Password
+            </label>
+            <div
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: 8,
+                border: "1px solid " + line,
+                background: "#fff",
+                borderRadius: 10,
+                padding: "10px 12px"
+              }}
+            >
+              <Lock size={18} style={{ color: primary }} />
+              <input
+                type="password"
+                id="password"
+                name="password"
+                value={password}
+                onChange={handleChange}
+                placeholder="Your password"
+                required
+                style={{
+                  flex: 1,
+                  border: "none",
+                  outline: "none",
+                  fontSize: 14,
+                  color: ink,
+                  background: "transparent"
+                }}
+              />
+            </div>
+          </div>
+
+          <div
+            style={{
+              display: "flex",
+              justifyContent: "space-between",
+              alignItems: "center",
+              fontSize: 13,
+              color: "#6B7280"
+            }}
+          >
+            <label style={{ display: "flex", alignItems: "center", gap: 8, cursor: "pointer" }}>
+              <input type="checkbox" style={{ width: 16, height: 16 }} /> Remember me
+            </label>
+            <Link
+              to="/password-reset"
+              style={{ color: primary, textDecoration: "none", fontWeight: 700 }}
+            >
+              Forgot password
             </Link>
           </div>
 
-          <button type="submit" style={buttonStyle}>
+          <button
+            type="submit"
+            style={{
+              width: "100%",
+              display: "inline-flex",
+              alignItems: "center",
+              justifyContent: "center",
+              gap: 8,
+              padding: "12px 14px",
+              background: primary,
+              color: "#fff",
+              border: "none",
+              borderRadius: 10,
+              fontWeight: 800,
+              cursor: "pointer",
+              boxShadow: "0 8px 18px rgba(10,102,194,0.28)"
+            }}
+          >
+            <LogIn size={18} />
             Login
           </button>
         </form>
 
-        <p style={footerTextStyle}>
-          Don’t have an account? <Link to="/signup" style={linkStyle}>Sign up here</Link>
-        </p>
+        <div
+          style={{
+            marginTop: 16,
+            fontSize: 14,
+            color: "#6B7280",
+            textAlign: "center"
+          }}
+        >
+          Don’t have an account?{" "}
+          <Link to="/signup" style={{ color: primary, textDecoration: "none", fontWeight: 800 }}>
+            Sign up
+          </Link>
+        </div>
       </div>
     </div>
   );

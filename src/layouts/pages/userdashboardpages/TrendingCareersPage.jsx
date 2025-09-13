@@ -37,6 +37,7 @@ export default function TrendingCareersPage() {
         color: "#1D2226",
       }}
     >
+      
       <div
         style={{
           display: "flex",

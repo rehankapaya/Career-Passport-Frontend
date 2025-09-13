@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+import { BarChart3, Mail } from "lucide-react";
 
 export default function AdminQuizHistory() {
   const [history, setHistory] = useState([]);
@@ -10,207 +11,78 @@ export default function AdminQuizHistory() {
         const res = await fetch("http://localhost:5000/api/attempt/history");
         const data = await res.json();
         setHistory(data);
-      } catch (err) {
-        console.error("Error fetching history:", err);
-      } finally {
+      } catch {}
+      finally {
         setLoading(false);
       }
     };
-
     fetchHistory();
   }, []);
 
   if (loading) {
     return (
-      <div
-        style={{
-          display: "flex",
-          justifyContent: "center",
-          alignItems: "center",
-          padding: "40px",
-          fontFamily: "Segoe UI, Roboto, Helvetica, Arial, sans-serif",
-          color: "#5f5f5f",
-          fontSize: "16px",
-        }}
-      >
-        Loading quiz history...
+      <div style={{ display: "flex", gap: 10, justifyContent: "center", alignItems: "center", padding: 40, fontFamily: "system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif", color: "#5F5F5F", fontSize: 16 }}>
+        <BarChart3 size={18} color="#0A66C2" />
+        Loading quiz history…
       </div>
     );
   }
 
   return (
-    <div
-      style={{
-        padding: "32px",
-        fontFamily: "Segoe UI, Roboto, Helvetica, Arial, sans-serif",
-        backgroundColor: "#f3f2ef", // LinkedIn background
-        minHeight: "100vh",
-      }}
-    >
-      {/* Header */}
-      <h2
-        style={{
-          fontSize: "24px",
-          fontWeight: "600",
-          color: "#1d2226",
-          marginBottom: "20px",
-        }}
-      >
-        📊 Quiz Attempts History
-      </h2>
+    <div style={{ padding: 32, fontFamily: "system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif", backgroundColor: "#F3F6F8", minHeight: "100vh" }}>
+      <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 20 }}>
+        <div style={{ display: "inline-flex", alignItems: "center", justifyContent: "center", width: 36, height: 36, borderRadius: 10, background: "#E8F3FF", border: "1px solid #BBD7FF" }}>
+          <BarChart3 size={18} color="#0A66C2" />
+        </div>
+        <h2 style={{ fontSize: 24, fontWeight: 700, color: "#1D2226", margin: 0 }}>Quiz Attempts History</h2>
+      </div>
 
-      {/* Table Container */}
-      <div
-        style={{
-          overflowX: "auto",
-          backgroundColor: "#ffffff",
-          boxShadow: "0 2px 6px rgba(0,0,0,0.08)",
-          borderRadius: "8px",
-        }}
-      >
-        <table
-          style={{
-            width: "100%",
-            borderCollapse: "collapse",
-          }}
-        >
-          {/* Table Head */}
-          <thead
-            style={{
-              backgroundColor: "#f9fafb",
-              borderBottom: "1px solid #e0e0e0",
-            }}
-          >
+      <div style={{ overflowX: "auto", backgroundColor: "#FFFFFF", boxShadow: "0 10px 24px rgba(0,0,0,0.06)", borderRadius: 12, border: "1px solid #E6E9EC" }}>
+        <table style={{ width: "100%", borderCollapse: "collapse" }}>
+          <thead style={{ backgroundColor: "#F9FAFB", borderBottom: "1px solid #E6E9EC" }}>
             <tr>
-              {["User", "Quiz ID", "Step Index", "Status", "Total Score", "Created At"].map(
-                (header) => (
-                  <th
-                    key={header}
-                    style={{
-                      textAlign: "left",
-                      padding: "14px 20px",
-                      fontSize: "14px",
-                      fontWeight: "600",
-                      color: "#434649",
-                    }}
-                  >
-                    {header}
-                  </th>
-                )
-              )}
+              {["User", "Quiz ID", "Step Index", "Status", "Total Score", "Created At"].map((h) => (
+                <th key={h} style={{ textAlign: "left", padding: "14px 20px", fontSize: 13, letterSpacing: ".2px", fontWeight: 700, color: "#434649" }}>{h}</th>
+              ))}
             </tr>
           </thead>
-
-          {/* Table Body */}
           <tbody>
             {history.length > 0 ? (
               history.map((attempt, idx) => (
                 <tr
                   key={attempt._id}
-                  style={{
-                    backgroundColor: idx % 2 === 0 ? "#ffffff" : "#f9fafb",
-                    transition: "background 0.2s",
-                  }}
-                  onMouseEnter={(e) =>
-                    (e.currentTarget.style.backgroundColor = "#eef3f8")
-                  }
-                  onMouseLeave={(e) =>
-                    (e.currentTarget.style.backgroundColor =
-                      idx % 2 === 0 ? "#ffffff" : "#f9fafb")
-                  }
+                  style={{ backgroundColor: idx % 2 === 0 ? "#FFFFFF" : "#F9FAFB", transition: "background .2s" }}
+                  onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = "#EEF3F8")}
+                  onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = idx % 2 === 0 ? "#FFFFFF" : "#F9FAFB")}
                 >
-                  {/* User */}
-                  <td
-                    style={{
-                      padding: "14px 20px",
-                      fontSize: "14px",
-                      color: "#1d2226",
-                    }}
-                  >
-                    {attempt.userId?.email || "N/A"}
+                  <td style={{ padding: "14px 20px", fontSize: 14, color: "#1D2226", display: "flex", alignItems: "center", gap: 8 }}>
+                    <Mail size={16} color="#6B7280" />
+                    <span>{attempt.userId?.email || "N/A"}</span>
                   </td>
-
-                  {/* Quiz ID */}
-                  <td
-                    style={{
-                      padding: "14px 20px",
-                      fontSize: "14px",
-                      color: "#5f5f5f",
-                    }}
-                  >
-                    {attempt.quizId}
-                  </td>
-
-                  {/* Step Index */}
-                  <td
-                    style={{
-                      padding: "14px 20px",
-                      fontSize: "14px",
-                      color: "#5f5f5f",
-                    }}
-                  >
-                    {attempt.stepIndex}
-                  </td>
-
-                  {/* Status */}
+                  <td style={{ padding: "14px 20px", fontSize: 14, color: "#5F5F5F" }}>{attempt.quizId}</td>
+                  <td style={{ padding: "14px 20px", fontSize: 14, color: "#5F5F5F" }}>{attempt.stepIndex}</td>
                   <td style={{ padding: "14px 20px" }}>
                     <span
                       style={{
                         padding: "6px 12px",
-                        fontSize: "12px",
-                        fontWeight: "600",
-                        borderRadius: "20px",
-                        backgroundColor:
-                          attempt.status === "completed"
-                            ? "rgba(112, 181, 72, 0.15)" // LinkedIn green
-                            : "rgba(255, 191, 0, 0.15)", // Yellow
-                        color:
-                          attempt.status === "completed"
-                            ? "#007d44"
-                            : "#915907",
+                        fontSize: 12,
+                        fontWeight: 700,
+                        borderRadius: 999,
+                        backgroundColor: attempt.status === "completed" ? "rgba(112,181,72,.15)" : "rgba(255,191,0,.15)",
+                        color: attempt.status === "completed" ? "#007D44" : "#915907",
+                        border: `1px solid ${attempt.status === "completed" ? "rgba(112,181,72,.35)" : "rgba(255,191,0,.35)"}`
                       }}
                     >
                       {attempt.status}
                     </span>
                   </td>
-
-                  {/* Total Score */}
-                  <td
-                    style={{
-                      padding: "14px 20px",
-                      fontSize: "14px",
-                      fontWeight: "500",
-                      color: "#1d2226",
-                    }}
-                  >
-                    {attempt.totalScore ?? "-"}
-                  </td>
-
-                  {/* Created At */}
-                  <td
-                    style={{
-                      padding: "14px 20px",
-                      fontSize: "14px",
-                      color: "#5f5f5f",
-                    }}
-                  >
-                    {new Date(attempt.createdAt).toLocaleString()}
-                  </td>
+                  <td style={{ padding: "14px 20px", fontSize: 14, fontWeight: 600, color: "#1D2226" }}>{attempt.totalScore ?? "-"}</td>
+                  <td style={{ padding: "14px 20px", fontSize: 14, color: "#5F5F5F" }}>{new Date(attempt.createdAt).toLocaleString()}</td>
                 </tr>
               ))
             ) : (
               <tr>
-                <td
-                  colSpan="6"
-                  style={{
-                    padding: "20px",
-                    textAlign: "center",
-                    fontSize: "14px",
-                    color: "#5f5f5f",
-                  }}
-                >
-                  No quiz attempts found.
-                </td>
+                <td colSpan="6" style={{ padding: 20, textAlign: "center", fontSize: 14, color: "#5F5F5F" }}>No quiz attempts found.</td>
               </tr>
             )}
           </tbody>

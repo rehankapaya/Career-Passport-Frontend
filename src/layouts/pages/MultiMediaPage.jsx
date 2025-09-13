@@ -6,6 +6,7 @@ import MultimediaPageeXTRA from "./MultimediaPageeXTRA";
 import { Video as VideoIcon, Mic as AudioIcon, FileText as PdfIcon, Image as ImageIcon, Star as StarIcon, Search as SearchIcon, PlayCircle, Bookmark, BookmarkCheck } from "lucide-react";
 import { useBookmark } from "../../hooks/useBookmark";
 import { UserContext } from "../../context/UserContext";
+import getThumbnail from "../../hooks/useThumbnail";
 
 export default function MultimediaPage() {
   const [items, setItems] = useState([]);
@@ -101,35 +102,8 @@ export default function MultimediaPage() {
     navigate(`/multimedia/${item.media_id}`, { state: item });
   };
 
-  const getMediaIcon = (type) => {
-    const s = 18;
-    const m = { marginRight: 8 };
-    if (type === "video") return <VideoIcon size={s} style={m} />;
-    if (type === "audio") return <AudioIcon size={s} style={m} />;
-    if (type === "pdf") return <PdfIcon size={s} style={m} />;
-    if (type === "image") return <ImageIcon size={s} style={m} />;
-    return null;
-  };
 
-  const getThumbnailUrl = (item) => {
-    if (item.type === "video") {
-      if (item.url && (item.url.includes("youtube.com") || item.url.includes("youtu.be"))) {
-        const videoId = item.url.match(/(?:youtube\.com\/(?:[^/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([^"&?/\s]{11})/);
-        return videoId ? `https://img.youtube.com/vi/${videoId[1]}/mqdefault.jpg` : "https://via.placeholder.com/320x180/0A66C2/FFFFFF?text=Video";
-      } else if (item.url && isDriveUrl(item.url)) {
-        return getDriveThumbnailUrl(item.url);
-      } else if (item.url && item.url.startsWith("uploads/")) {
-        return "https://via.placeholder.com/320x180/0A66C2/FFFFFF?text=Video";
-      }
-    } else if (item.type === "image") {
-      return item.url && item.url.startsWith("uploads/") ? `${apiurl}/${item.url}` : item.url;
-    } else if (item.type === "audio") {
-      return "https://via.placeholder.com/320x180/004182/FFFFFF?text=Audio";
-    } else if (item.type === "pdf") {
-      return "https://via.placeholder.com/320x180/56687A/FFFFFF?text=PDF";
-    }
-    return "https://via.placeholder.com/320x180/56687A/FFFFFF?text=Media";
-  };
+ 
 
   const formatDate = (dateString) => {
     const date = new Date(dateString);
@@ -279,19 +253,11 @@ export default function MultimediaPage() {
                 onMouseLeave={(e) => (e.currentTarget.style.transform = "translateY(0)")}
               >
                 <div style={{ position: "relative", height: 180, overflow: "hidden", backgroundColor: "#000", display: "flex", alignItems: "center", justifyContent: "center" }}>
-                  {(item.type === "video" || item.type === "image") ? (
-                    <>
-                      <img src={getThumbnailUrl(item)} alt={item.title} style={{ width: "100%", height: "100%", objectFit: "cover", position: "absolute", inset: 0 }} />
+                      <img src={getThumbnail(item)} alt={item.title} style={{ width: "100%", height: "100%", objectFit: "cover", position: "absolute", inset: 0 }} />
                       {item.type === "video" && (
                         <PlayCircle size={56} style={{ position: "absolute", zIndex: 1, pointerEvents: "none", opacity: 0.9 }} />
                       )}
-                    </>
-                  ) : (
-                    <div style={{ display: "flex", flexDirection: "column", alignItems: "center", color: "#FFFFFF", fontSize: 16 }}>
-                      {getMediaIcon(item.type)}
-                      <span style={{ textTransform: "uppercase", fontWeight: 700, marginTop: 8 }}>{item.type}</span>
-                    </div>
-                  )}
+                
                   {item.type === "video" && isDriveUrl(item.url) && (
                     <div style={{ position: "absolute", top: 10, left: 10, backgroundColor: "#0A66C2", color: "#FFFFFF", padding: "4px 8px", borderRadius: 6, fontSize: 11, fontWeight: 700, zIndex: 2 }}>
                       Drive
@@ -379,7 +345,7 @@ export default function MultimediaPage() {
                   backgroundColor: "#E6E9EC"
                 }}>
                   <img
-                    src={getThumbnailUrl(item)}
+                    src={getThumbnail(item)}
                     alt={item.title}
                     style={{
                       width: "100%",

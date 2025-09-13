@@ -221,7 +221,7 @@ export default function HomePage() {
             Navigate your educational and career journey with guidance that feels practical and clear. Nothing fancy—just the stuff you actually need to move forward.
           </p>
 
-          <div style={pickCard}>
+          {/* <div style={pickCard}>
             <p style={{ fontWeight: 700, marginBottom: "1rem", textAlign: "left" }}>Choose Your Path</p>
             <form>
               {paths.map((p) => (
@@ -241,7 +241,7 @@ export default function HomePage() {
                 Get Started
               </button>
             </form>
-          </div>
+          </div> */}
         </div>
 
         <div style={mid}>

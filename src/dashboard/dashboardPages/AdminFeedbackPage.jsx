@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
 import { apiurl } from "../../api";
+import { List, Grid2X2, Search, X, Trash2, Mail, Tag, Clock } from "lucide-react";
 
 const AdminFeedbackPage = () => {
   const [feedbacks, setFeedbacks] = useState([]);
@@ -8,22 +9,21 @@ const AdminFeedbackPage = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [loading, setLoading] = useState(true);
   const [message, setMessage] = useState("");
-  const [viewMode, setViewMode] = useState("list"); // list or grid
+  const [viewMode, setViewMode] = useState("list");
 
-  // Fetch feedbacks on mount
   useEffect(() => {
     fetchFeedbacks();
   }, []);
 
-  // Filter on search
   useEffect(() => {
     if (searchTerm) {
+      const t = searchTerm.toLowerCase();
       const filtered = feedbacks.filter(
         (f) =>
-          f.message.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          f.category.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          f.user_id?.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          f.status.toLowerCase().includes(searchTerm.toLowerCase())
+          f.message?.toLowerCase().includes(t) ||
+          f.category?.toLowerCase().includes(t) ||
+          f.user_id?.email?.toLowerCase().includes(t) ||
+          f.status?.toLowerCase().includes(t)
       );
       setFilteredFeedbacks(filtered);
     } else {
@@ -41,8 +41,7 @@ const AdminFeedbackPage = () => {
       });
       setFeedbacks(res.data.data || []);
       setFilteredFeedbacks(res.data.data || []);
-    } catch (err) {
-      console.error(err);
+    } catch {
       setMessage("Failed to fetch feedbacks");
     } finally {
       setLoading(false);
@@ -58,7 +57,7 @@ const AdminFeedbackPage = () => {
       });
       setMessage("Feedback deleted successfully!");
       fetchFeedbacks();
-    } catch (err) {
+    } catch {
       setMessage("Failed to delete feedback");
     }
   };
@@ -73,116 +72,115 @@ const AdminFeedbackPage = () => {
       );
       setMessage("Status updated successfully!");
       fetchFeedbacks();
-    } catch (err) {
+    } catch {
       setMessage("Failed to update status");
     }
   };
 
-  const formatDate = (dateString) => {
-    return new Date(dateString).toLocaleString("en-US", {
+  const formatDate = (dateString) =>
+    new Date(dateString).toLocaleString("en-US", {
       year: "numeric",
       month: "short",
       day: "numeric",
       hour: "2-digit",
       minute: "2-digit",
     });
-  };
 
   if (loading) {
-    return <p>Loading feedbacks...</p>;
+    return (
+      <div style={{ minHeight: "50vh", display: "flex", flexDirection: "column", gap: 12, alignItems: "center", justifyContent: "center", color: "#6B7280", fontFamily: "system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif" }}>
+        <div style={{ width: 44, height: 44, border: "4px solid #E6E9EC", borderTop: "4px solid #0A66C2", borderRadius: "50%", animation: "spin 1s linear infinite" }} />
+        <div>Loading feedbacks…</div>
+      </div>
+    );
   }
 
   return (
-    <div style={styles.container}>
-      <div style={styles.header}>
-        <h1 style={styles.pageTitle}>Feedback Management</h1>
-        <div style={styles.viewControls}>
-          <button
-            onClick={() => setViewMode("list")}
-            style={{
-              ...styles.viewButton,
-              ...(viewMode === "list" ? styles.activeViewButton : {}),
-            }}
-          >
-            List View
+    <div style={{ padding: 20, maxWidth: 1200, margin: "0 auto", fontFamily: "system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif" }}>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 20, gap: 12, flexWrap: "wrap" }}>
+        <h1 style={{ margin: 0, color: "#1D2226" }}>Feedback Management</h1>
+        <div style={{ display: "flex", gap: 8 }}>
+          <button onClick={() => setViewMode("list")} style={{ display: "inline-flex", alignItems: "center", gap: 8, padding: "8px 14px", background: viewMode === "list" ? "#0A66C2" : "#F3F6F8", color: viewMode === "list" ? "#fff" : "#1D2226", border: "1px solid", borderColor: viewMode === "list" ? "#0A66C2" : "#E6E9EC", borderRadius: 10, cursor: "pointer", fontWeight: 700 }}>
+            <List size={16} />
+            List
           </button>
-          <button
-            onClick={() => setViewMode("grid")}
-            style={{
-              ...styles.viewButton,
-              ...(viewMode === "grid" ? styles.activeViewButton : {}),
-            }}
-          >
-            Grid View
+          <button onClick={() => setViewMode("grid")} style={{ display: "inline-flex", alignItems: "center", gap: 8, padding: "8px 14px", background: viewMode === "grid" ? "#0A66C2" : "#F3F6F8", color: viewMode === "grid" ? "#fff" : "#1D2226", border: "1px solid", borderColor: viewMode === "grid" ? "#0A66C2" : "#E6E9EC", borderRadius: 10, cursor: "pointer", fontWeight: 700 }}>
+            <Grid2X2 size={16} />
+            Grid
           </button>
         </div>
       </div>
 
       {message && (
-        <div
-          style={{
-            ...styles.message,
-            ...(message.includes("success")
-              ? styles.successMessage
-              : styles.errorMessage),
-          }}
-        >
-          {message}
-          <button onClick={() => setMessage("")} style={styles.messageClose}>
-            ×
+        <div style={{ padding: "12px 16px", borderRadius: 10, marginBottom: 16, display: "flex", alignItems: "center", justifyContent: "space-between", fontWeight: 600, background: message.toLowerCase().includes("success") ? "#E8F3FF" : "#FDE7E9", color: message.toLowerCase().includes("success") ? "#0A66C2" : "#B42318", border: `1px solid ${message.toLowerCase().includes("success") ? "#BBD7FF" : "#F2C2C0"}` }}>
+          <span>{message}</span>
+          <button onClick={() => setMessage("")} style={{ background: "transparent", border: "none", color: "inherit", cursor: "pointer", display: "inline-flex" }}>
+            <X size={18} />
           </button>
         </div>
       )}
 
-      <div style={styles.searchContainer}>
-        <input
-          type="text"
-          placeholder="Search feedbacks..."
-          value={searchTerm}
-          onChange={(e) => setSearchTerm(e.target.value)}
-          style={styles.searchInput}
-        />
-        <span style={styles.resourceCount}>
-          {filteredFeedbacks.length} feedback(s) found
-        </span>
+      <div style={{ display: "grid", gridTemplateColumns: "1fr auto", gap: 12, alignItems: "center", marginBottom: 18 }}>
+        <div style={{ position: "relative" }}>
+          <Search size={16} color="#6B7280" style={{ position: "absolute", left: 12, top: "50%", transform: "translateY(-50%)" }} />
+          <input
+            type="text"
+            placeholder="Search by message, category, email, or status"
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            style={{ width: "100%", padding: "12px 14px 12px 36px", border: "1px solid #E6E9EC", borderRadius: 10, outline: "none", fontSize: 15 }}
+          />
+        </div>
+        <span style={{ color: "#6B7280", fontSize: 14 }}>{filteredFeedbacks.length} feedback(s) found</span>
       </div>
 
       {filteredFeedbacks.length === 0 ? (
-        <div style={styles.emptyState}>
-          <h3>No feedbacks found</h3>
+        <div style={{ textAlign: "center", padding: 40, background: "#F3F6F8", borderRadius: 12, color: "#6B7280" }}>
+          <h3 style={{ margin: 0, color: "#1D2226" }}>No feedbacks found</h3>
+          <p style={{ marginTop: 6 }}>Try a different search</p>
         </div>
       ) : viewMode === "list" ? (
-        <div style={styles.listContainer}>
-          <div style={styles.tableHeader}>
-            <div style={styles.tableCell}>User</div>
-            <div style={styles.tableCell}>Category</div>
-            <div style={styles.tableCell}>Message</div>
-            <div style={styles.tableCell}>Status</div>
-            <div style={styles.tableCell}>Submitted</div>
-            <div style={styles.tableCell}>Actions</div>
+        <div style={{ background: "#fff", borderRadius: 12, overflow: "hidden", boxShadow: "0 10px 24px rgba(0,0,0,0.06)" }}>
+          <div style={{ display: "grid", gridTemplateColumns: "1.4fr 1fr 2fr 1fr 1fr 0.8fr", padding: "14px 18px", background: "#F3F6F8", color: "#1D2226", fontWeight: 700, borderBottom: "1px solid #E6E9EC" }}>
+            <div>User</div>
+            <div>Category</div>
+            <div>Message</div>
+            <div>Status</div>
+            <div>Submitted</div>
+            <div>Actions</div>
           </div>
           {filteredFeedbacks.map((f) => (
-            <div key={f._id} style={styles.tableRow}>
-              <div style={styles.tableCell}>{f.user_id?.email}</div>
-              <div style={styles.tableCell}>{f.category}</div>
-              <div style={styles.tableCell}>{f.message}</div>
-              <div style={styles.tableCell}>
+            <div key={f._id} style={{ display: "grid", gridTemplateColumns: "1.4fr 1fr 2fr 1fr 1fr 0.8fr", padding: "14px 18px", borderBottom: "1px solid #E6E9EC", alignItems: "center" }}>
+              <div style={{ display: "inline-flex", alignItems: "center", gap: 8, color: "#1D2226" }}>
+                <Mail size={16} color="#6B7280" />
+                <span>{f.user_id?.email}</span>
+              </div>
+              <div style={{ display: "inline-flex", alignItems: "center", gap: 8 }}>
+                <Tag size={16} color="#6B7280" />
+                <span style={{ padding: "4px 10px", background: "#E8F3FF", color: "#0A66C2", borderRadius: 999, fontSize: 12, fontWeight: 700 }}>{f.category}</span>
+              </div>
+              <div style={{ color: "#374151" }}>{f.message}</div>
+              <div>
                 <select
                   value={f.status}
                   onChange={(e) => handleStatusUpdate(f._id, e.target.value)}
-                  style={styles.input}
+                  style={{ padding: 10, border: "1px solid #E6E9EC", borderRadius: 10, outline: "none", background: "#fff" }}
                 >
                   <option value="pending">Pending</option>
                   <option value="reviewed">Reviewed</option>
                   <option value="resolved">Resolved</option>
                 </select>
               </div>
-              <div style={styles.tableCell}>{formatDate(f.submitted_at)}</div>
-              <div style={styles.tableCell}>
+              <div style={{ display: "inline-flex", alignItems: "center", gap: 8, color: "#6B7280" }}>
+                <Clock size={16} />
+                <span>{formatDate(f.submitted_at)}</span>
+              </div>
+              <div>
                 <button
                   onClick={() => handleDelete(f._id)}
-                  style={styles.deleteButton}
+                  style={{ display: "inline-flex", alignItems: "center", gap: 8, padding: "8px 12px", background: "#DC2626", color: "#fff", border: "none", borderRadius: 10, cursor: "pointer", fontWeight: 700 }}
                 >
+                  <Trash2 size={16} />
                   Delete
                 </button>
               </div>
@@ -190,33 +188,37 @@ const AdminFeedbackPage = () => {
           ))}
         </div>
       ) : (
-        <div style={styles.gridContainer}>
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(300px, 1fr))", gap: 18 }}>
           {filteredFeedbacks.map((f) => (
-            <div key={f._id} style={styles.gridCard}>
-              <h3>{f.user_id?.email}</h3>
-              <p>
-                <strong>Category:</strong> {f.category}
-              </p>
-              <p>{f.message}</p>
-              <p>
-                <strong>Status:</strong>{" "}
+            <div key={f._id} style={{ background: "#fff", borderRadius: 12, padding: 18, boxShadow: "0 10px 24px rgba(0,0,0,0.06)", transition: "transform .2s ease, box-shadow .2s ease" }} onMouseEnter={(e) => (e.currentTarget.style.transform = "translateY(-4px)")} onMouseLeave={(e) => (e.currentTarget.style.transform = "none")}>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 10 }}>
+                <div style={{ display: "inline-flex", alignItems: "center", gap: 8, color: "#1D2226", fontWeight: 700 }}>
+                  <Mail size={16} color="#6B7280" />
+                  <span>{f.user_id?.email}</span>
+                </div>
+                <span style={{ padding: "4px 8px", background: "#E8F3FF", color: "#0A66C2", borderRadius: 999, fontSize: 12, fontWeight: 700 }}>{f.category}</span>
+              </div>
+              <p style={{ color: "#374151", lineHeight: 1.55, margin: "6px 0 12px" }}>{f.message}</p>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 8, marginBottom: 12 }}>
+                <div style={{ display: "inline-flex", alignItems: "center", gap: 8, color: "#6B7280", fontSize: 14 }}>
+                  <Clock size={16} />
+                  <span>{formatDate(f.submitted_at)}</span>
+                </div>
                 <select
                   value={f.status}
                   onChange={(e) => handleStatusUpdate(f._id, e.target.value)}
-                  style={styles.input}
+                  style={{ padding: 10, border: "1px solid #E6E9EC", borderRadius: 10, outline: "none", background: "#fff" }}
                 >
                   <option value="pending">Pending</option>
                   <option value="reviewed">Reviewed</option>
                   <option value="resolved">Resolved</option>
                 </select>
-              </p>
-              <p>
-                <strong>Submitted:</strong> {formatDate(f.submitted_at)}
-              </p>
+              </div>
               <button
                 onClick={() => handleDelete(f._id)}
-                style={styles.cardDeleteButton}
+                style={{ display: "inline-flex", alignItems: "center", gap: 8, padding: "10px 14px", background: "#DC2626", color: "#fff", border: "none", borderRadius: 10, cursor: "pointer", fontWeight: 700 }}
               >
+                <Trash2 size={16} />
                 Delete
               </button>
             </div>
@@ -227,163 +229,11 @@ const AdminFeedbackPage = () => {
   );
 };
 
-const styles = {
-  container: {
-    padding: '20px',
-    maxWidth: '1200px',
-    margin: '0 auto',
-    fontFamily: "'Segoe UI', Tahoma, Geneva, Verdana, sans-serif"
-  },
-  header: {
-    display: 'flex',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: '20px',
-    flexWrap: 'wrap',
-    gap: '15px'
-  },
-  pageTitle: {
-    color: '#2c3e50',
-    margin: '0'
-  },
-  viewControls: {
-    display: 'flex',
-    gap: '8px'
-  },
-  viewButton: {
-    padding: '8px 16px',
-    backgroundColor: '#f8f9fa',
-    color: '#6c757d',
-    border: '1px solid #e9ecef',
-    borderRadius: '6px',
-    cursor: 'pointer',
-    fontWeight: '500',
-    transition: 'all 0.3s ease'
-  },
-  activeViewButton: {
-    backgroundColor: '#4b6cb7',
-    color: 'white',
-    borderColor: '#4b6cb7'
-  },
-  message: {
-    padding: '12px 20px',
-    borderRadius: '6px',
-    marginBottom: '20px',
-    display: 'flex',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    fontWeight: '500'
-  },
-  successMessage: {
-    backgroundColor: '#d4edda',
-    color: '#155724',
-    border: '1px solid #c3e6cb'
-  },
-  errorMessage: {
-    backgroundColor: '#f8d7da',
-    color: '#721c24',
-    border: '1px solid #f5c6cb'
-  },
-  messageClose: {
-    background: 'none',
-    border: 'none',
-    fontSize: '20px',
-    cursor: 'pointer',
-    color: 'inherit'
-  },
-  searchContainer: {
-    display: 'flex',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: '20px',
-    flexWrap: 'wrap',
-    gap: '15px'
-  },
-  searchInput: {
-    padding: '12px 16px',
-    border: '1px solid #ddd',
-    borderRadius: '6px',
-    fontSize: '16px',
-    minWidth: '300px',
-    outline: 'none',
-    transition: 'border-color 0.3s ease'
-  },
-  resourceCount: {
-    color: '#6c757d',
-    fontSize: '14px'
-  },
-  emptyState: {
-    textAlign: 'center',
-    padding: '40px',
-    color: '#6c757d',
-    backgroundColor: '#f8f9fa',
-    borderRadius: '8px'
-  },
-  listContainer: {
-    backgroundColor: 'white',
-    borderRadius: '8px',
-    overflow: 'hidden',
-    boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)'
-  },
-  tableHeader: {
-    display: 'grid',
-    gridTemplateColumns: '1.2fr 1fr 2fr 1fr 1fr 1fr',
-    padding: '15px 20px',
-    backgroundColor: '#f8f9fa',
-    fontWeight: '600',
-    color: '#495057',
-    borderBottom: '1px solid #e9ecef'
-  },
-  tableRow: {
-    display: 'grid',
-    gridTemplateColumns: '1.2fr 1fr 2fr 1fr 1fr 1fr',
-    padding: '15px 20px',
-    borderBottom: '1px solid #e9ecef',
-    alignItems: 'center',
-    transition: 'background-color 0.2s ease'
-  },
-  tableCell: {
-    padding: '0 10px'
-  },
-  input: {
-    padding: '12px',
-    border: '1px solid #ddd',
-    borderRadius: '4px',
-    fontSize: '16px',
-    outline: 'none',
-    transition: 'border-color 0.3s ease'
-  },
-  deleteButton: {
-    padding: '6px 12px',
-    backgroundColor: '#dc3545',
-    color: 'white',
-    border: 'none',
-    borderRadius: '4px',
-    cursor: 'pointer',
-    fontSize: '14px',
-    transition: 'background-color 0.3s ease'
-  },
-  gridContainer: {
-    display: 'grid',
-    gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))',
-    gap: '20px'
-  },
-  gridCard: {
-    backgroundColor: 'white',
-    borderRadius: '8px',
-    padding: '20px',
-    boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)'
-  },
-  cardDeleteButton: {
-    padding: '8px 16px',
-    backgroundColor: '#dc3545',
-    color: 'white',
-    border: 'none',
-    borderRadius: '4px',
-    cursor: 'pointer',
-    fontSize: '14px',
-    transition: 'background-color 0.3s ease'
+try {
+  const sheet = document.styleSheets?.[0];
+  if (sheet) {
+    sheet.insertRule(`@keyframes spin { 0% { transform: rotate(0deg) } 100% { transform: rotate(360deg) } }`, sheet.cssRules.length);
   }
-};
+} catch {}
 
 export default AdminFeedbackPage;

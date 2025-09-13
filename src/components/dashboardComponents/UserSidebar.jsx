@@ -1,25 +1,16 @@
 import React from "react";
 import { NavLink } from "react-router-dom";
-import {
-  Home,
-  Clock,
-  ListChecks,
-  Bookmark,
-  Briefcase,
-  FileText,
-  Video,
-  TrendingUp,
-  Star,
-} from "lucide-react";
+import { Home, Clock, ListChecks, Bookmark, Briefcase, FileText, Video, TrendingUp, Star } from "lucide-react";
 
 export default function UserSidebar() {
-  const brandBlue = "#0A66C2";
-  const brandDeep = "#004182";
+  const brand = "#0A66C2";
+  const deep = "#004182";
   const ink = "#1D2226";
   const mute = "#56687A";
   const line = "#E6E9EC";
+
   const items = [
-    { icon: <Home size={18} />, label: "Dashboard", to: "/user-dashboard" },
+    // { icon: <Home size={18} />, label: "Dashboard", to: "/user-dashboard" },
     { icon: <Clock size={18} />, label: "Recent Activity", to: "/user-dashboard/recent-activity" },
     { icon: <ListChecks size={18} />, label: "Quiz Results", to: "/user-dashboard/quiz-result" },
     { icon: <Bookmark size={18} />, label: "Bookmarked Items", to: "/user-dashboard/book-mark" },
@@ -43,80 +34,68 @@ export default function UserSidebar() {
         top: 16,
         alignSelf: "start",
         boxShadow: "0 8px 24px rgba(0,0,0,0.06)",
+        fontFamily: "system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif",
+        color: ink
       }}
     >
-      <div
-        style={{
-          padding: "10px 12px",
-          borderBottom: "1px solid " + line,
-          marginBottom: 8,
-        }}
-      >
-        <div
-          style={{
-            fontWeight: 900,
-            fontSize: 18,
-            color: ink,
-            letterSpacing: 0.2,
-          }}
-        >
-          Your Space
-        </div>
-        <div style={{ color: mute, fontSize: 12, marginTop: 2 }}>
-          quick links for your stuff
-        </div>
+      <div style={{ padding: "10px 12px", borderBottom: "1px solid " + line, marginBottom: 8 }}>
+        <div style={{ fontWeight: 900, fontSize: 18, color: ink, letterSpacing: 0.2 }}>Your Space</div>
+        <div style={{ color: mute, fontSize: 12, marginTop: 2 }}>quick links for your stuff</div>
       </div>
 
       <div style={{ display: "grid", gap: 4 }}>
         {items.map((m) => (
-          <NavLink
-            key={m.label}
-            to={m.to}
-            end
-            style={({ isActive }) => ({
-              display: "flex",
-              alignItems: "center",
-              gap: 10,
-              padding: "10px 12px",
-              textDecoration: "none",
-              borderRadius: 10,
-              border: "1px solid " + (isActive ? "#D0E6FB" : "transparent"),
-              background: isActive ? "#E9F1FF" : "transparent",
-              color: isActive ? brandBlue : ink,
-              fontWeight: isActive ? 800 : 500,
-              transition: "background .15s ease,border-color .15s ease,color .15s ease",
-            })}
-            onMouseEnter={(e) => {
-              const a = e.currentTarget;
-              if (a.getAttribute("data-active") !== "true") {
-                a.style.background = "#F7F9FB";
-                a.style.borderColor = line;
-              }
-            }}
-            onMouseLeave={(e) => {
-              const a = e.currentTarget;
-              if (a.getAttribute("data-active") !== "true") {
-                a.style.background = "transparent";
-                a.style.borderColor = "transparent";
-              }
-            }}
-            data-active={undefined}
-          >
-            <span
-              style={{
-                width: 26,
-                height: 26,
-                borderRadius: 8,
-                display: "inline-flex",
-                alignItems: "center",
-                justifyContent: "center",
-                background: "#F3F6F8",
-                color: brandDeep,
-              }}
-            >
-              {m.icon}
-            </span>
-            <span style={{ fontSize: 14 }}>{m.label}</span>
+          <NavLink key={m.label} to={m.to} end>
+            {({ isActive }) => (
+              <div
+                data-active={isActive ? "true" : "false"}
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 10,
+                  padding: "10px 12px",
+                  borderRadius: 10,
+                  textDecoration: "none",
+                  border: "1px solid " + (isActive ? "#D0E6FB" : "transparent"),
+                  background: isActive ? "#E9F1FF" : "transparent",
+                  color: isActive ? brand : ink,
+                  fontWeight: isActive ? 800 : 500,
+                  transition: "background .15s ease,border-color .15s ease,color .15s ease",
+                  cursor: "pointer"
+                }}
+                onMouseEnter={(e) => {
+                  const a = e.currentTarget;
+                  if (a.getAttribute("data-active") !== "true") {
+                    a.style.background = "#F7F9FB";
+                    a.style.borderColor = line;
+                  }
+                }}
+                onMouseLeave={(e) => {
+                  const a = e.currentTarget;
+                  if (a.getAttribute("data-active") !== "true") {
+                    a.style.background = "transparent";
+                    a.style.borderColor = "transparent";
+                  }
+                }}
+              >
+                <span
+                  style={{
+                    width: 26,
+                    height: 26,
+                    borderRadius: 8,
+                    display: "inline-flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    background: "#F3F6F8",
+                    color: deep,
+                    boxShadow: isActive ? "inset 0 0 0 1px rgba(10,102,194,0.18)" : "none"
+                  }}
+                >
+                  {m.icon}
+                </span>
+                <span style={{ fontSize: 14 }}>{m.label}</span>
+              </div>
+            )}
           </NavLink>
         ))}
       </div>

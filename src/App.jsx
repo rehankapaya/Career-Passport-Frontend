@@ -48,6 +48,10 @@ export default function App() {
   const { user } = useContext(UserContext)
   const router = createBrowserRouter([
     {
+      path: '/',
+      element: user?.role == "admin" ? <Navigate to={"/admin"} /> : <AppLayout />,
+      children: [
+    {
       path: '/signup',
       element: !user ? <SignupPage /> : <Navigate to={"/"} />,
     },
@@ -59,10 +63,6 @@ export default function App() {
       path: '/password-reset',
       element: <ForgotPasswordPage />
     },
-    {
-      path: '/',
-      element: user?.role == "admin" ? <Navigate to={"/admin"} /> : <AppLayout />,
-      children: [
         {
           index: true,
           element: <HomePage />
@@ -132,10 +132,7 @@ export default function App() {
           element: user && user?.role !== "admin" ? <UserDashboardLayout /> : <Navigate to="/" />,
           children: [
             {
-              index: true, element: <h1>Admin Dashboard Home</h1>
-            },
-            { path: 'manage-users', element: <h1>Manage Users</h1> },
-            { path: 'recent-activity', element: <RecentActivityPage /> },
+              index: true, element: <RecentActivityPage /> },
             { path: 'quiz-result', element: <QuizResultsPage /> },
             { path: 'book-mark', element: <BookMarkpage /> },
             { path: 'recommended-career', element: <RecommendedCareersPage /> },

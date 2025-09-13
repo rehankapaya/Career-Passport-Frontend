@@ -1,16 +1,15 @@
 import React, { useContext, useState } from "react";
-import {toast} from "react-toastify"
+import { toast } from "react-toastify";
 import axios from "axios";
 import { apiurl } from "../api";
 import { useNavigate } from "react-router-dom";
 import { UserContext } from "../context/UserContext";
+import { Mail, Lock, LogIn, Shield } from "lucide-react";
+
 export default function AdminLoginPage() {
   const { userlogin } = useContext(UserContext);
-  const [formData, setFormData] = useState({
-    email: "",
-    password: "",
-  });
-  const [loading, setLoading] = useState(false);
+  const [formData, setFormData] = useState({ email: "", password: "" });
+  const [loading] = useState(false);
   const navigate = useNavigate();
 
   const { email, password } = formData;
@@ -21,138 +20,225 @@ export default function AdminLoginPage() {
 
   async function handleSubmit(e) {
     e.preventDefault();
-
     try {
       const response = await axios.post(`${apiurl}/api/admin/login`, formData);
-      console.log("Login successful:", response.data);
       toast.success("Admin Login Successful");
       userlogin(response.data);
       navigate("/admin/dashboard");
     } catch (error) {
-      console.error("Login failed:", error);
       toast.error(error.response?.data?.message || "Login Failed");
     }
   }
 
-  const containerStyle = {
-    display: 'flex',
-    justifyContent: 'center',
-    alignItems: 'center',
-    minHeight: '100vh',
-    backgroundColor: '#1a1a1a',
-    fontFamily: 'sans-serif',
-    padding: '2rem'
-  };
-
-  const cardStyle = {
-    backgroundColor: '#2d2d2d',
-    padding: '2.5rem',
-    borderRadius: '1rem',
-    boxShadow: '0 4px 10px rgba(0, 0, 0, 0.5)',
-    width: '100%',
-    maxWidth: '24rem',
-    textAlign: 'center'
-  };
-
-  const titleStyle = {
-    fontSize: '2rem',
-    fontWeight: 'bold',
-    marginBottom: '0.5rem',
-    color: '#e0e0e0'
-  };
-
-  const subtitleStyle = {
-    color: '#a0a0a0',
-    marginBottom: '1.5rem'
-  };
-
-  const formStyle = {
-    display: 'flex',
-    flexDirection: 'column',
-    gap: '1rem'
-  };
-
-  const formGroupStyle = {
-    display: 'flex',
-    flexDirection: 'column',
-    alignItems: 'flex-start'
-  };
-
-  const labelStyle = {
-    marginBottom: '0.5rem',
-    color: '#e0e0e0',
-    textAlign: 'left',
-    fontWeight: '500'
-  };
-
-  const inputStyle = {
-    width: '100%',
-    padding: '0.75rem',
-    borderRadius: '0.5rem',
-    border: '1px solid #444',
-    backgroundColor: '#3b3b3b',
-    color: '#e0e0e0',
-    outline: 'none',
-    boxSizing: 'border-box'
-  };
-
-  const buttonStyle = {
-    width: '100%',
-    padding: '0.75rem',
-    backgroundColor: '#007bff',
-    color: '#fff',
-    border: 'none',
-    borderRadius: '0.5rem',
-    fontWeight: 'bold',
-    cursor: 'pointer',
-    marginTop: '0.5rem',
-    fontSize: '1rem'
-  };
-
   return (
-      <div style={containerStyle}>
-        <div style={cardStyle}>
-          <h2 style={titleStyle}>Admin Panel</h2>
-          <p style={subtitleStyle}>
-            Please login with your admin credentials ⚡
-          </p>
+    <div
+      style={{
+        display: "flex",
+        justifyContent: "center",
+        alignItems: "center",
+        minHeight: "100vh",
+        backgroundColor: "#f3f2ef",
+        fontFamily:
+          'system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif',
+        padding: "2rem",
+      }}
+    >
+      <div
+        style={{
+          backgroundColor: "#ffffff",
+          padding: "2.25rem",
+          borderRadius: "16px",
+          boxShadow: "0 18px 48px rgba(10,102,194,0.15)",
+          width: "100%",
+          maxWidth: "26rem",
+          textAlign: "center",
+          border: "1px solid #e9ecef",
+        }}
+      >
+        <div
+          style={{
+            display: "inline-flex",
+            alignItems: "center",
+            justifyContent: "center",
+            width: "3rem",
+            height: "3rem",
+            borderRadius: "999px",
+            background: "#e7f0fa",
+            marginBottom: "0.75rem",
+          }}
+        >
+          <Shield size={22} color="#0a66c2" />
+        </div>
+        <h2
+          style={{
+            fontSize: "1.9rem",
+            fontWeight: 800,
+            marginBottom: "0.35rem",
+            color: "#1f2328",
+            letterSpacing: "-0.3px",
+          }}
+        >
+          Admin Panel
+        </h2>
+        <p
+          style={{
+            color: "#5a6b7b",
+            marginBottom: "1.4rem",
+            fontSize: "0.98rem",
+            lineHeight: 1.5,
+          }}
+        >
+          Sign in with your admin details
+        </p>
 
-          <form style={formStyle} onSubmit={handleSubmit}>
-            <div style={formGroupStyle}>
-              <label htmlFor="email" style={labelStyle}>Admin Email</label>
+        <form
+          onSubmit={handleSubmit}
+          style={{ display: "flex", flexDirection: "column", gap: "1rem" }}
+        >
+          <div style={{ textAlign: "left" }}>
+            <label
+              htmlFor="email"
+              style={{
+                display: "block",
+                marginBottom: "0.5rem",
+                color: "#1f2328",
+                fontWeight: 600,
+                fontSize: "0.95rem",
+              }}
+            >
+              Admin Email
+            </label>
+            <div style={{ position: "relative" }}>
+              <div
+                style={{
+                  position: "absolute",
+                  left: "12px",
+                  top: "50%",
+                  transform: "translateY(-50%)",
+                  pointerEvents: "none",
+                  opacity: 0.9,
+                }}
+              >
+                <Mail size={18} color="#0a66c2" />
+              </div>
               <input
+                id="email"
                 type="email"
                 name="email"
                 value={email}
                 onChange={handleChange}
                 placeholder="Enter admin email"
                 required
-                style={inputStyle}
+                style={{
+                  width: "100%",
+                  padding: "0.78rem 0.9rem 0.78rem 2.3rem",
+                  borderRadius: "10px",
+                  border: "1px solid #d0d7de",
+                  backgroundColor: "#ffffff",
+                  color: "#1f2328",
+                  outline: "none",
+                  boxSizing: "border-box",
+                  transition: "box-shadow .15s ease, border-color .15s ease",
+                }}
+                onFocus={(e) => {
+                  e.currentTarget.style.boxShadow = "0 0 0 3px rgba(10,102,194,0.15)";
+                  e.currentTarget.style.borderColor = "#0a66c2";
+                }}
+                onBlur={(e) => {
+                  e.currentTarget.style.boxShadow = "none";
+                  e.currentTarget.style.borderColor = "#d0d7de";
+                }}
               />
             </div>
+          </div>
 
-            <div style={formGroupStyle}>
-              <label htmlFor="password" style={labelStyle}>Admin Password</label>
+          <div style={{ textAlign: "left" }}>
+            <label
+              htmlFor="password"
+              style={{
+                display: "block",
+                marginBottom: "0.5rem",
+                color: "#1f2328",
+                fontWeight: 600,
+                fontSize: "0.95rem",
+              }}
+            >
+              Admin Password
+            </label>
+            <div style={{ position: "relative" }}>
+              <div
+                style={{
+                  position: "absolute",
+                  left: "12px",
+                  top: "50%",
+                  transform: "translateY(-50%)",
+                  pointerEvents: "none",
+                  opacity: 0.9,
+                }}
+              >
+                <Lock size={18} color="#0a66c2" />
+              </div>
               <input
+                id="password"
                 type="password"
                 name="password"
                 value={password}
                 onChange={handleChange}
                 placeholder="Enter admin password"
                 required
-                style={inputStyle}
+                style={{
+                  width: "100%",
+                  padding: "0.78rem 0.9rem 0.78rem 2.3rem",
+                  borderRadius: "10px",
+                  border: "1px solid #d0d7de",
+                  backgroundColor: "#ffffff",
+                  color: "#1f2328",
+                  outline: "none",
+                  boxSizing: "border-box",
+                  transition: "box-shadow .15s ease, border-color .15s ease",
+                }}
+                onFocus={(e) => {
+                  e.currentTarget.style.boxShadow = "0 0 0 3px rgba(10,102,194,0.15)";
+                  e.currentTarget.style.borderColor = "#0a66c2";
+                }}
+                onBlur={(e) => {
+                  e.currentTarget.style.boxShadow = "none";
+                  e.currentTarget.style.borderColor = "#d0d7de";
+                }}
               />
             </div>
+          </div>
 
-            <button
-              type="submit"
-              style={buttonStyle}
-              disabled={loading}
-            >
-              {loading ? "Logging in..." : "Login"}
-            </button>
-          </form>
-        </div>
+          <button
+            type="submit"
+            disabled={loading}
+            style={{
+              width: "100%",
+              padding: "0.9rem",
+              backgroundColor: "#0a66c2",
+              color: "#ffffff",
+              border: "none",
+              borderRadius: "12px",
+              fontWeight: 800,
+              cursor: "pointer",
+              marginTop: "0.25rem",
+              fontSize: "1rem",
+              letterSpacing: "0.2px",
+              display: "inline-flex",
+              alignItems: "center",
+              justifyContent: "center",
+              gap: "0.5rem",
+              boxShadow: "0 10px 24px rgba(10,102,194,0.20)",
+              transition: "transform .06s ease, background-color .15s ease",
+            }}
+            onMouseDown={(e) => (e.currentTarget.style.backgroundColor = "#004182")}
+            onMouseUp={(e) => (e.currentTarget.style.backgroundColor = "#0a66c2")}
+          >
+            <LogIn size={18} />
+            {loading ? "Logging in..." : "Login"}
+          </button>
+        </form>
       </div>
+    </div>
   );
 }

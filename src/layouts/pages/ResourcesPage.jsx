@@ -79,12 +79,12 @@ const ResourceCard = ({ resource }) => {
         </div>
 
         <div style={{ display: "inline-flex", alignItems: "center", gap: 8, marginBottom: 8 }}>
-          <div style={{ backgroundColor: chipBg, color: brandBlue, border: "1px solid #D7E9FF", padding: "4px 10px", borderRadius: 999, fontSize: 12, fontWeight: 700 }}>
+          <div style={{ backgroundColor: chipBg, color: "#0A66C2", border: "1px solid #D7E9FF", padding: "4px 10px", borderRadius: 999, fontSize: 12, fontWeight: 700 }}>
             <FileText size={14} style={{ verticalAlign: "text-bottom", marginRight: 6 }} />
             Resource
           </div>
           {resource.category && (
-            <div style={{ backgroundColor: "#EEF3F8", color: brandMute, border: "1px solid #E6E9EC", padding: "4px 10px", borderRadius: 999, fontSize: 12, fontWeight: 700 }}>
+            <div style={{ backgroundColor: "#EEF3F8", color: "#56687A", border: "1px solid #E6E9EC", padding: "4px 10px", borderRadius: 999, fontSize: 12, fontWeight: 700 }}>
               {resource.category}
             </div>
           )}
@@ -92,7 +92,7 @@ const ResourceCard = ({ resource }) => {
 
         <h3 style={{ fontSize: 18, fontWeight: 800, color: brandInk, marginBottom: 6, lineHeight: 1.35 }}>{resource.title}</h3>
 
-        <p style={{ color: brandMute, fontSize: 14, lineHeight: 1.6, margin: 0 }}>{resource.description}</p>
+        <p style={{ color: "#56687A", fontSize: 14, lineHeight: 1.6, margin: 0 }}>{resource.description}</p>
       </div>
 
       <div style={{ marginTop: "auto" }}>
@@ -100,7 +100,7 @@ const ResourceCard = ({ resource }) => {
           onClick={saveHistory}
           to={`/resources/${resource.resource_id}`}
           style={{
-            backgroundColor: brandBlue,
+            backgroundColor: "#0A66C2",
             color: "#FFFFFF",
             padding: "12px 14px",
             borderRadius: 10,
@@ -114,7 +114,7 @@ const ResourceCard = ({ resource }) => {
             transition: "transform 120ms ease, background-color 120ms ease"
           }}
           onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = "#004182")}
-          onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = brandBlue)}
+          onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = "#0A66C2")}
         >
           Read article
         </Link>
@@ -129,7 +129,7 @@ export default function ResourcesPage() {
   const brandInk = "#1D2226";
   const brandMute = "#56687A";
 
-  const featuredResources = [
+  const featuredResourcesStatic = [
     { title: "Career Planning Toolkit", description: "Guides and worksheets to map your path with clarity." },
     { title: "Industry Insights Hub", description: "Trends, skills demand, and opportunities in one glance." },
     { title: "Skill Development Center", description: "Curated learning paths to build in-demand skills." }
@@ -145,6 +145,8 @@ export default function ResourcesPage() {
   useEffect(() => {
     fetchResources();
   }, []);
+
+  const featuredLive = (Array.isArray(resources) ? resources.slice(0, 3) : []).filter(Boolean);
 
   return (
     <div style={{ minHeight: "100vh", backgroundColor: "#F3F2EF", fontFamily: "system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif", padding: 24, color: brandInk }}>
@@ -190,8 +192,79 @@ export default function ResourcesPage() {
           <p style={{ color: brandMute }}>Short, useful picks to jump right in</p>
         </div>
 
+        {featuredLive.length > 0 && (
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))", gap: 16, marginBottom: 16 }}>
+            {featuredLive.map((res, idx) => {
+              const dateTxt = res?.createdAt
+                ? new Date(res.createdAt).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })
+                : "N/A";
+              return (
+                <div
+                  key={idx}
+                  style={{
+                    backgroundColor: "#FFFFFF",
+                    borderRadius: 16,
+                    padding: 20,
+                    boxShadow: "0 6px 18px rgba(0,0,0,0.06)",
+                    transition: "transform 120ms ease",
+                    display: "flex",
+                    flexDirection: "column",
+                    gap: 10
+                  }}
+                  onMouseEnter={(e) => (e.currentTarget.style.transform = "translateY(-3px)")}
+                  onMouseLeave={(e) => (e.currentTarget.style.transform = "translateY(0)")}
+                >
+                  <div style={{ display: "flex", alignItems: "center", gap: 8, color: "#56687A", fontSize: 13 }}>
+                    <CalendarDays size={16} />
+                    <span>{dateTxt}</span>
+                  </div>
+                  <div style={{ display: "inline-flex", alignItems: "center", gap: 8 }}>
+                    <div style={{ backgroundColor: "#E9F3FF", color: "#0A66C2", border: "1px solid #D7E9FF", padding: "4px 10px", borderRadius: 999, fontSize: 12, fontWeight: 800 }}>
+                      <FileText size={14} style={{ verticalAlign: "text-bottom", marginRight: 6 }} />
+                      Resource
+                    </div>
+                    {res.category && (
+                      <div style={{ backgroundColor: "#EEF3F8", color: "#56687A", border: "1px solid #E6E9EC", padding: "4px 10px", borderRadius: 999, fontSize: 12, fontWeight: 700 }}>
+                        {res.category}
+                      </div>
+                    )}
+                  </div>
+                  <div style={{ fontSize: 18, fontWeight: 800, color: "#1D2226", lineHeight: 1.35 }}>{res.title}</div>
+                  <div style={{ color: "#56687A", fontSize: 14, lineHeight: 1.6 }}>{res.description}</div>
+                  <Link
+                    to={`/resources/${res.resource_id}`}
+                    style={{
+                      marginTop: "auto",
+                      display: "inline-block",
+                      textAlign: "center",
+                      backgroundColor: "#FFFFFF",
+                      color: "#0A66C2",
+                      padding: "10px 16px",
+                      borderRadius: 12,
+                      border: "1px solid #0A66C2",
+                      fontWeight: 800,
+                      textDecoration: "none",
+                      transition: "all 120ms ease"
+                    }}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.backgroundColor = "#0A66C2";
+                      e.currentTarget.style.color = "#FFFFFF";
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.backgroundColor = "#FFFFFF";
+                      e.currentTarget.style.color = "#0A66C2";
+                    }}
+                  >
+                    Open
+                  </Link>
+                </div>
+              );
+            })}
+          </div>
+        )}
+
         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))", gap: 16 }}>
-          {featuredResources.map((r, i) => (
+          {(featuredLive.length >= 3 ? [] : featuredResourcesStatic).map((r, i) => (
             <div
               key={i}
               style={{
