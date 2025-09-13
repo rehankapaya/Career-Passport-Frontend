@@ -80,7 +80,7 @@ export default function DashboardSidebar() {
         }}
       >
         <Link
-          to="dashboard"
+          to=""
           style={{
             display: "flex",
             alignItems: "center",
@@ -153,7 +153,7 @@ export default function DashboardSidebar() {
               fontWeight: 500,
             }}
           >
-            Interest Quiz
+            Quiz History
           </span>
         </Link>
         <Link

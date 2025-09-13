@@ -41,6 +41,8 @@ import QuizPage from './layouts/pages/QuizPage'
 import ResultPage from './layouts/pages/ResultPage';
 import HistoryPage from './layouts/pages/HistoryPage'
 import UnifiedLogin from './auth/UndefiendLogin'
+import AnalyticsPage from './components/dashboardComponents/AnalyticsPage'
+import AdminQuizHistory from './dashboard/dashboardPages/AdminQuizHistory'
 
 export default function App() {
   const { user } = useContext(UserContext)
@@ -160,10 +162,11 @@ export default function App() {
       element: user && user?.role === "admin" ? <DashboardLayout /> : <Navigate to="/" />,
       children: [
         {
-          index: true, element: <h1>Admin Dashboard Home</h1>
+          index: true, element: <AnalyticsPage/>
         },
         { path: 'manage-users', element: <h1>Manage Users</h1> },
         { path: 'admincareerbank', element: <AdminCareerBankPage /> },
+        { path: 'quiz', element: <AdminQuizHistory /> },
         { path: 'addresource', element: <AdminAddResourcePage /> },
         { path: 'adminmultimedia', element: <AdminMultimediaPage /> },
         { path: 'adminsuccessstories', element: <AdminSuccessStoriesPage /> },

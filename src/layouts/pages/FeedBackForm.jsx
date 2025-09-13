@@ -1,9 +1,9 @@
 import React, { useState, useContext, useEffect } from "react";
 import axios from "axios";
 import { UserContext } from "../../context/UserContext";
+import { apiurl } from "../../api";
 
-export default function FeedbackForm() {
-  const apiurl = "http://localhost:5000"; // 🔹 apna backend ka base URL dalna
+export default function FeedbackForm() { // 🔹 apna backend ka base URL dalna
   const [category, setCategory] = useState("general");
   const [message, setMessage] = useState("");
   const [status, setStatus] = useState(null);
