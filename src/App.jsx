@@ -40,6 +40,7 @@ import TopPicksForYouPage from './layouts/pages/userdashboardpages/TopPicksForYo
 import QuizPage from './layouts/pages/QuizPage'
 import ResultPage from './layouts/pages/ResultPage';
 import HistoryPage from './layouts/pages/HistoryPage'
+import UnifiedLogin from './auth/UndefiendLogin'
 
 export default function App() {
   const { user } = useContext(UserContext)
@@ -50,7 +51,7 @@ export default function App() {
     },
     {
       path: '/login',
-      element: !user ? <LoginPage /> : <Navigate to={"/"} />,
+      element: !user ? <UnifiedLogin /> : <Navigate to={"/"} />,
     },
     {
       path: '/password-reset',

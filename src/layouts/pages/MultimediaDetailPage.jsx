@@ -10,9 +10,6 @@ import {
   FileText as PdfIcon,
   Image as ImageIcon,
   Star as StarIcon,
-  Play as PlayIcon,
-  Volume2,
-  Share2,
   Download,
   FileText,
 } from "lucide-react";
@@ -27,15 +24,19 @@ export default function MultimediaDetailPage() {
   const [showTranscript, setShowTranscript] = useState(false);
   const { id } = useParams();
 
+  // -------- Brand (removed purple) --------
+  const brandBlue = "#1a73e8";
+  const brandBlueLight = "#e9f1ff";
+  const mediaBg = "#111";
+  // ---------------------------------------
+
   // --------- helper: media URLs ---------
   const getMediaUrl = (url) => {
-    if (url && url.startsWith("uploads/")) {
-      return `${apiurl}/${url}`;
-    }
+    if (url && url.startsWith("uploads/")) return `${apiurl}/${url}`;
     return url;
   };
 
-  // Drive helpers (ADD)
+  // Drive helpers
   const isDriveUrl = (url = "") =>
     typeof url === "string" &&
     (url.includes("drive.google.com") ||
@@ -45,18 +46,11 @@ export default function MultimediaDetailPage() {
 
   const extractDriveId = (urlOrId = "") => {
     if (!urlOrId) return "";
-    // raw id (no slash & no query)
     if (!urlOrId.includes("/") && !urlOrId.includes("?")) return urlOrId.trim();
-
     const m1 = urlOrId.match(/\/file\/d\/([^/]+)\//);
     if (m1?.[1]) return m1[1];
-
     const m2 = urlOrId.match(/[?&]id=([^&]+)/);
     if (m2?.[1]) return m2[1];
-
-    const m3 = urlOrId.match(/[?&](?:export|uc|open)=([^&]+)/);
-    if (m3?.[1]) return m3[1];
-
     return urlOrId.trim();
   };
 
@@ -65,15 +59,30 @@ export default function MultimediaDetailPage() {
     if (!fileId) return urlOrId;
     const base = `https://drive.google.com/file/d/${fileId}/preview`;
     const params = new URLSearchParams();
-    if (autoplay) params.set("autoplay", "1"); // browsers usually require muted for autoplay
+    if (autoplay) params.set("autoplay", "1");
     if (muted) params.set("mute", "1");
     if (loop) params.set("loop", "1");
     const qs = params.toString();
     return qs ? `${base}?${qs}` : base;
   };
+
+  // NEW: direct download URL for audio from Drive (works for publicly shared files)
+  const getDriveDownloadUrl = (urlOrId = "") => {
+    const fileId = extractDriveId(urlOrId);
+    if (!fileId) return urlOrId;
+    return `https://drive.google.com/uc?export=download&id=${fileId}`;
+  };
+
+  const getMimeFromUrl = (url = "") => {
+    const lower = url.toLowerCase();
+    if (lower.endsWith(".mp3")) return "audio/mpeg";
+    if (lower.endsWith(".wav")) return "audio/wav";
+    if (lower.endsWith(".m4a")) return "audio/mp4";
+    if (lower.endsWith(".ogg")) return "audio/ogg";
+    return "";
+  };
   // --------------------------------------
 
-  // Dummy related/popular (as in your code)
   const generateRandomContent = (sourceItems, count, excludeId = null) => {
     if (!sourceItems || sourceItems.length === 0) return [];
     const filteredItems = sourceItems.filter((item) => item.media_id !== excludeId);
@@ -106,7 +115,7 @@ export default function MultimediaDetailPage() {
     };
 
     fetchMultimedia();
-  }, [id]);
+  }, [id, state]);
 
   const getMediaIcon = (type) => {
     switch (type) {
@@ -153,7 +162,6 @@ export default function MultimediaDetailPage() {
     try {
       await axios.post(`${apiurl}/api/multimedia/${id}/rate`, { rating: value });
       toast.success("Thank you for your feedback!");
-
       const response = await axios.get(`${apiurl}/api/multimedia/${id}`);
       setMultimedia(response.data);
     } catch (err) {
@@ -178,6 +186,18 @@ export default function MultimediaDetailPage() {
     );
   }
 
+  // --------- AUDIO: build a reliable src (local, direct URL, or Google Drive) ---------
+  const audioSrc = (() => {
+    if (multimedia.type !== "audio") return "";
+    const url = multimedia.url || "";
+    if (!url) return "";
+    if (url.startsWith("uploads/")) return getMediaUrl(url); // local upload
+    if (isDriveUrl(url)) return getDriveDownloadUrl(url);     // public GDrive file
+    return url;                                               // plain external URL
+  })();
+  const audioType = getMimeFromUrl(audioSrc);
+  // -----------------------------------------------------------------------------------
+
   return (
     <div style={{ backgroundColor: "#f9f9f9", minHeight: "100vh", padding: "2rem", fontFamily: "Inter, sans-serif" }}>
       <Link
@@ -186,7 +206,7 @@ export default function MultimediaDetailPage() {
           display: "flex",
           alignItems: "center",
           textDecoration: "none",
-          color: "#6a5acd",
+          color: brandBlue,
           marginBottom: "1.5rem",
           fontWeight: "bold",
         }}
@@ -221,19 +241,19 @@ export default function MultimediaDetailPage() {
               style={{
                 position: "relative",
                 width: "100%",
-                paddingBottom: "56.25%",
-                backgroundColor: "#6a5acd",
+                paddingBottom: multimedia.type === "audio" ? "0" : "56.25%",
+                backgroundColor: mediaBg, // was purple; now neutral dark
                 borderRadius: "8px",
                 overflow: "hidden",
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "center",
                 marginBottom: "1.5rem",
+                minHeight: multimedia.type === "audio" ? 96 : undefined,
               }}
             >
               {multimedia.type === "video" && (
                 multimedia.url.startsWith("uploads/") ? (
-                  // local uploads (unchanged)
                   <video
                     controls
                     style={{ position: "absolute", top: 0, left: 0, width: "100%", height: "100%" }}
@@ -242,7 +262,6 @@ export default function MultimediaDetailPage() {
                     Your browser does not support the video tag.
                   </video>
                 ) : isDriveUrl(multimedia.url) ? (
-                  // NEW: Google Drive preview iframe
                   <iframe
                     src={getDrivePreviewUrl(multimedia.url, { autoplay: false, muted: false, loop: false })}
                     title={multimedia.title || "Drive Video"}
@@ -251,7 +270,6 @@ export default function MultimediaDetailPage() {
                     allowFullScreen
                   />
                 ) : (
-                  // everything else (e.g., YouTube/Vimeo/etc.) stays as-is
                   <iframe
                     src={multimedia.url}
                     title={multimedia.title}
@@ -263,10 +281,59 @@ export default function MultimediaDetailPage() {
               )}
 
               {multimedia.type === "audio" && (
-                <audio controls style={{ width: "100%", maxWidth: "500px" }}>
-                  <source src={getMediaUrl(multimedia.url)} />
-                  Your browser does not support the audio element.
-                </audio>
+                <div style={{ width: "100%", padding: "1rem" }}>
+                  <audio
+                    controls
+                    controlsList="play nodownload noplaybackrate"
+                    preload="metadata"
+                    style={{ width: "100%" }}
+                    src={audioSrc}
+                  >
+                    {audioType && <source src={audioSrc} type={audioType} />}
+                    Your browser does not support the audio element.
+                  </audio>
+
+                  {/* Download button (explicit), in case controlsList hides browser download */}
+                  <div style={{ marginTop: "0.75rem", display: "flex", gap: "0.5rem" }}>
+                    <a
+                      href={audioSrc}
+                      download
+                      style={{
+                        display: "inline-flex",
+                        alignItems: "center",
+                        gap: "0.5rem",
+                        background: brandBlue,
+                        color: "#fff",
+                        borderRadius: "999px",
+                        padding: "0.5rem 1rem",
+                        textDecoration: "none",
+                        fontWeight: 600,
+                      }}
+                    >
+                      <Download size={16} /> Download audio
+                    </a>
+                    {isDriveUrl(multimedia.url) && (
+                      <a
+                        href={getDriveDownloadUrl(multimedia.url)}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        style={{
+                          display: "inline-flex",
+                          alignItems: "center",
+                          gap: "0.5rem",
+                          background: "#e8e8e8",
+                          color: "#333",
+                          borderRadius: "999px",
+                          padding: "0.5rem 1rem",
+                          textDecoration: "none",
+                          fontWeight: 600,
+                        }}
+                      >
+                        Open in Drive
+                      </a>
+                    )}
+                  </div>
+                </div>
               )}
 
               {multimedia.type === "image" && (
@@ -290,16 +357,6 @@ export default function MultimediaDetailPage() {
                 </div>
               )}
 
-              {/* Play icon overlay for visual effect */}
-              {/* {multimedia.type !== "pdf" && (
-                <PlayIcon
-                  size={64}
-                  color="white"
-                  fill="rgba(255,255,255,0.2)"
-                  style={{ position: "absolute", zIndex: 1 }}
-                />
-              )} */}
-
               <span
                 style={{
                   position: "absolute",
@@ -317,7 +374,7 @@ export default function MultimediaDetailPage() {
               </span>
             </div>
 
-            {/* Media Controls (simplified) */}
+            {/* Media Controls / Transcript button */}
             <div style={{ display: "flex", gap: "1rem", marginBottom: "1.5rem", flexWrap: "wrap" }}>
               {multimedia.transcript && (
                 <button
@@ -363,8 +420,8 @@ export default function MultimediaDetailPage() {
                   <span
                     key={index}
                     style={{
-                      backgroundColor: "#e8f0fe",
-                      color: "#1a73e8",
+                      backgroundColor: brandBlueLight,
+                      color: brandBlue,
                       padding: "6px 16px",
                       borderRadius: "20px",
                       fontSize: "0.9rem",
@@ -473,7 +530,7 @@ export default function MultimediaDetailPage() {
                     style={{
                       width: "60px",
                       height: "60px",
-                      backgroundColor: "#6a5acd",
+                      backgroundColor: brandBlueLight, // was purple
                       borderRadius: "8px",
                       display: "flex",
                       alignItems: "center",
@@ -526,7 +583,7 @@ export default function MultimediaDetailPage() {
                     style={{
                       width: "60px",
                       height: "60px",
-                      backgroundColor: "#6a5acd",
+                      backgroundColor: brandBlueLight, // was purple
                       borderRadius: "8px",
                       display: "flex",
                       alignItems: "center",

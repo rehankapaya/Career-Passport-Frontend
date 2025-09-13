@@ -26,7 +26,7 @@ export default function LoginPage() {
     e.preventDefault();
 
     try {
-      const response = await axios.post(`${apiurl}/api/users/login`, formData);
+      const response = await axios.post(`${apiurl}/api/user/login`, formData);
       console.log("Login successful:", response.data);
 
       toast.success("Login Successful 🎉");
