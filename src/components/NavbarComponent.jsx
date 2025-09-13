@@ -32,7 +32,7 @@ export default function NavbarComponent() {
 
   const resourceNavItems = [
     { name: 'Career Bank', to: '/career-bank' },
-    { name: 'Interest Quiz', to: '/interest-quiz' },
+    { name: 'Interest Quiz', to: '/quiz' },
     { name: 'Multimedia Hub', to: '/multimedia' },
     { name: 'Success Stories', to: '/success-stories' },
   ];

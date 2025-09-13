@@ -31,7 +31,42 @@ export default function AdminMultimediaPage() {
   const [deletingId, setDeletingId] = useState(null);
   const [viewMode, setViewMode] = useState("grid"); // "grid" or "list"
   const [showAddForm, setShowAddForm] = useState(false);
-  
+
+  // ===== Helpers for URLs / IDs =====
+  const isDriveUrl = (url = "") =>
+    typeof url === "string" &&
+    (url.includes("drive.google.com") ||
+      url.includes("docs.google.com/uc?") ||
+      /[?&]id=/.test(url) ||
+      /\/file\/d\//.test(url));
+
+  const extractDriveId = (urlOrId = "") => {
+    if (!urlOrId) return "";
+    if (!urlOrId.includes("/") && !urlOrId.includes("?")) return urlOrId.trim();
+    const m1 = urlOrId.match(/\/file\/d\/([^/]+)/);
+    if (m1?.[1]) return m1[1];
+    const m2 = urlOrId.match(/[?&]id=([^&]+)/);
+    if (m2?.[1]) return m2[1];
+    return "";
+  };
+
+  const getDriveThumbnailUrl = (urlOrId = "", size = "w320-h180") => {
+    const id = extractDriveId(urlOrId);
+    return id ? `https://drive.google.com/thumbnail?id=${id}&sz=${size}` : "";
+  };
+
+  const getDriveImageViewUrl = (urlOrId = "") => {
+    const id = extractDriveId(urlOrId);
+    return id ? `https://drive.google.com/uc?export=view&id=${id}` : "";
+  };
+
+  const getYouTubeId = (url = "") => {
+    if (!url) return "";
+    const m = url.match(
+      /(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([^"&?\/\s]{11})/
+    );
+    return m?.[1] || "";
+  };
 
   // Fetch all multimedia
   useEffect(() => {
@@ -41,12 +76,13 @@ export default function AdminMultimediaPage() {
   // Filter items based on search term
   useEffect(() => {
     if (searchTerm) {
-      const filtered = items.filter(item => 
-        item.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        item.type.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        (item.tags && Array.isArray(item.tags) && 
-          item.tags.some(tag => tag.toLowerCase().includes(searchTerm.toLowerCase()))) ||
-        (item.transcript && item.transcript.toLowerCase().includes(searchTerm.toLowerCase()))
+      const filtered = items.filter((item) =>
+        (item.title || "").toLowerCase().includes(searchTerm.toLowerCase()) ||
+        (item.type || "").toLowerCase().includes(searchTerm.toLowerCase()) ||
+        (item.tags &&
+          Array.isArray(item.tags) &&
+          item.tags.some((tag) => (tag || "").toLowerCase().includes(searchTerm.toLowerCase()))) ||
+        (item.transcript || "").toLowerCase().includes(searchTerm.toLowerCase())
       );
       setFilteredItems(filtered);
     } else {
@@ -55,8 +91,9 @@ export default function AdminMultimediaPage() {
   }, [searchTerm, items]);
 
   const fetchMultimedia = () => {
-    axios.get(`${apiurl}/api/multimedia`)
-      .then(res => {
+    axios
+      .get(`${apiurl}/api/multimedia`)
+      .then((res) => {
         setItems(res.data);
         setFilteredItems(res.data);
       })
@@ -67,7 +104,7 @@ export default function AdminMultimediaPage() {
   };
 
   // Handle form change
-  const handleChange = e => {
+  const handleChange = (e) => {
     if (e.target.name === "file") {
       setForm({ ...form, file: e.target.files[0] });
     } else {
@@ -76,7 +113,7 @@ export default function AdminMultimediaPage() {
   };
 
   // Handle edit form change
-  const handleEditChange = e => {
+  const handleEditChange = (e) => {
     if (e.target.name === "file") {
       setEditForm({ ...editForm, file: e.target.files[0] });
     } else {
@@ -85,7 +122,7 @@ export default function AdminMultimediaPage() {
   };
 
   // Submit new multimedia
-  const handleSubmit = async e => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
 
@@ -107,7 +144,7 @@ export default function AdminMultimediaPage() {
           "Content-Type": "multipart/form-data",
           Authorization: `Bearer ${localStorage.getItem("token")}`,
         },
-        withCredentials: true
+        withCredentials: true,
       });
 
       toast.success("Multimedia created!");
@@ -130,14 +167,14 @@ export default function AdminMultimediaPage() {
       url: item.url,
       tags: item.tags ? (Array.isArray(item.tags) ? item.tags.join(", ") : item.tags) : "",
       transcript: item.transcript || "",
-      file: null
+      file: null,
     });
-    setEditUploadOption(item.url && item.url.startsWith('uploads/') ? "file" : "url");
+    setEditUploadOption(item.url && item.url.startsWith("uploads/") ? "file" : "url");
     setIsEditModalOpen(true);
   };
 
   // Submit edit multimedia
-  const handleEditSubmit = async e => {
+  const handleEditSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
 
@@ -159,7 +196,7 @@ export default function AdminMultimediaPage() {
           "Content-Type": "multipart/form-data",
           Authorization: `Bearer ${localStorage.getItem("token")}`,
         },
-        withCredentials: true
+        withCredentials: true,
       });
 
       toast.success("Multimedia updated!");
@@ -184,11 +221,11 @@ export default function AdminMultimediaPage() {
         headers: {
           Authorization: `Bearer ${localStorage.getItem("token")}`,
         },
-        withCredentials: true
+        withCredentials: true,
       });
 
       toast.success("Multimedia deleted!");
-      setItems(items.filter(item => (item._id || item.media_id) !== id));
+      setItems(items.filter((item) => (item._id || item.media_id) !== id));
     } catch (err) {
       toast.error("Error deleting multimedia");
       console.error(err);
@@ -198,40 +235,74 @@ export default function AdminMultimediaPage() {
 
   // Function to get the correct URL for display
   const getMediaUrl = (url) => {
-    if (url && url.startsWith('uploads/')) {
+    if (url && url.startsWith("uploads/")) {
       return `${apiurl}/${url}`;
     }
     return url;
   };
 
-  // Function to get thumbnail for media
+  // --- NEW: smarter thumbnails (YouTube, Drive, Images) ---
   const getThumbnail = (item) => {
-    if (item.type === "video") {
-      if (item.url && item.url.startsWith('uploads/')) {
-        return "https://via.placeholder.com/300x180/ff6b6b/ffffff?text=Video";
-      } else if (item.url && (item.url.includes('youtube.com') || item.url.includes('youtu.be'))) {
-        const videoId = item.url.match(/(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([^"&?\/\s]{11})/);
-        if (videoId && videoId[1]) {
-          return `https://img.youtube.com/vi/${videoId[1]}/mqdefault.jpg`;
-        }
-      }
-    } else if (item.type === "image") {
-      return getMediaUrl(item.url);
-    } else if (item.type === "audio") {
-      return "https://via.placeholder.com/300x180/4ecdc4/ffffff?text=Audio";
-    } else if (item.type === "pdf") {
-      return "https://via.placeholder.com/300x180/45b7d1/ffffff?text=PDF";
+    // Prefer a server-provided thumbnail if it exists
+    if (item.thumbnail_url) {
+      return item.thumbnail_url.startsWith("uploads/")
+        ? getMediaUrl(item.thumbnail_url)
+        : item.thumbnail_url;
     }
-    
+
+    const url = item.url || "";
+
+    // Type-specific logic
+    if (item.type === "image") {
+      if (!url) return placeholder("96aab5", "Image");
+      if (isDriveUrl(url)) return getDriveImageViewUrl(url);
+      return getMediaUrl(url);
+    }
+
+    if (item.type === "video") {
+      // YouTube
+      const yt = getYouTubeId(url);
+      if (yt) return `https://img.youtube.com/vi/${yt}/mqdefault.jpg`;
+
+      // Google Drive video/pdf thumbnails
+      if (isDriveUrl(url)) {
+        const t = getDriveThumbnailUrl(url);
+        if (t) return t;
+      }
+
+      // Local uploads (no built-in thumb) → placeholder
+      if (url && url.startsWith("uploads/")) {
+        return "https://via.placeholder.com/300x180/1f2937/ffffff?text=Video";
+      }
+
+      // Unknown video host → generic
+      return "https://via.placeholder.com/300x180/1f2937/ffffff?text=Video";
+    }
+
+    if (item.type === "pdf") {
+      // Drive often returns a thumbnail for PDFs
+      if (isDriveUrl(url)) {
+        const t = getDriveThumbnailUrl(url);
+        if (t) return t;
+      }
+      return "https://via.placeholder.com/300x180/0ea5e9/ffffff?text=PDF";
+    }
+
+    if (item.type === "audio") {
+      return "https://via.placeholder.com/300x180/10b981/ffffff?text=Audio";
+    }
+
+    // Fallback
     return "https://via.placeholder.com/300x180/96aab5/ffffff?text=Media";
   };
+  // --------------------------------------------------------
 
   // Format date for display
   const formatDate = (dateString) => {
-    return new Date(dateString).toLocaleDateString('en-US', {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric'
+    return new Date(dateString).toLocaleDateString("en-US", {
+      year: "numeric",
+      month: "short",
+      day: "numeric",
     });
   };
 
@@ -240,28 +311,25 @@ export default function AdminMultimediaPage() {
       <div style={styles.header}>
         <h1 style={styles.pageTitle}>Multimedia Management</h1>
         <div style={styles.controls}>
-          <button
-            onClick={() => setShowAddForm(!showAddForm)}
-            style={styles.toggleButton}
-          >
-            {showAddForm ? 'View Multimedia' : 'Add New Media'}
+          <button onClick={() => setShowAddForm(!showAddForm)} style={styles.toggleButton}>
+            {showAddForm ? "View Multimedia" : "Add New Media"}
           </button>
-           {!showAddForm && (
+          {!showAddForm && (
             <div style={styles.viewControls}>
               <button
-                onClick={() => setViewMode('list')}
+                onClick={() => setViewMode("list")}
                 style={{
                   ...styles.viewButton,
-                  ...(viewMode === 'list' ? styles.activeViewButton : {})
+                  ...(viewMode === "list" ? styles.activeViewButton : {}),
                 }}
               >
                 List View
               </button>
               <button
-                onClick={() => setViewMode('grid')}
+                onClick={() => setViewMode("grid")}
                 style={{
                   ...styles.viewButton,
-                  ...(viewMode === 'grid' ? styles.activeViewButton : {})
+                  ...(viewMode === "grid" ? styles.activeViewButton : {}),
                 }}
               >
                 Grid View
@@ -271,7 +339,7 @@ export default function AdminMultimediaPage() {
         </div>
       </div>
 
-      {/* Create Form - Styled same as AdminAddResourcePage */}
+      {/* Create Form */}
       {showAddForm && (
         <div style={styles.formContainer}>
           <h2 style={styles.formTitle}>Add New Media</h2>
@@ -292,87 +360,92 @@ export default function AdminMultimediaPage() {
 
               <div style={styles.formGroup}>
                 <label style={styles.label}>Type *</label>
-                <select
-                  name="type"
-                  value={form.type}
-                  onChange={handleChange}
-                  style={styles.input}
-                >
+                <select name="type" value={form.type} onChange={handleChange} style={styles.input}>
                   <option value="video">Video</option>
                   <option value="audio">Audio</option>
                   <option value="pdf">PDF</option>
                   <option value="image">Image</option>
                 </select>
               </div>
-              </div>
+            </div>
 
             <div style={styles.formGroup}>
               <label style={styles.label}>Source *</label>
-              <div style={{ display: 'flex', gap: '16px' }}>
-                <label style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                    <input
-                      type="radio"
-                      value="url"
-                    checked={uploadOption === 'url'}
-                    onChange={() => setUploadOption('url')}
-                    />
-                    URL
-                  </label>
-                <label style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                    <input
-                      type="radio"
-                      value="file"
-                    checked={uploadOption === 'file'}
-                    onChange={() => setUploadOption('file')}
-                    />
-                    Upload File
-                  </label>
-                </div>
-
-              {uploadOption === 'url' ? (
+              <div style={{ display: "flex", gap: "16px" }}>
+                <label style={{ display: "flex", alignItems: "center", gap: "6px" }}>
                   <input
-                    type="text"
-                    name="url"
-                    value={form.url}
-                    onChange={handleChange}
-                    placeholder="Media URL"
-                  style={styles.input}
-                    required
+                    type="radio"
+                    value="url"
+                    checked={uploadOption === "url"}
+                    onChange={() => setUploadOption("url")}
                   />
-                ) : (
+                  URL
+                </label>
+                <label style={{ display: "flex", alignItems: "center", gap: "6px" }}>
                   <input
-                    type="file"
-                    name="file"
-                  accept={form.type === 'image' ? 'image/*' : form.type === 'audio' ? 'audio/*' : form.type === 'pdf' ? 'application/pdf' : form.type === 'video' ? 'video/*' : '*'}
-                    onChange={handleChange}
-                  style={styles.input}
-                  required={uploadOption === 'file'}
+                    type="radio"
+                    value="file"
+                    checked={uploadOption === "file"}
+                    onChange={() => setUploadOption("file")}
                   />
-                )}
+                  Upload File
+                </label>
               </div>
+
+              {uploadOption === "url" ? (
+                <input
+                  type="text"
+                  name="url"
+                  value={form.url}
+                  onChange={handleChange}
+                  placeholder="Media URL"
+                  style={styles.input}
+                  required
+                />
+              ) : (
+                <input
+                  type="file"
+                  name="file"
+                  accept={
+                    form.type === "image"
+                      ? "image/*"
+                      : form.type === "audio"
+                      ? "audio/*"
+                      : form.type === "pdf"
+                      ? "application/pdf"
+                      : form.type === "video"
+                      ? "video/*"
+                      : "*"
+                  }
+                  onChange={handleChange}
+                  style={styles.input}
+                  required={uploadOption === "file"}
+                />
+              )}
+            </div>
 
             <div style={styles.formGroup}>
               <label style={styles.label}>Tags (comma separated)</label>
-                <input
-                  type="text"
-                  name="tags"
-                  value={form.tags}
-                  onChange={handleChange}
-                  placeholder="tag1, tag2, tag3"
+              <input
+                type="text"
+                name="tags"
+                value={form.tags}
+                onChange={handleChange}
+                placeholder="tag1, tag2, tag3"
                 style={styles.input}
-                />
-              </div>
+              />
+            </div>
 
             <div style={styles.formGroup}>
               <label style={styles.label}>Transcript (optional)</label>
-                <textarea
-                  name="transcript"
-                  value={form.transcript}
-                  onChange={handleChange}
-                  placeholder="Transcript text"
-                  rows={3}
+              <textarea
+                name="transcript"
+                value={form.transcript}
+                onChange={handleChange}
+                placeholder="Transcript text"
+                rows={3}
                 style={styles.textarea}
-                />
+              />
             </div>
 
             <div style={styles.formActions}>
@@ -380,23 +453,23 @@ export default function AdminMultimediaPage() {
                 type="button"
                 onClick={() => {
                   setForm({ title: "", type: "video", url: "", tags: "", transcript: "", file: null });
-                  setUploadOption('url');
+                  setUploadOption("url");
                   setShowAddForm(false);
                 }}
                 style={styles.cancelButton}
               >
                 Cancel
               </button>
-            <button
-              type="submit"
-              disabled={loading}
-              style={{
+              <button
+                type="submit"
+                disabled={loading}
+                style={{
                   ...styles.submitButton,
-                  ...(loading && styles.buttonDisabled)
+                  ...(loading && styles.buttonDisabled),
                 }}
               >
-                {loading ? 'Creating...' : 'Create Multimedia'}
-            </button>
+                {loading ? "Creating..." : "Create Multimedia"}
+              </button>
             </div>
           </form>
         </div>
@@ -411,20 +484,20 @@ export default function AdminMultimediaPage() {
             onChange={(e) => setSearchTerm(e.target.value)}
             style={styles.searchInput}
           />
-          <span style={styles.resourceCount}>
-            {filteredItems.length} item(s) found
-          </span>
+          <span style={styles.resourceCount}>{filteredItems.length} item(s) found</span>
         </div>
       )}
 
       {filteredItems.length === 0 ? (
-        <div style={{
-          background: "#f8f9fa", 
-          padding: 40, 
-          borderRadius: 12, 
-          textAlign: "center",
-          color: "#606060"
-        }}>
+        <div
+          style={{
+            background: "#f8f9fa",
+            padding: 40,
+            borderRadius: 12,
+            textAlign: "center",
+            color: "#606060",
+          }}
+        >
           <p>{searchTerm ? "No multimedia found matching your search" : "No multimedia content found"}</p>
           {!searchTerm && (
             <button
@@ -436,7 +509,7 @@ export default function AdminMultimediaPage() {
                 padding: "10px 20px",
                 borderRadius: "6px",
                 cursor: "pointer",
-                marginTop: "16px"
+                marginTop: "16px",
               }}
             >
               Add Your First Media
@@ -446,17 +519,19 @@ export default function AdminMultimediaPage() {
       ) : viewMode === "grid" ? (
         /* Grid View */
         <div style={styles.gridContainer}>
-          {filteredItems.map(item => (
+          {filteredItems.map((item) => (
             <div key={item._id || item.media_id} style={styles.gridCard}>
               {/* Thumbnail */}
-              <div style={{ 
-                position: "relative", 
-                paddingBottom: "56.25%", // 16:9 aspect ratio
-                backgroundColor: "#000",
-                overflow: "hidden"
-              }}>
-                <img 
-                  src={getThumbnail(item)} 
+              <div
+                style={{
+                  position: "relative",
+                  paddingBottom: "56.25%", // 16:9
+                  backgroundColor: "#000",
+                  overflow: "hidden",
+                }}
+              >
+                <img
+                  src={getThumbnail(item)}
                   alt={item.title}
                   style={{
                     position: "absolute",
@@ -464,114 +539,134 @@ export default function AdminMultimediaPage() {
                     left: 0,
                     width: "100%",
                     height: "100%",
-                    objectFit: "cover"
+                    objectFit: "cover",
                   }}
+                  loading="lazy"
                 />
-                
-                {/* Media type indicator */}
-                <div style={{
-                  position: "absolute",
-                  top: "8px",
-                  right: "8px",
-                  backgroundColor: "rgba(0,0,0,0.7)",
-                  color: "white",
-                  padding: "4px 8px",
-                  borderRadius: "4px",
-                  fontSize: "12px",
-                  fontWeight: "500",
-                  textTransform: "uppercase"
-                }}>
-                  {item.type}
-                </div>
 
-                {/* Rating */}
-                {item.rating_avg > 0 && (
-                  <div style={{
+                {/* Media type indicator */}
+                <div
+                  style={{
                     position: "absolute",
-                    bottom: "8px",
-                    left: "8px",
+                    top: "8px",
+                    right: "8px",
                     backgroundColor: "rgba(0,0,0,0.7)",
                     color: "white",
                     padding: "4px 8px",
                     borderRadius: "4px",
                     fontSize: "12px",
-                    fontWeight: "500"
-                  }}>
+                    fontWeight: "500",
+                    textTransform: "uppercase",
+                  }}
+                >
+                  {item.type}
+                </div>
+
+                {/* Rating */}
+                {item.rating_avg > 0 && (
+                  <div
+                    style={{
+                      position: "absolute",
+                      bottom: "8px",
+                      left: "8px",
+                      backgroundColor: "rgba(0,0,0,0.7)",
+                      color: "white",
+                      padding: "4px 8px",
+                      borderRadius: "4px",
+                      fontSize: "12px",
+                      fontWeight: "500",
+                    }}
+                  >
                     ⭐ {item.rating_avg} ({item.rating_count})
                   </div>
                 )}
               </div>
-              
+
               {/* Content details */}
               <div style={{ padding: 16 }}>
-                <h4 style={{ 
-                  margin: "0 0 8px", 
-                  fontSize: "16px",
-                  fontWeight: "500",
-                  lineHeight: "1.4",
-                  display: "-webkit-box",
-                  WebkitLineClamp: "2",
-                  WebkitBoxOrient: "vertical",
-                  overflow: "hidden",
-                  color: "#0f0f0f",
-                  height: 44
-                }}>
+                <h4
+                  style={{
+                    margin: "0 0 8px",
+                    fontSize: "16px",
+                    fontWeight: "500",
+                    lineHeight: "1.4",
+                    display: "-webkit-box",
+                    WebkitLineClamp: "2",
+                    WebkitBoxOrient: "vertical",
+                    overflow: "hidden",
+                    color: "#0f0f0f",
+                    height: 44,
+                  }}
+                >
                   {item.title}
                 </h4>
-                
-                <div style={{ 
-                  display: "flex", 
-                  flexWrap: "wrap",
-                  gap: "4px",
-                  marginBottom: 12,
-                  minHeight: 28
-                }}>
-                  {item.tags && Array.isArray(item.tags) && item.tags.slice(0, 2).map((tag, index) => (
-                    <span key={index} style={{
-                      background: "#e8f4fd", 
-                      color: "#0984e3", 
-                      padding: "2px 6px",
-                      borderRadius: "4px", 
-                      fontSize: "11px", 
-                      display: "inline-block"
-                    }}>
-                      #{typeof tag === 'string' && tag.length > 12 ? tag.substring(0, 12) + '...' : tag}
-                    </span>
-                  ))}
+
+                <div
+                  style={{
+                    display: "flex",
+                    flexWrap: "wrap",
+                    gap: "4px",
+                    marginBottom: 12,
+                    minHeight: 28,
+                  }}
+                >
+                  {item.tags &&
+                    Array.isArray(item.tags) &&
+                    item.tags.slice(0, 2).map((tag, index) => (
+                      <span
+                        key={index}
+                        style={{
+                          background: "#e8f4fd",
+                          color: "#0984e3",
+                          padding: "2px 6px",
+                          borderRadius: "4px",
+                          fontSize: "11px",
+                          display: "inline-block",
+                        }}
+                      >
+                        #{typeof tag === "string" && tag.length > 12 ? tag.substring(0, 12) + "..." : tag}
+                      </span>
+                    ))}
                   {item.tags && Array.isArray(item.tags) && item.tags.length > 2 && (
-                    <span style={{
-                      background: "#f0f0f0", 
-                      color: "#666", 
-                      padding: "2px 6px",
-                      borderRadius: "4px", 
-                      fontSize: "11px", 
-                      display: "inline-block"
-                    }}>
+                    <span
+                      style={{
+                        background: "#f0f0f0",
+                        color: "#666",
+                        padding: "2px 6px",
+                        borderRadius: "4px",
+                        fontSize: "11px",
+                        display: "inline-block",
+                      }}
+                    >
                       +{item.tags.length - 2}
                     </span>
                   )}
                 </div>
-                
-                <div style={{ 
-                  display: "flex", 
-                  justifyContent: "space-between",
-                  alignItems: "center",
-                  fontSize: "12px",
-                  color: "#666",
-                  marginBottom: "12px"
-                }}>
+
+                <div
+                  style={{
+                    display: "flex",
+                    justifyContent: "space-between",
+                    alignItems: "center",
+                    fontSize: "12px",
+                    color: "#666",
+                    marginBottom: "12px",
+                  }}
+                >
                   <span>{formatDate(item.createdAt)}</span>
                   <span>{item.views_count || 0} views</span>
                 </div>
-                
+
                 {/* Action Buttons */}
-                <div style={{ 
-                  display: "flex", 
-                  gap: "8px",
-                  borderTop: "1px solid #f0f0f0",
-                  paddingTop: 12,
-                  marginTop: 8
-                }}>
+                <div
+                  style={{
+                    display: "flex",
+                    gap: "8px",
+                    borderTop: "1px solid #f0f0f0",
+                    paddingTop: 12,
+                    marginTop: 8,
+                  }}
+                >
                   <button
                     onClick={() => openEditModal(item)}
                     style={{
@@ -583,7 +678,7 @@ export default function AdminMultimediaPage() {
                       cursor: "pointer",
                       fontSize: "12px",
                       fontWeight: "500",
-                      flex: 1
+                      flex: 1,
                     }}
                   >
                     Edit
@@ -600,7 +695,7 @@ export default function AdminMultimediaPage() {
                       cursor: deletingId === (item._id || item.media_id) ? "not-allowed" : "pointer",
                       fontSize: "12px",
                       fontWeight: "500",
-                      flex: 1
+                      flex: 1,
                     }}
                   >
                     {deletingId === (item._id || item.media_id) ? "Deleting..." : "Delete"}
@@ -620,41 +715,49 @@ export default function AdminMultimediaPage() {
             <div style={styles.tableCell}>Created</div>
             <div style={styles.tableCell}>Actions</div>
           </div>
-          {filteredItems.map(item => (
+          {filteredItems.map((item) => (
             <div key={item._id || item.media_id} style={styles.tableRow}>
-              <div style={styles.tableCell}>
-                <div style={styles.resourceTitle}>{item.title}</div>
-                <div style={styles.resourceDescription}>
-                  {item.transcript ? (item.transcript.length > 100 ? `${item.transcript.substring(0, 100)}...` : item.transcript) : ''}
+              <div style={{ ...styles.tableCell, display: "flex", alignItems: "center", gap: 10 }}>
+                {/* NEW: small thumbnail in list view */}
+                <img
+                  src={getThumbnail(item)}
+                  alt={item.title}
+                  style={{ width: 64, height: 40, objectFit: "cover", borderRadius: 4, flexShrink: 0 }}
+                  loading="lazy"
+                />
+                <div>
+                  <div style={styles.resourceTitle}>{item.title}</div>
+                  <div style={styles.resourceDescription}>
+                    {item.transcript
+                      ? item.transcript.length > 100
+                        ? `${item.transcript.substring(0, 100)}...`
+                        : item.transcript
+                      : ""}
+                  </div>
+                </div>
               </div>
-                </div>
               <div style={styles.tableCell}>
-                <span style={styles.categoryBadge}>{(item.type || '').toUpperCase()}</span>
-                </div>
+                <span style={styles.categoryBadge}>{(item.type || "").toUpperCase()}</span>
+              </div>
               <div style={styles.tableCell}>
                 <span style={styles.viewsCount}>{item.views_count || 0}</span>
               </div>
-              <div style={styles.tableCell}>
-                {formatDate(item.createdAt)}
-              </div>
+              <div style={styles.tableCell}>{formatDate(item.createdAt)}</div>
               <div style={styles.tableCell}>
                 <div style={styles.actionButtons}>
-                <button
-                  onClick={() => openEditModal(item)}
-                    style={styles.editButton}
-                >
-                  Edit
-                </button>
-                <button
-                  onClick={() => handleDelete(item._id || item.media_id)}
-                  disabled={deletingId === (item._id || item.media_id)}
-                  style={{
+                  <button onClick={() => openEditModal(item)} style={styles.editButton}>
+                    Edit
+                  </button>
+                  <button
+                    onClick={() => handleDelete(item._id || item.media_id)}
+                    disabled={deletingId === (item._id || item.media_id)}
+                    style={{
                       ...styles.deleteButton,
-                      ...(deletingId === (item._id || item.media_id) ? styles.buttonDisabled : {})
+                      ...(deletingId === (item._id || item.media_id) ? styles.buttonDisabled : {}),
                     }}
                   >
-                    {deletingId === (item._id || item.media_id) ? 'Deleting...' : 'Delete'}
-                </button>
+                    {deletingId === (item._id || item.media_id) ? "Deleting..." : "Delete"}
+                  </button>
                 </div>
               </div>
             </div>
@@ -664,34 +767,40 @@ export default function AdminMultimediaPage() {
 
       {/* Edit Modal */}
       {isEditModalOpen && (
-        <div style={{
-          position: "fixed",
-          top: 0,
-          left: 0,
-          right: 0,
-          bottom: 0,
-          backgroundColor: "rgba(0,0,0,0.5)",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          zIndex: 1000,
-          padding: "20px"
-        }}>
-          <div style={{
-            background: "#fff",
-            padding: 24,
-            borderRadius: 12,
-            width: "100%",
-            maxWidth: 600,
-            maxHeight: "90vh",
-            overflowY: "auto"
-          }}>
-            <div style={{
-              display: "flex",
-              justifyContent: "space-between",
-              alignItems: "center",
-              marginBottom: 20
-            }}>
+        <div
+          style={{
+            position: "fixed",
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            backgroundColor: "rgba(0,0,0,0.5)",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            zIndex: 1000,
+            padding: "20px",
+          }}
+        >
+          <div
+            style={{
+              background: "#fff",
+              padding: 24,
+              borderRadius: 12,
+              width: "100%",
+              maxWidth: 600,
+              maxHeight: "90vh",
+              overflowY: "auto",
+            }}
+          >
+            <div
+              style={{
+                display: "flex",
+                justifyContent: "space-between",
+                alignItems: "center",
+                marginBottom: 20,
+              }}
+            >
               <h3>Edit Media</h3>
               <button
                 onClick={() => setIsEditModalOpen(false)}
@@ -700,7 +809,7 @@ export default function AdminMultimediaPage() {
                   border: "none",
                   fontSize: "20px",
                   cursor: "pointer",
-                  color: "#757575"
+                  color: "#757575",
                 }}
               >
                 ×
@@ -724,12 +833,7 @@ export default function AdminMultimediaPage() {
 
                 <div style={styles.formGroup}>
                   <label style={styles.label}>Type *</label>
-                  <select
-                    name="type"
-                    value={editForm.type}
-                    onChange={handleEditChange}
-                    style={styles.input}
-                  >
+                  <select name="type" value={editForm.type} onChange={handleEditChange} style={styles.input}>
                     <option value="video">Video</option>
                     <option value="audio">Audio</option>
                     <option value="pdf">PDF</option>
@@ -740,28 +844,28 @@ export default function AdminMultimediaPage() {
 
               <div style={styles.formGroup}>
                 <label style={styles.label}>Source *</label>
-                <div style={{ display: 'flex', gap: '16px' }}>
-                  <label style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                <div style={{ display: "flex", gap: "16px" }}>
+                  <label style={{ display: "flex", alignItems: "center", gap: "6px" }}>
                     <input
                       type="radio"
                       value="url"
-                      checked={editUploadOption === 'url'}
-                      onChange={() => setEditUploadOption('url')}
+                      checked={editUploadOption === "url"}
+                      onChange={() => setEditUploadOption("url")}
                     />
                     URL
                   </label>
-                  <label style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                  <label style={{ display: "flex", alignItems: "center", gap: "6px" }}>
                     <input
                       type="radio"
                       value="file"
-                      checked={editUploadOption === 'file'}
-                      onChange={() => setEditUploadOption('file')}
+                      checked={editUploadOption === "file"}
+                      onChange={() => setEditUploadOption("file")}
                     />
                     Upload File
                   </label>
                 </div>
 
-                {editUploadOption === 'url' ? (
+                {editUploadOption === "url" ? (
                   <input
                     type="text"
                     name="url"
@@ -775,11 +879,21 @@ export default function AdminMultimediaPage() {
                     <input
                       type="file"
                       name="file"
-                      accept={editForm.type === 'image' ? 'image/*' : editForm.type === 'audio' ? 'audio/*' : editForm.type === 'pdf' ? 'application/pdf' : editForm.type === 'video' ? 'video/*' : '*'}
+                      accept={
+                        editForm.type === "image"
+                          ? "image/*"
+                          : editForm.type === "audio"
+                          ? "audio/*"
+                          : editForm.type === "pdf"
+                          ? "application/pdf"
+                          : editForm.type === "video"
+                          ? "video/*"
+                          : "*"
+                      }
                       onChange={handleEditChange}
                       style={styles.input}
                     />
-                    <div style={{ fontSize: '0.8rem', color: '#757575', marginTop: '8px' }}>
+                    <div style={{ fontSize: "0.8rem", color: "#757575", marginTop: "8px" }}>
                       Current: {editForm.url}
                     </div>
                   </div>
@@ -817,16 +931,12 @@ export default function AdminMultimediaPage() {
                   style={{
                     ...styles.submitButton,
                     ...(loading && styles.buttonDisabled),
-                    flex: 1
+                    flex: 1,
                   }}
                 >
-                  {loading ? 'Updating...' : 'Update'}
+                  {loading ? "Updating..." : "Update"}
                 </button>
-                <button
-                  type="button"
-                  onClick={() => setIsEditModalOpen(false)}
-                  style={styles.cancelButton}
-                >
+                <button type="button" onClick={() => setIsEditModalOpen(false)} style={styles.cancelButton}>
                   Cancel
                 </button>
               </div>
@@ -840,381 +950,384 @@ export default function AdminMultimediaPage() {
 
 const styles = {
   container: {
-    padding: '20px',
-    maxWidth: '1200px',
-    margin: '0 auto',
-    fontFamily: "'Segoe UI', Tahoma, Geneva, Verdana, sans-serif"
+    padding: "20px",
+    maxWidth: "1200px",
+    margin: "0 auto",
+    fontFamily: "'Segoe UI', Tahoma, Geneva, Verdana, sans-serif",
   },
   header: {
-    display: 'flex',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: '20px',
-    flexWrap: 'wrap',
-    gap: '15px'
+    display: "flex",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: "20px",
+    flexWrap: "wrap",
+    gap: "15px",
   },
   pageTitle: {
-    color: '#2c3e50',
-    margin: '0'
+    color: "#2c3e50",
+    margin: "0",
   },
   controls: {
-    display: 'flex',
-    gap: '15px',
-    alignItems: 'center'
+    display: "flex",
+    gap: "15px",
+    alignItems: "center",
   },
   toggleButton: {
-    padding: '10px 20px',
-    backgroundColor: '#4b6cb7',
-    color: 'white',
-    border: 'none',
-    borderRadius: '6px',
-    cursor: 'pointer',
-    fontWeight: '500',
-    transition: 'background-color 0.3s ease'
+    padding: "10px 20px",
+    backgroundColor: "#4b6cb7",
+    color: "white",
+    border: "none",
+    borderRadius: "6px",
+    cursor: "pointer",
+    fontWeight: "500",
+    transition: "background-color 0.3s ease",
   },
   viewControls: {
-    display: 'flex',
-    gap: '8px'
+    display: "flex",
+    gap: "8px",
   },
   viewButton: {
-    padding: '8px 16px',
-    backgroundColor: '#f8f9fa',
-    color: '#6c757d',
-    border: '1px solid #e9ecef',
-    borderRadius: '6px',
-    cursor: 'pointer',
-    fontWeight: '500',
-    transition: 'all 0.3s ease'
+    padding: "8px 16px",
+    backgroundColor: "#f8f9fa",
+    color: "#6c757d",
+    border: "1px solid #e9ecef",
+    borderRadius: "6px",
+    cursor: "pointer",
+    fontWeight: "500",
+    transition: "all 0.3s ease",
   },
   activeViewButton: {
-    backgroundColor: '#4b6cb7',
-    color: 'white',
-    borderColor: '#4b6cb7'
+    backgroundColor: "#4b6cb7",
+    color: "white",
+    borderColor: "#4b6cb7",
   },
   loadingContainer: {
-    display: 'flex',
-    flexDirection: 'column',
-    justifyContent: 'center',
-    alignItems: 'center',
-    minHeight: '50vh',
-    color: '#666'
+    display: "flex",
+    flexDirection: "column",
+    justifyContent: "center",
+    alignItems: "center",
+    minHeight: "50vh",
+    color: "#666",
   },
   spinner: {
-    width: '40px',
-    height: '40px',
-    border: '4px solid #f3f3f3',
-    borderTop: '4px solid #4b6cb7',
-    borderRadius: '50%',
-    animation: 'spin 1s linear infinite',
-    marginBottom: '15px'
+    width: "40px",
+    height: "40px",
+    border: "4px solid #f3f3f3",
+    borderTop: "4px solid #4b6cb7",
+    borderRadius: "50%",
+    animation: "spin 1s linear infinite",
+    marginBottom: "15px",
   },
   message: {
-    padding: '12px 20px',
-    borderRadius: '6px',
-    marginBottom: '20px',
-    display: 'flex',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    fontWeight: '500'
+    padding: "12px 20px",
+    borderRadius: "6px",
+    marginBottom: "20px",
+    display: "flex",
+    justifyContent: "space-between",
+    alignItems: "center",
+    fontWeight: "500",
   },
   successMessage: {
-    backgroundColor: '#d4edda',
-    color: '#155724',
-    border: '1px solid #c3e6cb'
+    backgroundColor: "#d4edda",
+    color: "#155724",
+    border: "1px solid #c3e6cb",
   },
   errorMessage: {
-    backgroundColor: '#f8d7da',
-    color: '#721c24',
-    border: '1px solid #f5c6cb'
+    backgroundColor: "#f8d7da",
+    color: "#721c24",
+    border: "1px solid #f5c6cb",
   },
   messageClose: {
-    background: 'none',
-    border: 'none',
-    fontSize: '20px',
-    cursor: 'pointer',
-    color: 'inherit'
+    background: "none",
+    border: "none",
+    fontSize: "20px",
+    cursor: "pointer",
+    color: "inherit",
   },
   formContainer: {
-    backgroundColor: 'white',
-    padding: '30px',
-    borderRadius: '8px',
-    boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)',
-    marginBottom: '20px'
+    backgroundColor: "white",
+    padding: "30px",
+    borderRadius: "8px",
+    boxShadow: "0 4px 6px rgba(0, 0, 0, 0.1)",
+    marginBottom: "20px",
   },
   formTitle: {
-    textAlign: 'center',
-    color: '#333',
-    marginBottom: '30px',
-    fontSize: '24px',
-    fontWeight: '600'
+    textAlign: "center",
+    color: "#333",
+    marginBottom: "30px",
+    fontSize: "24px",
+    fontWeight: "600",
   },
   form: {
-    display: 'flex',
-    flexDirection: 'column',
-    gap: '20px'
+    display: "flex",
+    flexDirection: "column",
+    gap: "20px",
   },
   formRow: {
-    display: 'grid',
-    gridTemplateColumns: '1fr 1fr',
-    gap: '20px'
+    display: "grid",
+    gridTemplateColumns: "1fr 1fr",
+    gap: "20px",
   },
   formGroup: {
-    display: 'flex',
-    flexDirection: 'column',
-    gap: '8px'
+    display: "flex",
+    flexDirection: "column",
+    gap: "8px",
   },
   label: {
-    fontWeight: '600',
-    color: '#333',
-    fontSize: '14px'
+    fontWeight: "600",
+    color: "#333",
+    fontSize: "14px",
   },
   input: {
-    padding: '12px',
-    border: '1px solid #ddd',
-    borderRadius: '4px',
-    fontSize: '16px',
-    outline: 'none',
-    transition: 'border-color 0.3s ease'
+    padding: "12px",
+    border: "1px solid #ddd",
+    borderRadius: "4px",
+    fontSize: "16px",
+    outline: "none",
+    transition: "border-color 0.3s ease",
   },
   textarea: {
-    padding: '12px',
-    border: '1px solid #ddd',
-    borderRadius: '4px',
-    fontSize: '16px',
-    outline: 'none',
-    resize: 'vertical',
-    minHeight: '100px',
-    transition: 'border-color 0.3s ease'
+    padding: "12px",
+    border: "1px solid #ddd",
+    borderRadius: "4px",
+    fontSize: "16px",
+    outline: "none",
+    resize: "vertical",
+    minHeight: "100px",
+    transition: "border-color 0.3s ease",
   },
   formActions: {
-    display: 'flex',
-    justifyContent: 'flex-end',
-    gap: '15px',
-    marginTop: '10px'
+    display: "flex",
+    justifyContent: "flex-end",
+    gap: "15px",
+    marginTop: "10px",
   },
   cancelButton: {
-    padding: '12px 24px',
-    backgroundColor: '#f8f9fa',
-    color: '#6c757d',
-    border: '1px solid #e9ecef',
-    borderRadius: '4px',
-    cursor: 'pointer',
-    fontWeight: '500',
-    transition: 'all 0.3s ease'
+    padding: "12px 24px",
+    backgroundColor: "#f8f9fa",
+    color: "#6c757d",
+    border: "1px solid #e9ecef",
+    borderRadius: "4px",
+    cursor: "pointer",
+    fontWeight: "500",
+    transition: "all 0.3s ease",
   },
   submitButton: {
-    padding: '12px 24px',
-    backgroundColor: '#4b6cb7',
-    color: 'white',
-    border: 'none',
-    borderRadius: '4px',
-    cursor: 'pointer',
-    fontWeight: '500',
-    transition: 'background-color 0.3s ease'
+    padding: "12px 24px",
+    backgroundColor: "#4b6cb7",
+    color: "white",
+    border: "none",
+    borderRadius: "4px",
+    cursor: "pointer",
+    fontWeight: "500",
+    transition: "background-color 0.3s ease",
   },
   buttonDisabled: {
-    backgroundColor: '#6c757d',
-    cursor: 'not-allowed'
+    backgroundColor: "#6c757d",
+    cursor: "not-allowed",
   },
   searchContainer: {
-    display: 'flex',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: '20px',
-    flexWrap: 'wrap',
-    gap: '15px'
+    display: "flex",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: "20px",
+    flexWrap: "wrap",
+    gap: "15px",
   },
   searchInput: {
-    padding: '12px 16px',
-    border: '1px solid #ddd',
-    borderRadius: '6px',
-    fontSize: '16px',
-    minWidth: '300px',
-    outline: 'none',
-    transition: 'border-color 0.3s ease'
+    padding: "12px 16px",
+    border: "1px solid #ddd",
+    borderRadius: "6px",
+    fontSize: "16px",
+    minWidth: "300px",
+    outline: "none",
+    transition: "border-color 0.3s ease",
   },
   resourceCount: {
-    color: '#6c757d',
-    fontSize: '14px'
+    color: "#6c757d",
+    fontSize: "14px",
   },
   emptyState: {
-    textAlign: 'center',
-    padding: '40px',
-    color: '#6c757d',
-    backgroundColor: '#f8f9fa',
-    borderRadius: '8px'
+    textAlign: "center",
+    padding: "40px",
+    color: "#6c757d",
+    backgroundColor: "#f8f9fa",
+    borderRadius: "8px",
   },
   listContainer: {
-    backgroundColor: 'white',
-    borderRadius: '8px',
-    overflow: 'hidden',
-    boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)'
+    backgroundColor: "white",
+    borderRadius: "8px",
+    overflow: "hidden",
+    boxShadow: "0 4px 6px rgba(0, 0, 0, 0.1)",
   },
   tableHeader: {
-    display: 'grid',
-    gridTemplateColumns: '2fr 1fr 0.5fr 1fr 1fr',
-    padding: '15px 20px',
-    backgroundColor: '#f8f9fa',
-    fontWeight: '600',
-    color: '#495057',
-    borderBottom: '1px solid #e9ecef'
+    display: "grid",
+    gridTemplateColumns: "2fr 1fr 0.5fr 1fr 1fr",
+    padding: "15px 20px",
+    backgroundColor: "#f8f9fa",
+    fontWeight: "600",
+    color: "#495057",
+    borderBottom: "1px solid #e9ecef",
   },
   tableRow: {
-    display: 'grid',
-    gridTemplateColumns: '2fr 1fr 0.5fr 1fr 1fr',
-    padding: '15px 20px',
-    borderBottom: '1px solid #e9ecef',
-    alignItems: 'center',
-    transition: 'background-color 0.2s ease'
+    display: "grid",
+    gridTemplateColumns: "2fr 1fr 0.5fr 1fr 1fr",
+    padding: "15px 20px",
+    borderBottom: "1px solid #e9ecef",
+    alignItems: "center",
+    transition: "background-color 0.2s ease",
   },
   tableRowHover: {
-    backgroundColor: '#f8f9fa'
+    backgroundColor: "#f8f9fa",
   },
   tableCell: {
-    padding: '0 10px'
+    padding: "0 10px",
   },
   resourceTitle: {
-    fontWeight: '600',
-    color: '#2c3e50',
-    marginBottom: '5px'
+    fontWeight: "600",
+    color: "#2c3e50",
+    marginBottom: "5px",
   },
   resourceDescription: {
-    color: '#6c757d',
-    fontSize: '14px'
+    color: "#6c757d",
+    fontSize: "14px",
   },
   categoryBadge: {
-    padding: '4px 10px',
-    backgroundColor: '#e7f3ff',
-    color: '#007bff',
-    borderRadius: '12px',
-    fontSize: '12px',
-    fontWeight: '500'
+    padding: "4px 10px",
+    backgroundColor: "#e7f3ff",
+    color: "#007bff",
+    borderRadius: "12px",
+    fontSize: "12px",
+    fontWeight: "500",
   },
   viewsCount: {
-    fontWeight: '600',
-    color: '#495057'
+    fontWeight: "600",
+    color: "#495057",
   },
   actionButtons: {
-    display: 'flex',
-    gap: '10px'
+    display: "flex",
+    gap: "10px",
   },
   editButton: {
-    padding: '6px 12px',
-    backgroundColor: '#28a745',
-    color: 'white',
-    border: 'none',
-    borderRadius: '4px',
-    cursor: 'pointer',
-    fontSize: '14px',
-    transition: 'background-color 0.3s ease'
+    padding: "6px 12px",
+    backgroundColor: "#28a745",
+    color: "white",
+    border: "none",
+    borderRadius: "4px",
+    cursor: "pointer",
+    fontSize: "14px",
+    transition: "background-color 0.3s ease",
   },
   deleteButton: {
-    padding: '6px 12px',
-    backgroundColor: '#dc3545',
-    color: 'white',
-    border: 'none',
-    borderRadius: '4px',
-    cursor: 'pointer',
-    fontSize: '14px',
-    transition: 'background-color 0.3s ease'
+    padding: "6px 12px",
+    backgroundColor: "#dc3545",
+    color: "white",
+    border: "none",
+    borderRadius: "4px",
+    cursor: "pointer",
+    fontSize: "14px",
+    transition: "background-color 0.3s ease",
   },
   gridContainer: {
-    display: 'grid',
-    gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))',
-    gap: '20px'
+    display: "grid",
+    gridTemplateColumns: "repeat(auto-fill, minmax(300px, 1fr))",
+    gap: "20px",
   },
   gridCard: {
-    backgroundColor: 'white',
-    borderRadius: '8px',
-    padding: '20px',
-    boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)',
-    transition: 'transform 0.2s ease, box-shadow 0.2s ease'
+    backgroundColor: "white",
+    borderRadius: "8px",
+    padding: "20px",
+    boxShadow: "0 4px 6px rgba(0, 0, 0, 0.1)",
+    transition: "transform 0.2s ease, box-shadow 0.2s ease",
   },
   gridCardHover: {
-    transform: 'translateY(-5px)',
-    boxShadow: '0 8px 15px rgba(0, 0, 0, 0.1)'
+    transform: "translateY(-5px)",
+    boxShadow: "0 8px 15px rgba(0, 0, 0, 0.1)",
   },
   cardHeader: {
-    display: 'flex',
-    justifyContent: 'space-between',
-    alignItems: 'flex-start',
-    marginBottom: '15px'
+    display: "flex",
+    justifyContent: "space-between",
+    alignItems: "flex-start",
+    marginBottom: "15px",
   },
   cardTitle: {
-    margin: '0',
-    color: '#2c3e50',
-    fontSize: '18px',
-    fontWeight: '600',
-    flex: '1'
+    margin: "0",
+    color: "#2c3e50",
+    fontSize: "18px",
+    fontWeight: "600",
+    flex: "1",
   },
   cardCategory: {
-    padding: '4px 8px',
-    backgroundColor: '#e7f3ff',
-    color: '#007bff',
-    borderRadius: '12px',
-    fontSize: '12px',
-    fontWeight: '500',
-    marginLeft: '10px'
+    padding: "4px 8px",
+    backgroundColor: "#e7f3ff",
+    color: "#007bff",
+    borderRadius: "12px",
+    fontSize: "12px",
+    fontWeight: "500",
+    marginLeft: "10px",
   },
   cardDescription: {
-    color: '#6c757d',
-    marginBottom: '15px',
-    lineHeight: '1.5'
+    color: "#6c757d",
+    marginBottom: "15px",
+    lineHeight: "1.5",
   },
   cardMeta: {
-    display: 'flex',
-    justifyContent: 'space-between',
-    marginBottom: '15px',
-    fontSize: '14px',
-    color: '#6c757d'
+    display: "flex",
+    justifyContent: "space-between",
+    marginBottom: "15px",
+    fontSize: "14px",
+    color: "#6c757d",
   },
   cardTags: {
-    display: 'flex',
-    flexWrap: 'wrap',
-    gap: '8px',
-    marginBottom: '15px'
+    display: "flex",
+    flexWrap: "wrap",
+    gap: "8px",
+    marginBottom: "15px",
   },
   tag: {
-    padding: '4px 8px',
-    backgroundColor: '#f8f9fa',
-    color: '#495057',
-    borderRadius: '4px',
-    fontSize: '12px',
-    border: '1px solid #e9ecef'
+    padding: "4px 8px",
+    backgroundColor: "#f8f9fa",
+    color: "#495057",
+    borderRadius: "4px",
+    fontSize: "12px",
+    border: "1px solid #e9ecef",
   },
   cardActions: {
-    display: 'flex',
-    gap: '10px'
+    display: "flex",
+    gap: "10px",
   },
   cardEditButton: {
-    padding: '8px 16px',
-    backgroundColor: '#28a745',
-    color: 'white',
-    border: 'none',
-    borderRadius: '4px',
-    cursor: 'pointer',
-    fontSize: '14px',
-    flex: '1',
-    transition: 'background-color 0.3s ease'
+    padding: "8px 16px",
+    backgroundColor: "#28a745",
+    color: "white",
+    border: "none",
+    borderRadius: "4px",
+    cursor: "pointer",
+    fontSize: "14px",
+    flex: "1",
+    transition: "background-color 0.3s ease",
   },
   cardDeleteButton: {
-    padding: '8px 16px',
-    backgroundColor: '#dc3545',
-    color: 'white',
-    border: 'none',
-    borderRadius: '4px',
-    cursor: 'pointer',
-    fontSize: '14px',
-    flex: '1',
-    transition: 'background-color 0.3s ease'
-  }
+    padding: "8px 16px",
+    backgroundColor: "#dc3545",
+    color: "white",
+    border: "none",
+    borderRadius: "4px",
+    cursor: "pointer",
+    fontSize: "14px",
+    flex: "1",
+    transition: "background-color 0.3s ease",
+  },
 };
 
 // Add CSS animation for spinner
 const styleSheet = document.styleSheets[0];
-styleSheet.insertRule(`
+styleSheet.insertRule(
+  `
   @keyframes spin {
     0% { transform: rotate(0deg); }
     100% { transform: rotate(360deg); }
   }
-`, styleSheet.cssRules.length);
+`,
+  styleSheet.cssRules.length
+);

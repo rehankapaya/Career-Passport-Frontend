@@ -114,10 +114,6 @@ export default function App() {
           element: <CareerDetailPage />
         },
         {
-          path: '/interest-quiz',
-          element: <InterestQuizPage />
-        },
-        {
           path: '/quiz',
           element: user ? <QuizPage /> : <Navigate to={"/login"} />,
         },
