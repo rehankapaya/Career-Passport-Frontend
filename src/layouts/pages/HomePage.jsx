@@ -192,6 +192,7 @@ export default function HomePage() {
   ];
 
   return (
+    <>
       <div style={containerStyle}>
         {/* Header Section */}
         <div style={headerStyle}>
@@ -205,7 +206,7 @@ export default function HomePage() {
             <form>
               {pathOptions.map((option) => (
                 <label 
-                  key={option.value}
+                key={option.value}
                   style={selectedPath === option.value ? selectedPathLabelStyle : pathLabelStyle}
                 >
                   <input
@@ -301,5 +302,8 @@ export default function HomePage() {
           </button>
         </div>
       </div>
+
+      
+                    </>
   );
 }
