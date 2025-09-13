@@ -145,28 +145,7 @@ export default function DashboardNavbar() {
             fontFamily: "'Segoe UI', Tahoma, Geneva, Verdana, sans-serif",
           }}
         >
-          <a
-            href="/dashboard/profile"
-            style={{
-              textDecoration: "none",
-              color: "#333",
-              padding: "5px 10px",
-              borderRadius: "4px",
-            }}
-          >
-            Profile
-          </a>
-          <a
-            href="/dashboard/settings"
-            style={{
-              textDecoration: "none",
-              color: "#333",
-              padding: "5px 10px",
-              borderRadius: "4px",
-            }}
-          >
-            Settings
-          </a>
+       
           <Link
             onClick={() => {
               userlogout();

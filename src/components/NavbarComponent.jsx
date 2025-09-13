@@ -23,14 +23,14 @@ export default function NavbarComponent() {
   // Main Navigation + Dashboard
   const mainNavItems = [
     { name: 'Home', to: '/' },
-    { name: 'Resources', to: '/resources' },
     { name: 'About', to: '/about' },
     { name: 'Contact', to: '/contact' },
     { name: 'Feedback', to: '/feedback' },
     { name: 'Dashboard', to: '/user-dashboard' },
   ];
-
+  
   const resourceNavItems = [
+    { name: 'Resources', to: '/resources' },
     { name: 'Career Bank', to: '/career-bank' },
     { name: 'Interest Quiz', to: '/quiz' },
     { name: 'Multimedia Hub', to: '/multimedia' },
