@@ -35,7 +35,6 @@ export default function UserProfilePage() {
         withCredentials: true,
       });
       if (res.data) {
-        console.log(res.data);
         setUserProfile(res.data);
         setFormData({
           education_level: res.data.education_level || "",
@@ -58,9 +57,9 @@ export default function UserProfilePage() {
       form.append("education_level", formData.education_level || "");
       const interestsArray = formData.interests
         ? formData.interests
-          .split(",")
-          .map((item) => item.trim())
-          .filter((item) => item)
+            .split(",")
+            .map((item) => item.trim())
+            .filter((item) => item)
         : [];
       form.append("interests", JSON.stringify(interestsArray));
       if (formData.profile_image) {
@@ -120,7 +119,7 @@ export default function UserProfilePage() {
   const handleDownloadResume = async () => {
     try {
       const response = await axios.get(`${apiurl}/${userProfile.resume}`, {
-        responseType: 'blob',
+        responseType: "blob",
         headers: {
           Authorization: `Bearer ${localStorage.getItem("token")}`,
         },
@@ -128,16 +127,16 @@ export default function UserProfilePage() {
       });
 
       const url = window.URL.createObjectURL(new Blob([response.data]));
-      const link = document.createElement('a');
+      const link = document.createElement("a");
       link.href = url;
-      link.setAttribute('download', 'resume.pdf');
+      link.setAttribute("download", "resume.pdf");
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
       window.URL.revokeObjectURL(url);
     } catch (error) {
-      console.error('Error downloading the resume:', error);
-      toast.error('Failed to download the resume.');
+      console.error("Error downloading the resume:", error);
+      toast.error("Failed to download the resume.");
     }
   };
 
@@ -188,32 +187,24 @@ export default function UserProfilePage() {
           <div className="profile-info">
             <h2 className="profile-name">{user.username}</h2>
             <p className="profile-email">{user.email}</p>
-            <span className="profile-badge">
-              {user.role || "User"}
-            </span>
+            <span className="profile-badge">{user.role || "User"}</span>
           </div>
         </div>
 
         {/* Navigation Tabs */}
         <div className="profile-tabs">
-          <button 
+          <button
             className={`tab-button ${activeTab === "profile" ? "active" : ""}`}
             onClick={() => setActiveTab("profile")}
           >
             <i className="tab-icon">👤</i> Profile
           </button>
-          <button 
+          <button
             className={`tab-button ${activeTab === "resume" ? "active" : ""}`}
             onClick={() => setActiveTab("resume")}
           >
             <i className="tab-icon">📄</i> Resume
           </button>
-          {/* <button 
-            className={`tab-button ${activeTab === "settings" ? "active" : ""}`}
-            onClick={() => setActiveTab("settings")}
-          >
-            <i className="tab-icon">⚙️</i> Settings
-          </button> */}
         </div>
 
         {/* Profile Details Section */}
@@ -262,38 +253,43 @@ export default function UserProfilePage() {
                 </div>
               </div>
             </div>
-            
-            {userProfile?.user_id ==user?.user_id &&<div className="action-buttons">
-              <button
-                onClick={() => setShowEdit(true)}
-                className="btn-primary"
-                disabled={isLoading}
-              >
-                {isLoading ? "Updating..." : "Edit Profile"}
-              </button>
-            </div>}
+
+            {user?.user_id && (
+              <div className="action-buttons">
+                <button
+                  onClick={() => setShowEdit(true)}
+                  className="btn-primary"
+                  disabled={isLoading}
+                >
+                  {isLoading
+                    ? "Saving..."
+                    : userProfile
+                    ? "Edit Profile"
+                    : "Add Profile"}
+                </button>
+              </div>
+            )}
           </div>
         )}
 
         {/* Resume Section */}
         {activeTab === "resume" && (
           <div className="profile-section">
-            {userProfile?.user_id == user?.user_id && <h3 className="section-title">Resume Management</h3>}
+            <h3 className="section-title">Resume Management</h3>
 
-            {userProfile?.user_id == user?.user_id && <div className="resume-status">
+            <div className="resume-status">
               <div className="resume-status-icon">
                 {userProfile?.resume ? "✅" : "📝"}
               </div>
               <div className="resume-status-content">
                 <h4>Current Resume Status</h4>
                 <p>
-                  {userProfile?.resume 
+                  {userProfile?.resume
                     ? "Your resume has been uploaded and is ready to be viewed by employers."
-                    : "You haven't uploaded a resume yet. Add one to increase your job opportunities."
-                  }
+                    : "You haven't uploaded a resume yet. Add one to increase your job opportunities."}
                 </p>
               </div>
-            </div>}
+            </div>
 
             {userProfile?.resume && (
               <div className="resume-actions">
@@ -305,10 +301,7 @@ export default function UserProfilePage() {
                   >
                     {showResumePreview ? "Hide Preview" : "Preview Resume"}
                   </button>
-                  <button
-                    onClick={handleDownloadResume}
-                    className="btn-secondary"
-                  >
+                  <button onClick={handleDownloadResume} className="btn-secondary">
                     Download Resume
                   </button>
                 </div>
@@ -325,67 +318,40 @@ export default function UserProfilePage() {
               </div>
             )}
 
-            {userProfile?.user_id ==user?.user_id &&<div className="resume-upload">
-              <h4>{userProfile?.resume ? "Update Your Resume" : "Upload Your Resume"}</h4>
-              <p>Supported formats: PDF, DOC, DOCX</p>
-              <form onSubmit={handleResumeUpload} className="upload-form">
-                <div className="file-input-container">
-                  <label htmlFor="resume-upload" className="file-input-label">
-                    <i className="upload-icon">📁</i>
-                    {resumeFile ? resumeFile.name : "Choose file"}
-                  </label>
-                  <input
-                    id="resume-upload"
-                    type="file"
-                    accept=".pdf,.doc,.docx"
-                    onChange={(e) => setResumeFile(e.target.files[0])}
-                    className="file-input"
-                  />
-                </div>
-                <button
-                  type="submit"
-                  className="btn-primary"
-                  disabled={!resumeFile || isLoading}
-                >
-                  {isLoading ? "Uploading..." : "Upload Resume"}
-                </button>
-              </form>
-            </div>}
+            {user?.user_id && (
+              <div className="resume-upload">
+                <h4>{userProfile?.resume ? "Update Your Resume" : "Add Resume"}</h4>
+                <p>Supported formats: PDF, DOC, DOCX</p>
+                <form onSubmit={handleResumeUpload} className="upload-form">
+                  <div className="file-input-container">
+                    <label htmlFor="resume-upload" className="file-input-label">
+                      <i className="upload-icon">📁</i>
+                      {resumeFile ? resumeFile.name : "Choose file"}
+                    </label>
+                    <input
+                      id="resume-upload"
+                      type="file"
+                      accept=".pdf,.doc,.docx"
+                      onChange={(e) => setResumeFile(e.target.files[0])}
+                      className="file-input"
+                    />
+                  </div>
+                  <button
+                    type="submit"
+                    className="btn-primary"
+                    disabled={!resumeFile || isLoading}
+                  >
+                    {isLoading
+                      ? "Uploading..."
+                      : userProfile?.resume
+                      ? "Update Resume"
+                      : "Add Resume"}
+                  </button>
+                </form>
+              </div>
+            )}
           </div>
         )}
-
-        {/* Settings Section */}
-        {/* {activeTab === "settings" && (
-          <div className="profile-section">
-            <h3 className="section-title">Account Settings</h3>
-            <div className="settings-list">
-              <div className="setting-item">
-                <div className="setting-icon">🔒</div>
-                <div className="setting-content">
-                  <h4>Privacy & Security</h4>
-                  <p>Manage your account security and privacy settings</p>
-                </div>
-                <button className="setting-action">Configure</button>
-              </div>
-              <div className="setting-item">
-                <div className="setting-icon">🔔</div>
-                <div className="setting-content">
-                  <h4>Notifications</h4>
-                  <p>Control how we contact you and what notifications you receive</p>
-                </div>
-                <button className="setting-action">Manage</button>
-              </div>
-              <div className="setting-item">
-                <div className="setting-icon">🎨</div>
-                <div className="setting-content">
-                  <h4>Appearance</h4>
-                  <p>Customize how the app looks and feels</p>
-                </div>
-                <button className="setting-action">Customize</button>
-              </div>
-            </div>
-          </div>
-        )} */}
       </div>
 
       {/* Edit Modal */}
@@ -393,11 +359,8 @@ export default function UserProfilePage() {
         <div className="modal-overlay">
           <div className="modal-content">
             <div className="modal-header">
-              <h3>Edit Profile</h3>
-              <button 
-                onClick={() => setShowEdit(false)}
-                className="modal-close"
-              >
+              <h3>{userProfile ? "Edit Profile" : "Add Profile"}</h3>
+              <button onClick={() => setShowEdit(false)} className="modal-close">
                 &times;
               </button>
             </div>
@@ -437,9 +400,14 @@ export default function UserProfilePage() {
               <div className="form-group">
                 <label className="form-label">Profile Image</label>
                 <div className="file-input-container">
-                  <label htmlFor="profile-image-upload" className="file-input-label">
+                  <label
+                    htmlFor="profile-image-upload"
+                    className="file-input-label"
+                  >
                     <i className="upload-icon">📷</i>
-                    {formData.profile_image ? formData.profile_image.name : "Choose profile image"}
+                    {formData.profile_image
+                      ? formData.profile_image.name
+                      : "Choose profile image"}
                   </label>
                   <input
                     id="profile-image-upload"
@@ -460,17 +428,10 @@ export default function UserProfilePage() {
             </div>
 
             <div className="modal-footer">
-              <button
-                onClick={() => setShowEdit(false)}
-                className="btn-secondary"
-              >
+              <button onClick={() => setShowEdit(false)} className="btn-secondary">
                 Cancel
               </button>
-              <button
-                onClick={handleUpdate}
-                className="btn-primary"
-                disabled={isLoading}
-              >
+              <button onClick={handleUpdate} className="btn-primary" disabled={isLoading}>
                 {isLoading ? "Saving..." : "Save Changes"}
               </button>
             </div>

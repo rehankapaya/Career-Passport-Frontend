@@ -1,29 +1,40 @@
-import React from "react";
+import React, { useContext, useEffect, useState } from "react";
+import axios from "axios";
+import { apiurl } from "../../../api";
+import { UserContext } from "../../../context/UserContext";
 
 export default function QuizResultsPage() {
-  const results = [
-    {
-      id: 1,
-      title: "Web Development Basics",
-      score: "85%",
-      status: "Passed",
-      date: "2025-09-05",
-    },
-    {
-      id: 2,
-      title: "ReactJS Fundamentals",
-      score: "72%",
-      status: "Passed",
-      date: "2025-09-08",
-    },
-    {
-      id: 3,
-      title: "Data Structures Quiz",
-      score: "48%",
-      status: "Failed",
-      date: "2025-09-10",
-    },
-  ];
+  const {user} = useContext(UserContext)
+  const userId = user._id; // 👈 dynamically UserContext se bhi le sakte ho
+  const [results, setResults] = useState([]);
+  const [err, setErr] = useState("");
+
+  useEffect(() => {
+    (async () => {
+      try {
+        const r = await axios.get(
+          `${apiurl}/api/attempt/history/${userId}`
+        );
+        setResults(r.data);
+      } catch (e) {
+        setErr(e.message);
+      }
+    })();
+  }, [userId]);
+
+  if (err)
+    return (
+      <div style={{ color: "red", textAlign: "center", marginTop: "20px" }}>
+        {err}
+      </div>
+    );
+
+  if (!results.length)
+    return (
+      <div style={{ textAlign: "center", marginTop: "20px" }}>
+        No quiz results found.
+      </div>
+    );
 
   return (
     <div>
@@ -42,40 +53,54 @@ export default function QuizResultsPage() {
         <thead>
           <tr style={{ backgroundColor: "#f9fafb", textAlign: "left" }}>
             <th style={{ padding: "12px", borderBottom: "1px solid #e5e7eb" }}>
-              Quiz Title
-            </th>
-            <th style={{ padding: "12px", borderBottom: "1px solid #e5e7eb" }}>
-              Score
+              Quiz ID
             </th>
             <th style={{ padding: "12px", borderBottom: "1px solid #e5e7eb" }}>
               Status
             </th>
             <th style={{ padding: "12px", borderBottom: "1px solid #e5e7eb" }}>
-              Date
+              Total Score
+            </th>
+            <th style={{ padding: "12px", borderBottom: "1px solid #e5e7eb" }}>
+              Created At
+            </th>
+            <th style={{ padding: "12px", borderBottom: "1px solid #e5e7eb" }}>
+              Updated At
             </th>
           </tr>
         </thead>
         <tbody>
-          {results.map((quiz) => (
-            <tr key={quiz.id}>
-              <td style={{ padding: "12px", borderBottom: "1px solid #e5e7eb" }}>
-                {quiz.title}
-              </td>
-              <td style={{ padding: "12px", borderBottom: "1px solid #e5e7eb" }}>
-                {quiz.score}
+          {results.map((attempt) => (
+            <tr key={attempt._id}>
+              <td
+                style={{ padding: "12px", borderBottom: "1px solid #e5e7eb" }}
+              >
+                {attempt.quizId}
               </td>
               <td
                 style={{
                   padding: "12px",
                   borderBottom: "1px solid #e5e7eb",
-                  color: quiz.status === "Passed" ? "#16a34a" : "#dc2626",
+                  color: attempt.status === "completed" ? "#16a34a" : "#dc2626",
                   fontWeight: "bold",
                 }}
               >
-                {quiz.status}
+                {attempt.status}
               </td>
-              <td style={{ padding: "12px", borderBottom: "1px solid #e5e7eb" }}>
-                {quiz.date}
+              <td
+                style={{ padding: "12px", borderBottom: "1px solid #e5e7eb" }}
+              >
+                {attempt.totalScore}
+              </td>
+              <td
+                style={{ padding: "12px", borderBottom: "1px solid #e5e7eb" }}
+              >
+                {new Date(attempt.createdAt).toLocaleString()}
+              </td>
+              <td
+                style={{ padding: "12px", borderBottom: "1px solid #e5e7eb" }}
+              >
+                {new Date(attempt.updatedAt).toLocaleString()}
               </td>
             </tr>
           ))}

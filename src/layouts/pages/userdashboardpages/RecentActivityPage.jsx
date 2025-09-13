@@ -1,12 +1,11 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useContext } from "react";
 import { apiurl } from "../../../api";
-import { useContext } from "react";
 import { UserContext } from "../../../context/UserContext";
 
 export default function RecentActivityPage() {
   const [activities, setActivities] = useState([]);
-  const {user}= useContext(UserContext)
-  const userId = user.user_id; // 👈 dynamic userId aap auth se le sakte ho
+  const { user } = useContext(UserContext);
+  const userId = user.user_id;
 
   useEffect(() => {
     const fetchActivities = async () => {
@@ -24,7 +23,6 @@ export default function RecentActivityPage() {
     fetchActivities();
   }, [userId]);
 
-  // Format date (like "2 hours ago")
   const formatDate = (dateString) => {
     const now = new Date();
     const viewed = new Date(dateString);
@@ -43,27 +41,31 @@ export default function RecentActivityPage() {
   return (
     <div>
       <h1 style={{ color: "#2563eb", marginBottom: "15px" }}>Recent Activity</h1>
-      <ul style={{ listStyle: "none", padding: 0 }}>
-        {activities.map((activity) => (
-          <li
-            key={activity._id}
-            style={{
-              padding: "12px 15px",
-              border: "1px solid #e5e7eb",
-              borderRadius: "8px",
-              marginBottom: "10px",
-              backgroundColor: "#f9fafb",
-            }}
-          >
-            <p style={{ margin: 0, fontWeight: "500", color: "#374151" }}>
-              {activity.categoryType.toUpperCase()} – {activity.title}
-            </p>
-            <small style={{ color: "#6b7280" }}>
-              {formatDate(activity.viewedAt)}
-            </small>
-          </li>
-        ))}
-      </ul>
+      {activities.length === 0 ? (
+        <p style={{ color: "#6b7280" }}>No activity</p>
+      ) : (
+        <ul style={{ listStyle: "none", padding: 0 }}>
+          {activities.map((activity) => (
+            <li
+              key={activity._id}
+              style={{
+                padding: "12px 15px",
+                border: "1px solid #e5e7eb",
+                borderRadius: "8px",
+                marginBottom: "10px",
+                backgroundColor: "#f9fafb",
+              }}
+            >
+              <p style={{ margin: 0, fontWeight: "500", color: "#374151" }}>
+                {activity.categoryType.toUpperCase()} – {activity.title}
+              </p>
+              <small style={{ color: "#6b7280" }}>
+                {formatDate(activity.viewedAt)}
+              </small>
+            </li>
+          ))}
+        </ul>
+      )}
     </div>
   );
 }

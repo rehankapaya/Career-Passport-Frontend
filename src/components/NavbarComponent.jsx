@@ -1,12 +1,24 @@
-import React, { useContext, useState } from 'react';
+import React, { useContext, useState, useRef, useEffect } from 'react';
 import { useNavigate, Link, useLocation } from 'react-router-dom';
 import { UserContext } from '../context/UserContext';
 
 export default function NavbarComponent() {
   const [isDropdownVisible, setDropdownVisible] = useState(false);
+  const dropdownRef = useRef(null); // 🔹 Ref for profile + dropdown
   const navigate = useNavigate();
   const location = useLocation();
   const { user, userlogout } = useContext(UserContext);
+
+  // Close dropdown if clicked outside
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+        setDropdownVisible(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
 
   // Main Navigation + Dashboard
   const mainNavItems = [
@@ -14,7 +26,8 @@ export default function NavbarComponent() {
     { name: 'Resources', to: '/resources' },
     { name: 'About', to: '/about' },
     { name: 'Contact', to: '/contact' },
-    { name: 'Dashboard', to: '/user-dashboard' }, // 🔹 Added Dashboard here
+    { name: 'Feedback', to: '/feedback' },
+    { name: 'Dashboard', to: '/user-dashboard' },
   ];
 
   const resourceNavItems = [
@@ -92,11 +105,11 @@ export default function NavbarComponent() {
               Welcome{user.name ? `, ${user.name}` : user.email ? `, ${user.email}` : ''}
             </span>
 
-            {/* 🔹 Profile with hover dropdown */}
+            {/* 🔹 Profile with click dropdown */}
             <div
+              ref={dropdownRef}
               style={{ position: 'relative', cursor: 'pointer' }}
-              onMouseEnter={() => setDropdownVisible(true)}
-              onMouseLeave={() => setDropdownVisible(false)}
+              onClick={() => setDropdownVisible((prev) => !prev)}
             >
               <svg
                 style={{ width: '2rem', height: '2rem', color: '#6b7280' }}
@@ -138,17 +151,6 @@ export default function NavbarComponent() {
                   }}
                 >
                   Profile
-                </Link>
-                <Link
-                  to="/settings"
-                  style={{
-                    display: 'block',
-                    padding: '0.5rem 1rem',
-                    color: '#4b5563',
-                    textDecoration: 'none'
-                  }}
-                >
-                  Settings
                 </Link>
                 <button
                   onClick={() => {
