@@ -1,46 +1,140 @@
 import React, { useContext, useMemo } from "react";
+import { TrendingUp } from "lucide-react";
 import { CareerContext } from "../../../context/CareerContext";
 
 export default function TrendingCareersPage() {
   const { careerData, loading } = useContext(CareerContext);
 
-  if (loading) return <p className="text-gray-500 text-center mt-10">Loading career suggestions...</p>;
+  if (loading)
+    return (
+      <p
+        style={{
+          color: "#6B7280",
+          textAlign: "center",
+          marginTop: 40,
+          fontFamily: "system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif",
+        }}
+      >
+        Loading career suggestions...
+      </p>
+    );
 
-  // 📝 Extract careers dynamically (split by numbered sections)
   const careers = useMemo(() => {
     if (!careerData) return [];
     return careerData
-      .split(/\*\*\d+\.\s/) // split by **1. , **2. etc.
-      .slice(1) // first part is intro, skip it
+      .split(/\*\*\d+\.\s/)
+      .slice(1)
       .map((block) => block.trim());
   }, [careerData]);
 
   return (
-    <div className="max-w-6xl mx-auto px-6 py-10">
-      <h2 className="text-3xl font-bold text-blue-700 text-center mb-10">
-        🚀 Trending Career Suggestions
-      </h2>
-
-      {/* Intro section */}
-      <div className="bg-gradient-to-r from-blue-50 to-blue-100 text-gray-800 shadow-md rounded-xl p-6 mb-10">
-        <p className="leading-relaxed">{careerData.split("**1.")[0]}</p>
+    <div
+      style={{
+        maxWidth: 1120,
+        margin: "0 auto",
+        padding: "40px 24px",
+        fontFamily: "system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif",
+        color: "#1D2226",
+      }}
+    >
+      <div
+        style={{
+          display: "flex",
+          justifyContent: "center",
+          alignItems: "center",
+          gap: 10,
+          marginBottom: 32,
+        }}
+      >
+        <TrendingUp size={24} style={{ color: "#0A66C2" }} />
+        <h2
+          style={{
+            fontSize: 28,
+            fontWeight: 800,
+            color: "#0A66C2",
+            margin: 0,
+            letterSpacing: 0.2,
+          }}
+        >
+          Trending Career Suggestions
+        </h2>
       </div>
 
-      {/* Careers list */}
-      <div className="grid md:grid-cols-2 gap-6">
+      <div
+        style={{
+          background:
+            "linear-gradient(90deg, rgba(238,243,248,1) 0%, rgba(233,243,255,1) 100%)",
+          color: "#434649",
+          boxShadow: "0 8px 24px rgba(0,0,0,0.06)",
+          borderRadius: 16,
+          padding: 20,
+          marginBottom: 32,
+          border: "1px solid #E6E9EC",
+        }}
+      >
+        <p style={{ lineHeight: 1.6, margin: 0 }}>
+          {careerData.split("**1.")[0]}
+        </p>
+      </div>
+
+      <div
+        style={{
+          display: "grid",
+          gap: 16,
+          gridTemplateColumns: "repeat(auto-fit, minmax(320px, 1fr))",
+        }}
+      >
         {careers.map((career, index) => {
-          const [titleLine, ...details] = career.split("\n").filter((line) => line.trim());
+          const lines = career.split("\n").filter((l) => l.trim());
+          const [titleLine, ...details] = lines;
           return (
             <div
               key={index}
-              className="bg-white rounded-2xl shadow-lg hover:shadow-xl transition duration-300 p-6 border border-gray-100"
+              style={{
+                background: "#FFFFFF",
+                borderRadius: 16,
+                border: "1px solid #E6E9EC",
+                boxShadow: "0 8px 24px rgba(0,0,0,0.06)",
+                padding: 20,
+                transition: "transform 0.2s ease, box-shadow 0.2s ease",
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.transform = "translateY(-4px)";
+                e.currentTarget.style.boxShadow = "0 12px 28px rgba(0,0,0,0.08)";
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.transform = "none";
+                e.currentTarget.style.boxShadow = "0 8px 24px rgba(0,0,0,0.06)";
+              }}
             >
-              <h3 className="text-xl font-semibold text-indigo-600 mb-4">
+              <h3
+                style={{
+                  fontSize: 18,
+                  fontWeight: 700,
+                  color: "#0A66C2",
+                  margin: "0 0 12px 0",
+                  lineHeight: 1.35,
+                }}
+              >
                 {titleLine.replace(/\*\*/g, "").replace(":", "")}
               </h3>
-              <ul className="space-y-2 text-gray-700 text-sm">
+              <ul style={{ listStyle: "none", padding: 0, margin: 0 }}>
                 {details.map((line, i) => (
-                  <li key={i} className="border-l-4 border-indigo-400 pl-3">
+                  <li
+                    key={i}
+                    style={{
+                      color: "#434649",
+                      fontSize: 14,
+                      lineHeight: 1.6,
+                      paddingLeft: 10,
+                      borderLeft: "4px solid #0A66C2",
+                      marginBottom: 8,
+                      background: "#F7FAFC",
+                      borderRadius: 8,
+                      paddingTop: 8,
+                      paddingBottom: 8,
+                    }}
+                  >
                     {line.replace(/\*/g, "").trim()}
                   </li>
                 ))}
