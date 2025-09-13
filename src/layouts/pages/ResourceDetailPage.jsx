@@ -1,18 +1,23 @@
-import React, { useState, useEffect } from 'react';
-import axios from 'axios';
-import { Link, useParams } from 'react-router-dom';
-import './ResourceDetailsPage.css';
-import { useBookmark } from '../../hooks/useBookmark';
-import { Bookmark, BookmarkCheck } from 'lucide-react';
+import React, { useState, useEffect } from "react";
+import axios from "axios";
+import { Link, useParams } from "react-router-dom";
+import { useBookmark } from "../../hooks/useBookmark";
+import { Bookmark, BookmarkCheck, ArrowLeft, FileText, CalendarDays, Download as DownloadIcon, ExternalLink, RefreshCcw } from "lucide-react";
+
 export default function ResourceDetailsPage() {
   const { id } = useParams();
   const [resource, setResource] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState('');
-  const [viewMode, setViewMode] = useState('preview'); // 'preview' or 'download'
-  
-  // Bookmark functionality
-  const { isBookmarked, loading: bookmarkLoading, toggleBookmark } = useBookmark('resource', id);
+  const [error, setError] = useState("");
+  const [viewMode, setViewMode] = useState("preview");
+  const { isBookmarked, loading: bookmarkLoading, toggleBookmark } = useBookmark("resource", id);
+
+  const brandBlue = "#0A66C2";
+  const brandDeep = "#004182";
+  const brandInk = "#1D2226";
+  const brandMute = "#56687A";
+  const chipBg = "#E9F3FF";
+  const line = "#E6E9EC";
 
   useEffect(() => {
     fetchResource();
@@ -21,42 +26,39 @@ export default function ResourceDetailsPage() {
   const fetchResource = async () => {
     try {
       setLoading(true);
-      setError('');
+      setError("");
       const response = await axios.get(`http://localhost:5000/api/resources/${id}`);
-      console.log(response.data)
       setResource(response.data);
-    } catch (error) {
-      setError('Failed to fetch resource. Please try again.');
-      console.error('Fetch error:', error);
+    } catch {
+      setError("Failed to fetch resource. Please try again.");
     } finally {
       setLoading(false);
     }
   };
 
-  const formatDate = (dateString) => {
-    return new Date(dateString).toLocaleDateString('en-US', {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric'
-    });
-  };
+  const formatDate = (dateString) =>
+    new Date(dateString).toLocaleDateString("en-US", { year: "numeric", month: "short", day: "numeric" });
 
   const getFileType = (filename) => {
-    if (!filename) return 'Unknown';
-    const extension = filename.split('.').pop().toLowerCase();
-    if (['pdf'].includes(extension)) return 'PDF Document';
-    if (['doc', 'docx'].includes(extension)) return 'Word Document';
-    if (['xls', 'xlsx'].includes(extension)) return 'Excel Spreadsheet';
-    if (['ppt', 'pptx'].includes(extension)) return 'PowerPoint Presentation';
-    if (['jpg', 'jpeg', 'png', 'gif'].includes(extension)) return 'Image';
-    return 'File';
+    if (!filename) return "File";
+    const ext = filename.split(".").pop().toLowerCase();
+    if (["pdf"].includes(ext)) return "PDF Document";
+    if (["doc", "docx"].includes(ext)) return "Word Document";
+    if (["xls", "xlsx"].includes(ext)) return "Excel Spreadsheet";
+    if (["ppt", "pptx"].includes(ext)) return "PowerPoint Presentation";
+    if (["jpg", "jpeg", "png", "gif"].includes(ext)) return "Image";
+    return "File";
   };
 
   const handleDownload = () => {
-    // Create a temporary link to trigger download
-    const link = document.createElement('a');
-    link.href = resource.file_url;
-    link.setAttribute('download', resource.title || 'resource');
+    let fileUrl = resource.file_url;
+    if (fileUrl.includes("drive.google.com")) {
+      const fileId = fileUrl.match(/\/d\/(.*?)\//)?.[1];
+      if (fileId) fileUrl = `https://drive.google.com/uc?export=download&id=${fileId}`;
+    }
+    const link = document.createElement("a");
+    link.href = fileUrl;
+    link.setAttribute("download", resource.title || "resource");
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
@@ -64,20 +66,65 @@ export default function ResourceDetailsPage() {
 
   if (loading) {
     return (
-      <div className="resource-loading">
-        <div className="loading-spinner"></div>
-        <p>Loading resource details...</p>
+      <div
+        style={{
+          minHeight: "60vh",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          gap: 12,
+          fontFamily: "system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif",
+          color: brandInk
+        }}
+      >
+        <div style={{ width: 20, height: 20, border: "3px solid #E6E9EC", borderTopColor: brandBlue, borderRadius: "50%", animation: "spin 1s linear infinite" }} />
+        <span>Loading resource details…</span>
+        <style>{`@keyframes spin{to{transform:rotate(360deg)}}`}</style>
       </div>
     );
   }
 
   if (error) {
     return (
-      <div className="resource-error">
-        <div className="error-content">
-          <h3>{error}</h3>
-          <button onClick={fetchResource} className="retry-button">
-            Try Again
+      <div
+        style={{
+          minHeight: "60vh",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          fontFamily: "system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif"
+        }}
+      >
+        <div
+          style={{
+            background: "#FFFFFF",
+            border: "1px solid " + line,
+            borderRadius: 12,
+            padding: 24,
+            boxShadow: "0 6px 18px rgba(0,0,0,0.06)",
+            textAlign: "center",
+            maxWidth: 480
+          }}
+        >
+          <h3 style={{ margin: 0, marginBottom: 8, color: brandInk, fontSize: 18, fontWeight: 800 }}>{error}</h3>
+          <button
+            onClick={fetchResource}
+            style={{
+              marginTop: 8,
+              backgroundColor: "#EEF3F8",
+              color: brandInk,
+              border: "1px solid " + line,
+              borderRadius: 10,
+              padding: "10px 16px",
+              cursor: "pointer",
+              fontWeight: 800,
+              display: "inline-flex",
+              alignItems: "center",
+              gap: 8
+            }}
+          >
+            <RefreshCcw size={16} />
+            Try again
           </button>
         </div>
       </div>
@@ -86,196 +133,380 @@ export default function ResourceDetailsPage() {
 
   if (!resource) {
     return (
-      <div className="resource-not-found">
-        <h3>Resource not found</h3>
-        <p>The requested resource could not be found.</p>
+      <div
+        style={{
+          minHeight: "60vh",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          fontFamily: "system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif",
+          color: brandMute
+        }}
+      >
+        Not found
       </div>
     );
   }
 
   return (
-    <div className="resource-details-container">
-      <div className="resource-details-content">
-        {/* Back Button */}
-        <button onClick={() => window.history.back()} className="back-button">
-          ← Back to Resources
+    <div
+      style={{
+        minHeight: "100vh",
+        backgroundColor: "#F3F2EF",
+        padding: 24,
+        fontFamily: "system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif",
+        color: brandInk
+      }}
+    >
+      <div style={{ maxWidth: 1200, margin: "0 auto" }}>
+        <button
+          onClick={() => window.history.back()}
+          style={{
+            display: "inline-flex",
+            alignItems: "center",
+            gap: 8,
+            background: "transparent",
+            border: "1px solid " + line,
+            color: brandBlue,
+            borderRadius: 10,
+            padding: "8px 12px",
+            cursor: "pointer",
+            fontWeight: 800,
+            marginBottom: 16
+          }}
+        >
+          <ArrowLeft size={16} />
+          Back to resources
         </button>
 
-        {/* Main Card */}
-        <div className="resource-card">
-          {/* Header */}
-          <div className="resource-header">
-            <div className="resource-title-section">
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-                <h1>{resource.title}</h1>
-                <button
-                  onClick={toggleBookmark}
-                  disabled={bookmarkLoading}
-                  style={{
-                    background: 'none',
-                    border: 'none',
-                    cursor: bookmarkLoading ? 'not-allowed' : 'pointer',
-                    padding: '0.5rem',
-                    borderRadius: '0.375rem',
-                    color: isBookmarked ? '#f59e0b' : '#6b7280',
-                    transition: 'all 0.2s',
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '0.5rem'
-                  }}
-                  title={isBookmarked ? 'Remove from bookmarks' : 'Add to bookmarks'}
-                >
-                  {isBookmarked ? <BookmarkCheck size={24} /> : <Bookmark size={24} />}
-                  <span style={{ fontSize: '0.875rem', fontWeight: '500' }}>
-                    {isBookmarked ? 'Bookmarked' : 'Bookmark'}
-                  </span>
-                </button>
-              </div>
-              <div className="resource-badges">
-                <span className="category-badge">{resource.category}</span>
-                <span className="views-badge">{resource.views_count} views</span>
-              </div>
+        <div
+          style={{
+            background: "#FFFFFF",
+            borderRadius: 16,
+            boxShadow: "0 8px 24px rgba(0,0,0,0.06)",
+            border: "1px solid " + line,
+            overflow: "hidden"
+          }}
+        >
+          <div style={{ padding: 20, borderBottom: "1px solid " + line }}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 12 }}>
+              <h1 style={{ margin: 0, fontSize: 26, fontWeight: 900, color: brandInk, lineHeight: 1.25 }}>{resource.title}</h1>
+              <button
+                onClick={toggleBookmark}
+                disabled={bookmarkLoading}
+                style={{
+                  background: "rgba(255,255,255,0.95)",
+                  border: "1px solid " + line,
+                  cursor: bookmarkLoading ? "not-allowed" : "pointer",
+                  padding: 10,
+                  borderRadius: 12,
+                  color: isBookmarked ? "#FFC107" : "#7A8A99",
+                  display: "inline-flex",
+                  alignItems: "center",
+                  gap: 8,
+                  fontWeight: 800
+                }}
+                title={isBookmarked ? "Remove from bookmarks" : "Add to bookmarks"}
+              >
+                {isBookmarked ? <BookmarkCheck size={18} /> : <Bookmark size={18} />}
+                <span style={{ fontSize: 14 }}>{isBookmarked ? "Bookmarked" : "Bookmark"}</span>
+              </button>
             </div>
 
-            <p className="resource-description">{resource.description}</p>
+            <div style={{ display: "flex", alignItems: "center", gap: 8, marginTop: 10, flexWrap: "wrap" }}>
+              {resource.category && (
+                <span
+                  style={{
+                    display: "inline-flex",
+                    alignItems: "center",
+                    gap: 6,
+                    backgroundColor: chipBg,
+                    color: brandBlue,
+                    border: "1px solid #D7E9FF",
+                    padding: "6px 12px",
+                    borderRadius: 999,
+                    fontSize: 12,
+                    fontWeight: 800
+                  }}
+                >
+                  <FileText size={14} />
+                  {resource.category}
+                </span>
+              )}
+              <span
+                style={{
+                  display: "inline-flex",
+                  alignItems: "center",
+                  gap: 6,
+                  backgroundColor: "#EEF3F8",
+                  color: brandMute,
+                  border: "1px solid " + line,
+                  padding: "6px 12px",
+                  borderRadius: 999,
+                  fontSize: 12,
+                  fontWeight: 800
+                }}
+              >
+                <CalendarDays size={14} />
+                {formatDate(resource.createdAt)}
+              </span>
+              {typeof resource.views_count === "number" && (
+                <span style={{ color: brandMute, fontSize: 12, fontWeight: 700 }}>{resource.views_count} views</span>
+              )}
+            </div>
+
+            <p style={{ marginTop: 12, color: brandMute, lineHeight: 1.6 }}>{resource.description}</p>
           </div>
 
-          {/* Content */}
-          <div className="resource-content">
-            {/* File Actions */}
-            <div className="file-actions-section">
-              <div className="view-mode-toggle">
-                <button 
-                  className={viewMode === 'preview' ? 'toggle-active' : ''}
-                  onClick={() => setViewMode('preview')}
-                >
-                  Preview
-                </button>
-                <button 
-                  className={viewMode === 'download' ? 'toggle-active' : ''}
-                  onClick={() => setViewMode('download')}
-                >
-                  Download
-                </button>
-              </div>
-
-   {viewMode === 'preview' ? (
-  <div className="preview-section">
-    <h3>Document Preview</h3>
-    <div className="preview-container">
-      {resource.file_url ? (
-        <iframe
-          src={
-            resource.file_url.includes("drive.google.com")
-              ? `https://drive.google.com/file/d/${
-                  resource.file_url.split("/d/")[1].split("/")[0]
-                }/preview`
-              : resource.file_url
-          }
-          className="document-preview"
-          title="Document Preview"
-        />
-      ) : (
-        <p>No file available.</p>
-      )}
-    </div>
-  </div>
-) : (
-  <div className="download-section">
-  <h3>Download Resource</h3>
-  <div className="download-info">
-    <div className="file-type">{getFileType(resource.file_url)}</div>
-    <p>Click the button below to download this resource to your device.</p>
-  </div>
-  <div className="download-actions">
-    <button
-      onClick={() => {
-        let fileUrl = resource.file_url;
-
-        // Agar Google Drive ka link hai to download link me convert karo
-        if (fileUrl.includes("drive.google.com")) {
-          const fileId = fileUrl.match(/\/d\/(.*?)\//)?.[1];
-          if (fileId) {
-            fileUrl = `https://drive.google.com/uc?export=download&id=${fileId}`;
-          }
-        }
-
-        const link = document.createElement("a");
-        link.href = fileUrl;
-        link.setAttribute("download", resource.title || "resource");
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-      }}
-      className="download-button"
-    >
-      Download Now
-    </button>
-
-    <Link
-      to={resource.file_url}
-      target="_blank"
-      rel="noopener noreferrer"
-      className="open-link"
-    >
-      Open in New Tab
-    </Link>
-  </div>
-
-  </div>
-)}
-
+          <div style={{ padding: 20 }}>
+            <div
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: 8,
+                marginBottom: 16,
+                background: "#FAFBFC",
+                border: "1px solid " + line,
+                borderRadius: 12,
+                padding: 6,
+                width: "fit-content"
+              }}
+            >
+              <button
+                onClick={() => setViewMode("preview")}
+                style={{
+                  padding: "10px 16px",
+                  borderRadius: 10,
+                  border: "none",
+                  cursor: "pointer",
+                  fontWeight: 800,
+                  color: viewMode === "preview" ? "#FFFFFF" : brandInk,
+                  background: viewMode === "preview" ? brandBlue : "transparent"
+                }}
+              >
+                Preview
+              </button>
+              <button
+                onClick={() => setViewMode("download")}
+                style={{
+                  padding: "10px 16px",
+                  borderRadius: 10,
+                  border: "none",
+                  cursor: "pointer",
+                  fontWeight: 800,
+                  color: viewMode === "download" ? "#FFFFFF" : brandInk,
+                  background: viewMode === "download" ? brandBlue : "transparent"
+                }}
+              >
+                Download
+              </button>
             </div>
 
-            {/* Tags */}
+            {viewMode === "preview" ? (
+              <div>
+                <h3 style={{ fontSize: 18, fontWeight: 900, marginBottom: 10, color: brandInk }}>Document preview</h3>
+                <div
+                  style={{
+                    background: "#000",
+                    borderRadius: 12,
+                    overflow: "hidden",
+                    border: "1px solid " + line,
+                    minHeight: 480
+                  }}
+                >
+                  {resource.file_url ? (
+                    <iframe
+                      src={
+                        resource.file_url.includes("drive.google.com")
+                          ? `https://drive.google.com/file/d/${resource.file_url.split("/d/")[1].split("/")[0]}/preview`
+                          : resource.file_url
+                      }
+                      title="Document Preview"
+                      style={{ width: "100%", height: 600, border: "none", background: "#fff" }}
+                    />
+                  ) : (
+                    <div style={{ color: "#FFFFFF", padding: 24 }}>No file available.</div>
+                  )}
+                </div>
+              </div>
+            ) : (
+              <div>
+                <h3 style={{ fontSize: 18, fontWeight: 900, marginBottom: 10, color: brandInk }}>Download resource</h3>
+                <div
+                  style={{
+                    border: "1px solid " + line,
+                    background: "#FAFBFC",
+                    borderRadius: 12,
+                    padding: 16,
+                    marginBottom: 12
+                  }}
+                >
+                  <div style={{ display: "inline-flex", alignItems: "center", gap: 8, background: chipBg, color: brandBlue, border: "1px solid #D7E9FF", padding: "6px 12px", borderRadius: 999, fontSize: 12, fontWeight: 800 }}>
+                    <FileText size={14} />
+                    {getFileType(resource.file_url)}
+                  </div>
+                  <p style={{ marginTop: 10, color: brandMute }}>Click a button below to save or open the file.</p>
+                </div>
+                <div style={{ display: "flex", flexWrap: "wrap", gap: 10 }}>
+                  <button
+                    onClick={handleDownload}
+                    style={{
+                      display: "inline-flex",
+                      alignItems: "center",
+                      gap: 8,
+                      backgroundColor: brandBlue,
+                      color: "#FFFFFF",
+                      border: "1px solid " + brandBlue,
+                      borderRadius: 12,
+                      padding: "10px 16px",
+                      cursor: "pointer",
+                      fontWeight: 800
+                    }}
+                  >
+                    <DownloadIcon size={18} />
+                    Download now
+                  </button>
+                  <Link
+                    to={resource.file_url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    style={{
+                      display: "inline-flex",
+                      alignItems: "center",
+                      gap: 8,
+                      backgroundColor: "#FFFFFF",
+                      color: brandBlue,
+                      border: "1px solid " + brandBlue,
+                      borderRadius: 12,
+                      padding: "10px 16px",
+                      textDecoration: "none",
+                      fontWeight: 800
+                    }}
+                  >
+                    <ExternalLink size={18} />
+                    Open in new tab
+                  </Link>
+                </div>
+              </div>
+            )}
+
             {resource.tag && resource.tag.length > 0 && (
-              <div className="tags-section">
-                <h3>Tags</h3>
-                <div className="tags-container">
-                  {resource.tag.map((tag, index) => (
-                    <span key={index} className="tag">
-                      #{tag}
+              <div style={{ marginTop: 24 }}>
+                <h3 style={{ fontSize: 18, fontWeight: 900, marginBottom: 10, color: brandInk }}>Tags</h3>
+                <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
+                  {resource.tag.map((t, i) => (
+                    <span
+                      key={i}
+                      style={{
+                        backgroundColor: "#EEF3F8",
+                        color: brandMute,
+                        border: "1px solid " + line,
+                        padding: "6px 12px",
+                        borderRadius: 999,
+                        fontSize: 12,
+                        fontWeight: 800
+                      }}
+                    >
+                      #{t}
                     </span>
                   ))}
                 </div>
               </div>
             )}
 
-            {/* Metadata Grid */}
-            <div className="metadata-section">
-              <h3>Details</h3>
-              <div className="metadata-grid">
-                <div className="metadata-item">
-                  <label>Created By</label>
-                  <span>{resource.created_by || 'Not specified'}</span>
+            <div style={{ marginTop: 24 }}>
+              <h3 style={{ fontSize: 18, fontWeight: 900, marginBottom: 10, color: brandInk }}>Details</h3>
+              <div
+                style={{
+                  display: "grid",
+                  gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))",
+                  gap: 12
+                }}
+              >
+                <div
+                  style={{
+                    border: "1px solid " + line,
+                    borderRadius: 12,
+                    padding: 12,
+                    background: "#FFFFFF"
+                  }}
+                >
+                  <label style={{ display: "block", fontSize: 12, color: brandMute, marginBottom: 4 }}>Created by</label>
+                  <span style={{ fontWeight: 700, color: brandInk }}>{resource.created_by || "Not specified"}</span>
                 </div>
-
-                <div className="metadata-item">
-                  <label>Created</label>
-                  <span>{formatDate(resource.createdAt)}</span>
+                <div
+                  style={{
+                    border: "1px solid " + line,
+                    borderRadius: 12,
+                    padding: 12,
+                    background: "#FFFFFF"
+                  }}
+                >
+                  <label style={{ display: "block", fontSize: 12, color: brandMute, marginBottom: 4 }}>Created</label>
+                  <span style={{ fontWeight: 700, color: brandInk }}>{formatDate(resource.createdAt)}</span>
                 </div>
-
-                <div className="metadata-item">
-                  <label>Updated</label>
-                  <span>{formatDate(resource.updatedAt)}</span>
+                <div
+                  style={{
+                    border: "1px solid " + line,
+                    borderRadius: 12,
+                    padding: 12,
+                    background: "#FFFFFF"
+                  }}
+                >
+                  <label style={{ display: "block", fontSize: 12, color: brandMute, marginBottom: 4 }}>Updated</label>
+                  <span style={{ fontWeight: 700, color: brandInk }}>{formatDate(resource.updatedAt)}</span>
                 </div>
-
-                <div className="metadata-item">
-                  <label>File Type</label>
-                  <span>{getFileType(resource.file_url)}</span>
+                <div
+                  style={{
+                    border: "1px solid " + line,
+                    borderRadius: 12,
+                    padding: 12,
+                    background: "#FFFFFF"
+                  }}
+                >
+                  <label style={{ display: "block", fontSize: 12, color: brandMute, marginBottom: 4 }}>File type</label>
+                  <span style={{ fontWeight: 700, color: brandInk }}>{getFileType(resource.file_url)}</span>
                 </div>
-
-                <div className="metadata-item full-width">
-                  <label>Resource ID</label>
-                  <span className="resource-id">{resource._id}</span>
+                <div
+                  style={{
+                    gridColumn: "1 / -1",
+                    border: "1px solid " + line,
+                    borderRadius: 12,
+                    padding: 12,
+                    background: "#FFFFFF"
+                  }}
+                >
+                  <label style={{ display: "block", fontSize: 12, color: brandMute, marginBottom: 4 }}>Resource ID</label>
+                  <span style={{ fontFamily: "ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', monospace", color: brandInk }}>{resource._id}</span>
                 </div>
               </div>
             </div>
           </div>
 
-          {/* Footer */}
-          <div className="resource-footer">
-            <p>Resource ID: {resource._id} • Version: {resource.__v}</p>
+          <div
+            style={{
+              padding: 16,
+              borderTop: "1px solid " + line,
+              background: "#FAFBFC",
+              color: brandMute,
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "space-between",
+              flexWrap: "wrap",
+              gap: 8
+            }}
+          >
+            <span>Resource ID: {resource._id} • Version: {resource.__v}</span>
+            <Link
+              to="/resources"
+              style={{
+                color: brandBlue,
+                textDecoration: "none",
+                fontWeight: 800
+              }}
+            >
+              Browse more
+            </Link>
           </div>
         </div>
       </div>

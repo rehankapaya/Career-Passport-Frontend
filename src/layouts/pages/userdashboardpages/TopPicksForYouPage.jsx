@@ -4,94 +4,55 @@ import axios from "axios";
 import { useNavigate } from "react-router-dom";
 import { apiurl } from "../../../api";
 
-// 🔹 Thumbnail with file type icons + badge
 function Thumbnail({ item }) {
-  const url = item.url?.toLowerCase() || "";
-  const type = item.file_type?.toLowerCase();
-
+  const url = (item.url || "").toLowerCase();
+  const type = (item.file_type || "").toLowerCase();
   const isPDF = type === "pdf" || url.endsWith(".pdf");
-  const isVideo =
-    type === "video" || url.endsWith(".mp4") || url.endsWith(".mov");
-  const isAudio =
-    type === "audio" || url.endsWith(".mp3") || url.endsWith(".wav");
-  const isImage =
-    type === "image" ||
-    url.endsWith(".jpg") ||
-    url.endsWith(".jpeg") ||
-    url.endsWith(".png") ||
-    url.endsWith(".gif");
-
+  const isVideo = type === "video" || url.endsWith(".mp4") || url.endsWith(".mov");
+  const isAudio = type === "audio" || url.endsWith(".mp3") || url.endsWith(".wav");
+  const isImage = type === "image" || url.endsWith(".jpg") || url.endsWith(".jpeg") || url.endsWith(".png") || url.endsWith(".gif");
   let icon = null;
   let label = null;
-  let bgColor = "#f3f4f6"; // default gray
-
+  let bgColor = "#EEF3F8";
   if (isPDF) {
-    icon = <FileText size={50} color="#ef4444" />;
+    icon = <FileText size={50} style={{ color: "#D64541" }} />;
     label = "PDF";
-    bgColor = "#fef2f2";
+    bgColor = "#FFF1F0";
   } else if (isVideo) {
-    icon = <Video size={50} color="#2563eb" />;
+    icon = <Video size={50} style={{ color: "#0A66C2" }} />;
     label = "Video";
-    bgColor = "#eff6ff";
+    bgColor = "#E9F3FF";
   } else if (isAudio) {
-    icon = <Music size={50} color="#22c55e" />;
+    icon = <Music size={50} style={{ color: "#2E7D32" }} />;
     label = "Audio";
-    bgColor = "#f0fdf4";
+    bgColor = "#ECFDF3";
   } else if (isImage) {
-    icon = <ImageIcon size={50} color="#0ea5e9" />;
+    icon = <ImageIcon size={50} style={{ color: "#0284C7" }} />;
     label = "Image";
-    bgColor = "#f0f9ff";
+    bgColor = "#E6F4FF";
   }
-
   return (
-    <div style={{ position: "relative", width: "100%", height: "180px" }}>
+    <div style={{ position: "relative", width: "100%", height: 180, background: "#000", overflow: "hidden" }}>
       {item.thumbnail && !isPDF && !isVideo && !isAudio ? (
-        <img
-          src={item.thumbnail}
-          alt={item.title}
-          style={{
-            width: "100%",
-            height: "100%",
-            objectFit: "cover",
-          }}
-        />
+        <img src={item.thumbnail} alt={item.title} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
       ) : icon ? (
-        <div
-          style={{
-            width: "100%",
-            height: "100%",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            backgroundColor: bgColor,
-          }}
-        >
-          {icon}
-        </div>
+        <div style={{ width: "100%", height: "100%", display: "flex", alignItems: "center", justifyContent: "center", backgroundColor: bgColor }}>{icon}</div>
       ) : (
-        <img
-          src="https://via.placeholder.com/300x200?text=No+Thumbnail"
-          alt="No Thumbnail"
-          style={{
-            width: "100%",
-            height: "100%",
-            objectFit: "cover",
-          }}
-        />
+        <div style={{ width: "100%", height: "100%", background: "#EEF3F8" }} />
       )}
-
-      {/* 🔹 Badge Label */}
       {label && (
         <span
           style={{
             position: "absolute",
-            top: "8px",
-            left: "8px",
-            backgroundColor: "rgba(0,0,0,0.7)",
-            color: "white",
-            fontSize: "12px",
-            padding: "2px 6px",
-            borderRadius: "4px",
+            top: 10,
+            left: 10,
+            backgroundColor: "#0A66C2",
+            color: "#FFFFFF",
+            fontSize: 12,
+            padding: "4px 8px",
+            borderRadius: 6,
+            fontWeight: 700,
+            letterSpacing: 0.2,
           }}
         >
           {label}
@@ -109,13 +70,8 @@ export default function TopPicksForYouPage() {
   useEffect(() => {
     const fetchTopPicks = async () => {
       try {
-        const [multimediaRes, resourcesRes] = await Promise.all([
-          axios.get(`${apiurl}/api/multimedia`),
-          axios.get(`${apiurl}/api/resources`),
-        ]);
-
-        // Multimedia top 3
-        const multimediaTop = multimediaRes.data.slice(0, 3).map((item) => ({
+        const [multimediaRes, resourcesRes] = await Promise.all([axios.get(`${apiurl}/api/multimedia`), axios.get(`${apiurl}/api/resources`)]);
+        const multimediaTop = (multimediaRes.data || []).slice(0, 3).map((item) => ({
           id: item.media_id,
           title: item.title,
           thumbnail: item.thumbnail || item.image || item.cover_image || null,
@@ -124,9 +80,7 @@ export default function TopPicksForYouPage() {
           url: item.url,
           file_type: item.file_type,
         }));
-
-        // Resources top 3
-        const resourcesTop = resourcesRes.data.slice(0, 3).map((item) => ({
+        const resourcesTop = (resourcesRes.data || []).slice(0, 3).map((item) => ({
           id: item.resource_id,
           title: item.title,
           thumbnail: item.thumbnail || item.image || item.cover_image || null,
@@ -135,177 +89,162 @@ export default function TopPicksForYouPage() {
           url: item.url,
           file_type: item.file_type,
         }));
-
         setMultimedia(multimediaTop);
         setResources(resourcesTop);
-      } catch (err) {
-        console.error("Error fetching top picks:", err);
-      }
+      } catch (err) {}
     };
-
     fetchTopPicks();
   }, []);
 
   return (
-    <div style={{ padding: "2rem" }}>
-      {/* Back Button */}
+    <div
+      style={{
+        padding: "24px",
+        background: "#F3F6F8",
+        borderRadius: 12,
+        fontFamily: "system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif",
+        color: "#1D2226",
+      }}
+    >
       <button
         onClick={() => navigate(-1)}
         style={{
-          marginBottom: "20px",
-          padding: "8px 16px",
-          backgroundColor: "#e5e7eb",
-          border: "none",
-          borderRadius: "6px",
+          marginBottom: 20,
+          padding: "8px 14px",
+          backgroundColor: "#EEF3F8",
+          color: "#1D2226",
+          border: "1px solid #E6E9EC",
+          borderRadius: 8,
           cursor: "pointer",
-          fontSize: "14px",
+          fontSize: 14,
+          fontWeight: 600,
         }}
       >
-        ← Back to Previous
+        Back
       </button>
 
-      <h1 style={{ color: "#2563eb", marginBottom: "20px" }}>
-        Top Picks For You
-      </h1>
+      <h1 style={{ color: "#0A66C2", marginBottom: 20, fontSize: 24, fontWeight: 800 }}>Top Picks For You</h1>
 
-      {/* Multimedia Section */}
-      <h2 style={{ marginBottom: "15px", color: "#111827" }}>
-        🎥 Top Multimedia Videos
-      </h2>
+      <h2 style={{ marginBottom: 12, color: "#1D2226", fontSize: 18, fontWeight: 700 }}>Top Multimedia</h2>
       {multimedia.length > 0 ? (
-        <div
-          style={{
-            display: "grid",
-            gap: "20px",
-            gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))",
-            marginBottom: "40px",
-          }}
-        >
+        <div style={{ display: "grid", gap: 20, gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))", marginBottom: 40 }}>
           {multimedia.map((item) => (
             <div
               key={item.id}
               style={{
-                backgroundColor: "#fff",
-                border: "1px solid #e5e7eb",
-                borderRadius: "10px",
+                backgroundColor: "#FFFFFF",
+                border: "1px solid #E6E9EC",
+                borderRadius: 12,
                 overflow: "hidden",
-                boxShadow: "0 2px 6px rgba(0,0,0,0.1)",
+                boxShadow: "0 8px 24px rgba(0,0,0,0.06)",
+                transition: "transform 0.2s ease, box-shadow 0.2s ease",
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.transform = "translateY(-6px)";
+                e.currentTarget.style.boxShadow = "0 12px 28px rgba(0,0,0,0.08)";
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.transform = "none";
+                e.currentTarget.style.boxShadow = "0 8px 24px rgba(0,0,0,0.06)";
               }}
             >
               <Thumbnail item={item} />
-              <div style={{ padding: "15px" }}>
-                <h3 style={{ margin: "0 0 10px", color: "#2563eb" }}>
-                  {item.title}
-                </h3>
-                <p style={{ fontSize: "14px", color: "#374151" }}>
-                  {item.description}
-                </p>
+              <div style={{ padding: 16 }}>
+                <h3 style={{ margin: "0 0 8px", color: "#0A66C2", fontSize: 16, fontWeight: 700, lineHeight: 1.3 }}>{item.title}</h3>
+                <p style={{ fontSize: 14, color: "#434649", lineHeight: 1.5, margin: 0 }}>{item.description}</p>
                 <button
                   onClick={() => navigate(item.link)}
                   style={{
-                    marginTop: "10px",
+                    marginTop: 12,
                     padding: "8px 12px",
-                    backgroundColor: "#2563eb",
-                    color: "#fff",
-                    borderRadius: "6px",
+                    backgroundColor: "#0A66C2",
+                    color: "#FFFFFF",
+                    borderRadius: 8,
                     border: "none",
                     cursor: "pointer",
-                    fontSize: "14px",
+                    fontSize: 14,
+                    fontWeight: 700,
                   }}
                 >
-                  Watch Now →
+                  Watch
                 </button>
               </div>
             </div>
           ))}
         </div>
       ) : (
-        <p style={{ color: "#6b7280" }}>No multimedia available.</p>
+        <p style={{ color: "#6B7280" }}>No multimedia available.</p>
       )}
 
-      {/* Resources Section */}
-      <h2 style={{ marginBottom: "15px", color: "#111827" }}>
-        📚 Top Resources
-      </h2>
+      <h2 style={{ marginBottom: 12, color: "#1D2226", fontSize: 18, fontWeight: 700 }}>Top Resources</h2>
       {resources.length > 0 ? (
-        <div
-          style={{
-            display: "grid",
-            gap: "20px",
-            gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))",
-          }}
-        >
+        <div style={{ display: "grid", gap: 20, gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))" }}>
           {resources.map((item) => (
             <div
               key={item.id}
               style={{
-                backgroundColor: "#fff",
-                border: "1px solid #e5e7eb",
-                borderRadius: "10px",
+                backgroundColor: "#FFFFFF",
+                border: "1px solid #E6E9EC",
+                borderRadius: 12,
                 overflow: "hidden",
-                boxShadow: "0 2px 6px rgba(0,0,0,0.1)",
+                boxShadow: "0 8px 24px rgba(0,0,0,0.06)",
+                transition: "transform 0.2s ease, box-shadow 0.2s ease",
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.transform = "translateY(-6px)";
+                e.currentTarget.style.boxShadow = "0 12px 28px rgba(0,0,0,0.08)";
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.transform = "none";
+                e.currentTarget.style.boxShadow = "0 8px 24px rgba(0,0,0,0.06)";
               }}
             >
-              <div style={{ position: "relative", width: "100%", height: "180px" }}>
-       
-                  <div
-                    style={{
-                      width: "100%",
-                      height: "100%",
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "center",
-                      backgroundColor: "#fef2f2",
-                    }}
-                  >
-                    <FileText size={50} color="#ef4444"/>
-                  </div>
-             
-
-             
-                  <span
-                    style={{
-                      position: "absolute",
-                      top: "8px",
-                      left: "8px",
-                      backgroundColor: "rgba(0,0,0,0.7)",
-                      color: "white",
-                      fontSize: "12px",
-                      padding: "2px 6px",
-                      borderRadius: "4px",
-                    }}
-                  >
-                    PDF
-                  </span>
+              <div style={{ position: "relative", width: "100%", height: 180 }}>
+                <div style={{ width: "100%", height: "100%", display: "flex", alignItems: "center", justifyContent: "center", backgroundColor: "#FFF1F0" }}>
+                  <FileText size={50} style={{ color: "#D64541" }} />
+                </div>
+                <span
+                  style={{
+                    position: "absolute",
+                    top: 10,
+                    left: 10,
+                    backgroundColor: "#0A66C2",
+                    color: "#FFFFFF",
+                    fontSize: 12,
+                    padding: "4px 8px",
+                    borderRadius: 6,
+                    fontWeight: 700,
+                    letterSpacing: 0.2,
+                  }}
+                >
+                  PDF
+                </span>
               </div>
-              <div style={{ padding: "15px" }}>
-                <h3 style={{ margin: "0 0 10px", color: "#2563eb" }}>
-                  {item.title}
-                </h3>
-                <p style={{ fontSize: "14px", color: "#374151" }}>
-                  {item.description}
-                </p>
+              <div style={{ padding: 16 }}>
+                <h3 style={{ margin: "0 0 8px", color: "#0A66C2", fontSize: 16, fontWeight: 700, lineHeight: 1.3 }}>{item.title}</h3>
+                <p style={{ fontSize: 14, color: "#434649", lineHeight: 1.5, margin: 0 }}>{item.description}</p>
                 <button
                   onClick={() => navigate(item.link)}
                   style={{
-                    marginTop: "10px",
+                    marginTop: 12,
                     padding: "8px 12px",
-                    backgroundColor: "#2563eb",
-                    color: "#fff",
-                    borderRadius: "6px",
+                    backgroundColor: "#0A66C2",
+                    color: "#FFFFFF",
+                    borderRadius: 8,
                     border: "none",
                     cursor: "pointer",
-                    fontSize: "14px",
+                    fontSize: 14,
+                    fontWeight: 700,
                   }}
                 >
-                  View Resource →
+                  View
                 </button>
               </div>
             </div>
           ))}
         </div>
       ) : (
-        <p style={{ color: "#6b7280" }}>No resources available.</p>
+        <p style={{ color: "#6B7280" }}>No resources available.</p>
       )}
     </div>
   );
