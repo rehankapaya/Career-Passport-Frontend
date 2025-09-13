@@ -22,21 +22,22 @@ export default function MultimediaDetailPage() {
   const [relatedContent, setRelatedContent] = useState([]);
   const [popularContent, setPopularContent] = useState([]);
   const [showTranscript, setShowTranscript] = useState(false);
+  const [audioErrored, setAudioErrored] = useState(false);
+
   const { id } = useParams();
 
-  // -------- Brand (removed purple) --------
+  // ---- Brand (removed purple) ----
   const brandBlue = "#1a73e8";
   const brandBlueLight = "#e9f1ff";
   const mediaBg = "#111";
-  // ---------------------------------------
+  // --------------------------------
 
-  // --------- helper: media URLs ---------
+  // --------- helpers: URLs ---------
   const getMediaUrl = (url) => {
     if (url && url.startsWith("uploads/")) return `${apiurl}/${url}`;
     return url;
   };
 
-  // Drive helpers
   const isDriveUrl = (url = "") =>
     typeof url === "string" &&
     (url.includes("drive.google.com") ||
@@ -54,6 +55,7 @@ export default function MultimediaDetailPage() {
     return urlOrId.trim();
   };
 
+  // Works for Drive video/pdf preview in iframe
   const getDrivePreviewUrl = (urlOrId = "", { autoplay = false, muted = false, loop = false } = {}) => {
     const fileId = extractDriveId(urlOrId);
     if (!fileId) return urlOrId;
@@ -66,11 +68,23 @@ export default function MultimediaDetailPage() {
     return qs ? `${base}?${qs}` : base;
   };
 
-  // NEW: direct download URL for audio from Drive (works for publicly shared files)
+  // Direct download (useful for audio <audio src=...>)
   const getDriveDownloadUrl = (urlOrId = "") => {
     const fileId = extractDriveId(urlOrId);
     if (!fileId) return urlOrId;
     return `https://drive.google.com/uc?export=download&id=${fileId}`;
+  };
+
+  const looksLikePdf = (url = "") => /\.pdf(\?|$)/i.test(url);
+
+  // Build an embeddable PDF URL with sensible fallbacks
+  const getPdfEmbedUrl = (url = "") => {
+    if (!url) return "";
+    if (url.startsWith("uploads/")) return getMediaUrl(url); // served by your API
+    if (isDriveUrl(url)) return getDrivePreviewUrl(url);     // Drive preview
+    if (looksLikePdf(url)) return url;                       // direct .pdf
+    // Fallback: Google Docs Viewer tries to render non-.pdf or servers that don't set inline
+    return `https://docs.google.com/gview?embedded=1&url=${encodeURIComponent(url)}`;
   };
 
   const getMimeFromUrl = (url = "") => {
@@ -81,7 +95,7 @@ export default function MultimediaDetailPage() {
     if (lower.endsWith(".ogg")) return "audio/ogg";
     return "";
   };
-  // --------------------------------------
+  // ---------------------------------
 
   const generateRandomContent = (sourceItems, count, excludeId = null) => {
     if (!sourceItems || sourceItems.length === 0) return [];
@@ -132,32 +146,6 @@ export default function MultimediaDetailPage() {
     }
   };
 
-  const renderStarRating = (avgRating, ratingCount) => {
-    const filledStars = Math.round(avgRating);
-    const starColor = "#f5c518";
-    return (
-      <div style={{ display: "flex", alignItems: "center" }}>
-        {[...Array(5)].map((_, i) => (
-          <StarIcon
-            key={i}
-            size={18}
-            style={{
-              color: i < filledStars ? starColor : "#e0e0e0",
-              fill: i < filledStars ? starColor : "none",
-              marginRight: "2px",
-            }}
-          />
-        ))}
-        <span style={{ fontSize: "1rem", color: "#333", marginLeft: "8px", fontWeight: "bold" }}>
-          {avgRating ? avgRating.toFixed(1) : "0.0"}
-        </span>
-        <span style={{ fontSize: "0.9rem", color: "#888", marginLeft: "4px" }}>
-          ({ratingCount || 0} ratings)
-        </span>
-      </div>
-    );
-  };
-
   const handleRate = async (value) => {
     try {
       await axios.post(`${apiurl}/api/multimedia/${id}/rate`, { rating: value });
@@ -186,17 +174,30 @@ export default function MultimediaDetailPage() {
     );
   }
 
-  // --------- AUDIO: build a reliable src (local, direct URL, or Google Drive) ---------
+  // ---------- AUDIO src (local, external, or Drive) ----------
   const audioSrc = (() => {
     if (multimedia.type !== "audio") return "";
     const url = multimedia.url || "";
     if (!url) return "";
-    if (url.startsWith("uploads/")) return getMediaUrl(url); // local upload
-    if (isDriveUrl(url)) return getDriveDownloadUrl(url);     // public GDrive file
-    return url;                                               // plain external URL
+    if (url.startsWith("uploads/")) return getMediaUrl(url);
+    if (isDriveUrl(url)) return getDriveDownloadUrl(url);
+    return url;
   })();
   const audioType = getMimeFromUrl(audioSrc);
-  // -----------------------------------------------------------------------------------
+  // -----------------------------------------------------------
+
+  // ---------- PDF src (inline iframe preview) ----------
+  const pdfSrc = multimedia.type === "pdf" ? getPdfEmbedUrl(multimedia.url || "") : "";
+  // -----------------------------------------------------
+  // Build a Drive "view" link (opens Drive UI)
+  const getDriveViewUrl = (urlOrId = "") => {
+    const id = extractDriveId(urlOrId);
+    return id ? `https://drive.google.com/file/d/${id}/view` : urlOrId;
+  };
+
+  // Decide if this URL looks like a direct audio file we can stream natively
+  const looksLikeDirectAudio = (url = "") =>
+    /\.(mp3|m4a|aac|wav|ogg|opus)(\?|$)/i.test(url);
 
   return (
     <div style={{ backgroundColor: "#f9f9f9", minHeight: "100vh", padding: "2rem", fontFamily: "Inter, sans-serif" }}>
@@ -226,7 +227,6 @@ export default function MultimediaDetailPage() {
       >
         {/* Main Content Column */}
         <div>
-          {/* Media Player Container */}
           <div
             style={{
               background: "#fff",
@@ -236,22 +236,24 @@ export default function MultimediaDetailPage() {
               marginBottom: "1.5rem",
             }}
           >
-            {/* Conditional Media Display */}
             <div
               style={{
                 position: "relative",
                 width: "100%",
-                paddingBottom: multimedia.type === "audio" ? "0" : "56.25%",
-                backgroundColor: mediaBg, // was purple; now neutral dark
+                paddingBottom: ["audio", "pdf"].includes(multimedia.type) ? "0" : "56.25%",
+                backgroundColor: mediaBg,
                 borderRadius: "8px",
                 overflow: "hidden",
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "center",
                 marginBottom: "1.5rem",
-                minHeight: multimedia.type === "audio" ? 96 : undefined,
+                minHeight:
+                  multimedia.type === "audio" ? 96 :
+                    multimedia.type === "pdf" ? 720 : undefined,
               }}
             >
+              {/* VIDEO */}
               {multimedia.type === "video" && (
                 multimedia.url.startsWith("uploads/") ? (
                   <video
@@ -280,62 +282,80 @@ export default function MultimediaDetailPage() {
                 )
               )}
 
+              {/* AUDIO */}
               {multimedia.type === "audio" && (
-                <div style={{ width: "100%", padding: "1rem" }}>
-                  <audio
-                    controls
-                    controlsList="play nodownload noplaybackrate"
-                    preload="metadata"
-                    style={{ width: "100%" }}
-                    src={audioSrc}
-                  >
-                    {audioType && <source src={audioSrc} type={audioType} />}
-                    Your browser does not support the audio element.
-                  </audio>
+  <div style={{ width: "100%", padding: "1rem" }}>
+    {/* If it's a Drive URL, or if native playback failed, use Drive preview iframe */}
+    { (isDriveUrl(multimedia.url) || audioErrored) ? (
+      <iframe
+        src={getDrivePreviewUrl(multimedia.url, { autoplay: false })}
+        title={multimedia.title || "Drive Audio"}
+        style={{ width: "100%", height: 160, border: "none", background: "#000" }}
+        allow="autoplay"
+      />
+    ) : (
+      // Otherwise, use the native audio player for local/external direct audio
+      <audio
+        controls
+        controlsList="nodownload noplaybackrate"
+        preload="metadata"
+        style={{ width: "100%" }}
+        src={audioSrc}
+        crossOrigin="anonymous"
+        onError={() => setAudioErrored(true)} // fallback to Drive iframe if this fails
+      >
+        {audioType && <source src={audioSrc} type={audioType} />}
+        Your browser does not support the audio element.
+      </audio>
+    )}
 
-                  {/* Download button (explicit), in case controlsList hides browser download */}
-                  <div style={{ marginTop: "0.75rem", display: "flex", gap: "0.5rem" }}>
-                    <a
-                      href={audioSrc}
-                      download
-                      style={{
-                        display: "inline-flex",
-                        alignItems: "center",
-                        gap: "0.5rem",
-                        background: brandBlue,
-                        color: "#fff",
-                        borderRadius: "999px",
-                        padding: "0.5rem 1rem",
-                        textDecoration: "none",
-                        fontWeight: 600,
-                      }}
-                    >
-                      <Download size={16} /> Download audio
-                    </a>
-                    {isDriveUrl(multimedia.url) && (
-                      <a
-                        href={getDriveDownloadUrl(multimedia.url)}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        style={{
-                          display: "inline-flex",
-                          alignItems: "center",
-                          gap: "0.5rem",
-                          background: "#e8e8e8",
-                          color: "#333",
-                          borderRadius: "999px",
-                          padding: "0.5rem 1rem",
-                          textDecoration: "none",
-                          fontWeight: 600,
-                        }}
-                      >
-                        Open in Drive
-                      </a>
-                    )}
-                  </div>
-                </div>
-              )}
+    {/* Actions row */}
+    <div style={{ marginTop: "0.75rem", display: "flex", gap: "0.5rem", flexWrap: "wrap" }}>
+      {/* Download button always available */}
+      <a
+        href={isDriveUrl(multimedia.url) ? getDriveDownloadUrl(multimedia.url) : audioSrc}
+        download
+        style={{
+          display: "inline-flex",
+          alignItems: "center",
+          gap: "0.5rem",
+          background: brandBlue,
+          color: "#fff",
+          borderRadius: "999px",
+          padding: "0.5rem 1rem",
+          textDecoration: "none",
+          fontWeight: 600,
+        }}
+      >
+        <Download size={16} /> Download audio
+      </a>
 
+      {/* Open in Drive goes to the Drive UI, not the download endpoint */}
+      {isDriveUrl(multimedia.url) && (
+        <a
+          href={getDriveViewUrl(multimedia.url)}
+          target="_blank"
+          rel="noopener noreferrer"
+          style={{
+            display: "inline-flex",
+            alignItems: "center",
+            gap: "0.5rem",
+            background: "#e8e8e8",
+            color: "#333",
+            borderRadius: "999px",
+            padding: "0.5rem 1rem",
+            textDecoration: "none",
+            fontWeight: 600,
+          }}
+        >
+          Open in Drive
+        </a>
+      )}
+    </div>
+  </div>
+)}
+
+              {/* IMAGE */}
               {multimedia.type === "image" && (
                 <img
                   src={getMediaUrl(multimedia.url)}
@@ -344,17 +364,23 @@ export default function MultimediaDetailPage() {
                 />
               )}
 
+              {/* PDF (INLINE IFRAME) */}
               {multimedia.type === "pdf" && (
-                <div style={{ textAlign: "center", color: "white" }}>
-                  <a
-                    href={getMediaUrl(multimedia.url)}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    style={{ color: "white", textDecoration: "underline" }}
-                  >
-                    Open PDF Document
-                  </a>
-                </div>
+                <iframe
+                  src={pdfSrc}
+                  title={multimedia.title || "PDF Preview"}
+                  style={{
+                    position: "absolute",
+                    top: 0,
+                    left: 0,
+                    width: "100%",
+                    height: "100%",
+                    border: "none",
+                    background: "#fff",
+                  }}
+                  allow="clipboard-write"
+                  referrerPolicy="no-referrer-when-downgrade"
+                />
               )}
 
               <span
@@ -374,29 +400,7 @@ export default function MultimediaDetailPage() {
               </span>
             </div>
 
-            {/* Media Controls / Transcript button */}
-            <div style={{ display: "flex", gap: "1rem", marginBottom: "1.5rem", flexWrap: "wrap" }}>
-              {multimedia.transcript && (
-                <button
-                  onClick={() => setShowTranscript(!showTranscript)}
-                  style={{
-                    display: "flex",
-                    alignItems: "center",
-                    gap: "0.5rem",
-                    padding: "0.75rem 1.25rem",
-                    borderRadius: "2rem",
-                    background: "#e8e8e8",
-                    color: "#333",
-                    border: "none",
-                    cursor: "pointer",
-                  }}
-                >
-                  <FileText size={18} /> Transcript
-                </button>
-              )}
-            </div>
-
-            {/* Title and Metadata */}
+            {/* Title & Meta */}
             <h1 style={{ fontSize: "2rem", fontWeight: "bold", color: "#333", marginBottom: "0.5rem" }}>
               {multimedia.title}
             </h1>
@@ -415,22 +419,21 @@ export default function MultimediaDetailPage() {
 
             {/* Tags */}
             <div style={{ display: "flex", flexWrap: "wrap", gap: "0.75rem", marginBottom: "1.5rem" }}>
-              {multimedia.tags &&
-                multimedia.tags.map((tag, index) => (
-                  <span
-                    key={index}
-                    style={{
-                      backgroundColor: brandBlueLight,
-                      color: brandBlue,
-                      padding: "6px 16px",
-                      borderRadius: "20px",
-                      fontSize: "0.9rem",
-                      fontWeight: "bold",
-                    }}
-                  >
-                    #{tag}
-                  </span>
-                ))}
+              {multimedia.tags?.map((tag, idx) => (
+                <span
+                  key={idx}
+                  style={{
+                    backgroundColor: brandBlueLight,
+                    color: brandBlue,
+                    padding: "6px 16px",
+                    borderRadius: "20px",
+                    fontSize: "0.9rem",
+                    fontWeight: "bold",
+                  }}
+                >
+                  #{tag}
+                </span>
+              ))}
             </div>
 
             {/* Transcript */}
@@ -468,7 +471,7 @@ export default function MultimediaDetailPage() {
               </div>
             )}
 
-            {/* Rating Section */}
+            {/* Rating */}
             <div
               style={{
                 background: "#f8f8f8",
@@ -506,7 +509,7 @@ export default function MultimediaDetailPage() {
 
         {/* Sidebar Column */}
         <div>
-          {/* Related Content Section */}
+          {/* Related */}
           <div
             style={{
               background: "#fff",
@@ -520,9 +523,9 @@ export default function MultimediaDetailPage() {
               Related Content
             </h3>
             <div style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
-              {relatedContent.map((item, index) => (
+              {relatedContent.map((item) => (
                 <Link
-                  key={index}
+                  key={item.media_id}
                   to={`/multimedia/${item.media_id}`}
                   style={{ display: "flex", alignItems: "center", gap: "1rem", textDecoration: "none", color: "#333" }}
                 >
@@ -530,7 +533,7 @@ export default function MultimediaDetailPage() {
                     style={{
                       width: "60px",
                       height: "60px",
-                      backgroundColor: brandBlueLight, // was purple
+                      backgroundColor: brandBlueLight,
                       borderRadius: "8px",
                       display: "flex",
                       alignItems: "center",
@@ -560,7 +563,7 @@ export default function MultimediaDetailPage() {
             </div>
           </div>
 
-          {/* Popular This Week Section */}
+          {/* Popular */}
           <div
             style={{
               background: "#fff",
@@ -573,9 +576,9 @@ export default function MultimediaDetailPage() {
               Popular This Week
             </h3>
             <div style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
-              {popularContent.map((item, index) => (
+              {popularContent.map((item) => (
                 <Link
-                  key={index}
+                  key={item.media_id}
                   to={`/multimedia/${item.media_id}`}
                   style={{ display: "flex", alignItems: "center", gap: "1rem", textDecoration: "none", color: "#333" }}
                 >
@@ -583,7 +586,7 @@ export default function MultimediaDetailPage() {
                     style={{
                       width: "60px",
                       height: "60px",
-                      backgroundColor: brandBlueLight, // was purple
+                      backgroundColor: brandBlueLight,
                       borderRadius: "8px",
                       display: "flex",
                       alignItems: "center",
