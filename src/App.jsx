@@ -27,6 +27,9 @@ import ResourceDetailsPage from './layouts/pages/ResourceDetailPage'
 import AdminAddResourcePage from './dashboard/dashboardPages/AdminAddResourcePage'
 import AdminFeedbackPage from './dashboard/dashboardPages/AdminFeedbackPage'
 import AdminCareerBankPage from './dashboard/dashboardPages/AdminCareerBankPage'
+import QuizPage from './layouts/pages/QuizPage'
+import ResultPage from './layouts/pages/ResultPage';
+import HistoryPage from './layouts/pages/HistoryPage'
 
 
 export default function App() {
@@ -34,19 +37,19 @@ export default function App() {
   const router = createBrowserRouter([
     {
       path: '/signup',
-      element: <SignupPage />
+      element: !user?<SignupPage />:<Navigate to={"/"}/>,
     },
     {
       path: '/login',
-      element: <LoginPage />
+      element: !user?<LoginPage />:<Navigate to={"/"}/>,
     },
     {
       path:'/password-reset',
-      element:<ForgotPasswordPage/>
+      element:!user?<ForgotPasswordPage/>:<Navigate to={"/"}/>,
     },
     {
       path: '/',
-      element: <AppLayout />,
+      element:   user?.role== "admin"?<Navigate to={"/admin"}/>:<AppLayout />,
       children: [
         {
           index: true,
@@ -103,6 +106,18 @@ export default function App() {
         {
           path: '/my-bookmarks',
           element: user?<BookMarkpage />:<Navigate to={"/login"}/>,
+        },
+        {
+          path:"/quiz",
+          element:<QuizPage/>
+        },
+        {
+          path:"/result/:attemptId",
+          element:<ResultPage/>
+        },
+        {
+          path:"/history",
+          element:<HistoryPage/>
         }
       ]
     },
