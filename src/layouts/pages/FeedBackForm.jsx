@@ -1,16 +1,13 @@
 import React, { useState, useContext, useEffect } from "react";
 import axios from "axios";
 import { UserContext } from "../../context/UserContext";
-<<<<<<< HEAD
+
 import { apiurl } from "../../api";
 
-export default function FeedbackForm() { // 🔹 apna backend ka base URL dalna
-=======
 import { MessageSquare, CheckCircle2, XCircle, Pencil, Trash2, Send, Loader2, Inbox } from "lucide-react";
 
 export default function FeedbackForm() {
   const apiurl = "http://localhost:5000";
->>>>>>> e8e6a45f15b9b394e1954860aaae06e5430ab2b3
   const [category, setCategory] = useState("general");
   const [message, setMessage] = useState("");
   const [status, setStatus] = useState(null);
