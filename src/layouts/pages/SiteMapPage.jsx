@@ -11,51 +11,52 @@ export default function SiteMapPage() {
   const isLoggedIn = !!user;
 
   const publicRoutes = useMemo(() => ([
-    { to: "/", label: "Home" },
-    { to: "/about", label: "About" },
-    { to: "/contact", label: "Contact" },
-    { to: "/services", label: "Services" },
-    { to: "/success-stories", label: "Success Stories" },
-    { to: "/multimedia", label: "Multimedia" },
-    { to: "/resources", label: "Resources" },
-    { to: "/career-bank", label: "Career Bank" },
-    { to: "/feedback", label: "Feedback" },
-    { to: "/sitemap", label: "Site Map (you’re here)" },
-  ]), []);
+  { to: "/", label: "Home" },
+  { to: "/about", label: "About" },
+  { to: "/contact", label: "Contact" },
+  { to: "/services", label: "Services" },
+  { to: "/success-stories", label: "Success Stories" },
+  { to: "/multimedia", label: "Multimedia" },
+  { to: "/resources", label: "Resources" },
+  { to: "/career-bank", label: "Career Bank" },
+  { to: "/feedback", label: "Feedback" },
+  { to: "/profile", label: "User Profile" },   
+  { to: "/sitemap", label: "Site Map (you’re here)" },
+]), []);
 
-  const authRoutes = useMemo(() => ([
-    { to: "/login", label: "Login", show: !isLoggedIn },
-    { to: "/signup", label: "Sign Up", show: !isLoggedIn },
-    { to: "/password-reset", label: "Forgot / Reset Password", show: true },
-    { to: "/my-bookmarks", label: "My Bookmarks", show: true, needsAuth: true },
-    { to: "/quiz", label: "Take Quiz", show: true, needsAuth: true },
-    { to: "/history", label: "Quiz History", show: true, needsAuth: true },
-    { to: "/user-dashboard", label: "User Dashboard (layout)", show: true, needsAuth: true },
-    // Dashboard nested routes
-    { to: "/user-dashboard/recent-activity", label: "Recent Activity", show: true, needsAuth: true },
-    { to: "/user-dashboard/quiz-result", label: "Quiz Results", show: true, needsAuth: true },
-    { to: "/user-dashboard/book-mark", label: "Bookmarked Items (Dashboard)", show: true, needsAuth: true },
-    { to: "/user-dashboard/recommended-career", label: "Recommended Careers", show: true, needsAuth: true },
-    { to: "/user-dashboard/recommended-content", label: "Recommended Content", show: true, needsAuth: true },
-    { to: "/user-dashboard/recommended-videos", label: "Recommended Videos", show: true, needsAuth: true },
-    { to: "/user-dashboard/trending-career", label: "Trending Careers", show: true, needsAuth: true },
-    { to: "/user-dashboard/top-pick", label: "Top Picks For You", show: true, needsAuth: true },
-    { to: "/user-dashboard/analytics", label: "User Analytics", show: true, needsAuth: true },
-    { to: "/user-dashboard/settings", label: "User Settings", show: true, needsAuth: true },
-  ]), [isLoggedIn]);
+ const authRoutes = useMemo(() => ([
+  { to: "/login", label: "Login", show: !isLoggedIn },
+  { to: "/signup", label: "Sign Up", show: !isLoggedIn },
+  { to: "/password-reset", label: "Forgot / Reset Password", show: true },
+  { to: "/my-bookmarks", label: "My Bookmarks", show: true, needsAuth: true },
+  { to: "/quiz", label: "Take Quiz", show: true, needsAuth: true },
+  { to: "/history", label: "Quiz History", show: true, needsAuth: true },
+  { to: "/user-dashboard", label: "User Dashboard (layout)", show: true, needsAuth: true },
+  { to: "/user-dashboard/recent-activity", label: "Recent Activity", show: true, needsAuth: true }, 
+  { to: "/user-dashboard/quiz-result", label: "Quiz Results", show: true, needsAuth: true },
+  { to: "/user-dashboard/book-mark", label: "Bookmarked Items (Dashboard)", show: true, needsAuth: true },
+  { to: "/user-dashboard/recommended-career", label: "Recommended Careers", show: true, needsAuth: true },
+  { to: "/user-dashboard/recommended-content", label: "Recommended Content", show: true, needsAuth: true },
+  { to: "/user-dashboard/recommended-videos", label: "Recommended Videos", show: true, needsAuth: true },
+  { to: "/user-dashboard/trending-career", label: "Trending Careers", show: true, needsAuth: true },
+  { to: "/user-dashboard/top-pick", label: "Top Picks For You", show: true, needsAuth: true },
+]), [isLoggedIn]);
+
 
   const adminRoutes = useMemo(() => ([
-    { to: "/admin", label: "Admin Login", show: !isAdmin },
-    { to: "/admin/dashboard", label: "Admin Dashboard (layout)", show: isAdmin },
-    // Admin dashboard nested
-    { to: "/admin/dashboard/admincareerbank", label: "Admin Career Bank", show: isAdmin },
-    { to: "/admin/dashboard/addresource", label: "Admin Add Resource", show: isAdmin },
-    { to: "/admin/dashboard/adminmultimedia", label: "Admin Multimedia", show: isAdmin },
-    { to: "/admin/dashboard/adminsuccessstories", label: "Admin Success Stories", show: isAdmin },
-    { to: "/admin/dashboard/adminfeedback", label: "Admin Feedback", show: isAdmin },
-    { to: "/admin/dashboard/analytics", label: "Admin Analytics", show: isAdmin },
-    { to: "/admin/dashboard/settings", label: "Admin Settings", show: isAdmin },
-  ]), [isAdmin]);
+  { to: "/admin", label: "Admin Login", show: !isAdmin },
+  { to: "/admin/dashboard", label: "Admin Dashboard (layout)", show: isAdmin },
+  { to: "/admin/dashboard/analytics", label: "Admin Analytics (index)", show: isAdmin },
+  { to: "/admin/dashboard/scoringlogic", label: "Quiz Scoring Logic", show: isAdmin },  
+  { to: "/admin/dashboard/tracking", label: "Tracking Page", show: isAdmin },           
+  { to: "/admin/dashboard/quiz", label: "Quiz History", show: isAdmin },                
+  { to: "/admin/dashboard/admincareerbank", label: "Admin Career Bank", show: isAdmin },
+  { to: "/admin/dashboard/addresource", label: "Admin Add Resource", show: isAdmin },
+  { to: "/admin/dashboard/adminmultimedia", label: "Admin Multimedia", show: isAdmin },
+  { to: "/admin/dashboard/adminsuccessstories", label: "Admin Success Stories", show: isAdmin },
+  { to: "/admin/dashboard/adminfeedback", label: "Admin Feedback", show: isAdmin },
+]), [isAdmin]);
+
 
   // quick-go handlers for dynamic routes
   const goResource = (e) => {

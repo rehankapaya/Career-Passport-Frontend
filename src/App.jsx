@@ -142,8 +142,6 @@ export default function App() {
             { path: 'recommended-videos', element: <RecommendedVideosPage /> },
             { path: 'trending-career', element: <TrendingCareersPage /> },
             { path: 'top-pick', element: <TopPicksForYouPage /> },
-            { path: 'analytics', element: <h1>Analytics</h1> },
-            { path: 'settings', element: <h1>Settings</h1> }
           ]
         },
         {
@@ -165,15 +163,12 @@ export default function App() {
         },
         { path:'scoringlogic',element:<AdminQuizScoringLogic/>},
         { path:'tracking',element:<AdminTrackingPage/>},
-        { path: 'manage-users', element: <h1>Manage Users</h1> },
         { path: 'admincareerbank', element: <AdminCareerBankPage /> },
         { path: 'quiz', element: <AdminQuizHistory /> },
         { path: 'addresource', element: <AdminAddResourcePage /> },
         { path: 'adminmultimedia', element: <AdminMultimediaPage /> },
         { path: 'adminsuccessstories', element: <AdminSuccessStoriesPage /> },
         { path: 'adminfeedback', element: <AdminFeedbackPage /> },
-        { path: 'analytics', element: <h1>Analytics</h1> },
-        { path: 'settings', element: <h1>Settings</h1> }
       ]
     },
 
