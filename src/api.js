@@ -1,4 +1,4 @@
  const localapiurl = "http://localhost:5000"
  const liveapiurl = "https://career-passport-backend.vercel.app"
 
-export const apiurl = liveapiurl
+export const apiurl = process.env.SERVER_URL|| liveapiurl 

@@ -272,32 +272,14 @@ export default function HomePage() {
 
         <div style={line}></div>
 
-        <div style={journey}>
-          <h2 style={h2}>Your Journey Starts Here</h2>
-          <div style={{ display: "flex", flexDirection: "row", alignItems: "center", gap: "2rem", flexWrap: "wrap", justifyContent: "center" }}>
-            <div style={journeyText}>
-              <p style={small}>
-                NextStep Navigator gives practical direction for students, grads, and pros. You’ll find solid resources, straightforward insights, and tools that help you decide your next move.
-              </p>
-              <ul style={list}>
-                <li style={li}>Personalized career recommendations</li>
-                <li style={li}>Expert video content and podcasts</li>
-                <li style={li}>Downloadable resources and guides</li>
-                <li style={li}>Success stories and motivation</li>
-              </ul>
-            </div>
-            <div style={preview}>Platform Preview</div>
-          </div>
-        </div>
+    
 
         <div style={line}></div>
 
         <div style={bottom}>
           <h2 style={footTitle}>Ready to Navigate Your Future?</h2>
           <p style={footSub}>Join thousands who’ve found their path with NextStep Navigator.</p>
-          <button style={footBtn} onMouseDown={(e)=>e.currentTarget.style.backgroundColor=brandDark} onMouseUp={(e)=>e.currentTarget.style.backgroundColor=brand}>
-            Start Your Journey Today
-          </button>
+        
         </div>
       </div>
     </>

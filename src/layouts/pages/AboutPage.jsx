@@ -75,7 +75,7 @@ export default function AboutPage() {
           <div style={{ flex: "1 1 420px", minHeight: 300, background: "#EEF3F8", border: "1px solid #E6E9EC", borderRadius: 14, display: "flex", alignItems: "center", justifyContent: "center" }}>
             <div style={{ display: "flex", alignItems: "center", gap: 10, color: brandMute }}>
               <MonitorSmartphone size={22} />
-              <span>Platform Illustration</span>
+              <img src="/platform-preview.avif" alt="" />
             </div>
           </div>
         </div>
