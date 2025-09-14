@@ -77,7 +77,7 @@ const getThumbnail = (item) => {
 
         // Local uploads (no built-in thumb) → placeholder
         if (url && url.startsWith("uploads/")) {
-            return "https://via.placeholder.com/300x180/1f2937/ffffff?text=Video";
+            return "/multimedi.png";
         }
 
         // Unknown video host → generic
@@ -90,7 +90,7 @@ const getThumbnail = (item) => {
             const t = getDriveThumbnailUrl(url);
             if (t) return t;
         }
-        return "https://via.placeholder.com/300x180/0ea5e9/ffffff?text=PDF";
+        return "/pdfthumbnail.png";
     }
 
     if (item.type === "audio") {
@@ -98,7 +98,7 @@ const getThumbnail = (item) => {
     }
 
     // Fallback
-    return "https://via.placeholder.com/300x180/96aab5/ffffff?text=Media";
+    return "/multimedia.png";
 };
 
 export default getThumbnail;

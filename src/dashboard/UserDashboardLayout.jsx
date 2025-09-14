@@ -1,6 +1,6 @@
 import React from 'react'
 import { Outlet } from 'react-router-dom'
-import './DashboardLayout.css'   // Custom CSS import
+import './UserDashboardLayout.css'   // Custom CSS import
 import UserSidebar from '../components/dashboardComponents/UserSidebar'
 import UserTopbar from '../components/dashboardComponents/UserTopbar'
 

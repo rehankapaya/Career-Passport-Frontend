@@ -1,11 +1,56 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
-import { Link, useParams } from "react-router-dom";
+import { Link, useParams, useLocation, useNavigate } from "react-router-dom";
+import { apiurl } from "../../api";
 import { useBookmark } from "../../hooks/useBookmark";
 import { Bookmark, BookmarkCheck, ArrowLeft, FileText, CalendarDays, Download as DownloadIcon, ExternalLink, RefreshCcw } from "lucide-react";
+import Breadcrumbs from "../../components/Breadcrumbs";
+
+const CACHE_KEY = "resources_cache_v1";
+
+function readCache() {
+  try {
+    const raw = localStorage.getItem(CACHE_KEY);
+    if (!raw) return null;
+    const parsed = JSON.parse(raw);
+    if (!parsed || !Array.isArray(parsed.items)) return null;
+    return parsed.items;
+  } catch {
+    return null;
+  }
+}
+
+function writeCache(items) {
+  try {
+    localStorage.setItem(CACHE_KEY, JSON.stringify({ items, savedAt: Date.now() }));
+  } catch { }
+}
+
+function upsertCache(item) {
+  const items = readCache() || [];
+  const idx = items.findIndex(
+    (x) =>
+      String(x.resource_id) === String(item.resource_id) ||
+      String(x._id) === String(item._id)
+  );
+  if (idx >= 0) items[idx] = item;
+  else items.push(item);
+  writeCache(items);
+}
+
+function findInCacheById(items, id) {
+  if (!Array.isArray(items)) return null;
+  return (
+    items.find((x) => String(x.resource_id) === String(id)) ||
+    items.find((x) => String(x._id) === String(id)) ||
+    null
+  );
+}
 
 export default function ResourceDetailsPage() {
   const { id } = useParams();
+  const location = useLocation();
+  const navigate = useNavigate()
   const [resource, setResource] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -20,21 +65,40 @@ export default function ResourceDetailsPage() {
   const line = "#E6E9EC";
 
   useEffect(() => {
-    fetchResource();
-  }, [id]);
+    const init = async () => {
+      try {
+        setLoading(true);
+        setError("");
 
-  const fetchResource = async () => {
-    try {
-      setLoading(true);
-      setError("");
-      const response = await axios.get(`http://localhost:5000/api/resources/${id}`);
-      setResource(response.data);
-    } catch {
-      setError("Failed to fetch resource. Please try again.");
-    } finally {
-      setLoading(false);
-    }
-  };
+        const stateResource = location.state;
+        if (stateResource) {
+          setResource(stateResource);
+          upsertCache(stateResource);
+          setLoading(false);
+          return;
+        }
+
+        const cached = readCache();
+        if (cached && cached.length) {
+          const found = findInCacheById(cached, id);
+          if (found) {
+            setResource(found);
+            setLoading(false);
+            return;
+          }
+        }
+
+        const res = await axios.get(`${apiurl}/api/resources/${id}`);
+        setResource(res.data);
+        upsertCache(res.data);
+      } catch {
+        setError("Failed to fetch resource. Please try again.");
+      } finally {
+        setLoading(false);
+      }
+    };
+    init();
+  }, [id, location.state]);
 
   const formatDate = (dateString) =>
     new Date(dateString).toLocaleDateString("en-US", { year: "numeric", month: "short", day: "numeric" });
@@ -52,8 +116,9 @@ export default function ResourceDetailsPage() {
 
   const handleDownload = () => {
     let fileUrl = resource.file_url;
+    if (!fileUrl) return;
     if (fileUrl.includes("drive.google.com")) {
-      const fileId = fileUrl.match(/\/d\/(.*?)\//)?.[1];
+      const fileId = fileUrl.match(/\/d\/(.*?)\//)?.[1] || fileUrl.match(/[?&]id=([^&]+)/)?.[1];
       if (fileId) fileUrl = `https://drive.google.com/uc?export=download&id=${fileId}`;
     }
     const link = document.createElement("a");
@@ -108,7 +173,7 @@ export default function ResourceDetailsPage() {
         >
           <h3 style={{ margin: 0, marginBottom: 8, color: brandInk, fontSize: 18, fontWeight: 800 }}>{error}</h3>
           <button
-            onClick={fetchResource}
+            onClick={() => window.location.reload()}
             style={{
               marginTop: 8,
               backgroundColor: "#EEF3F8",
@@ -149,6 +214,8 @@ export default function ResourceDetailsPage() {
   }
 
   return (
+    <>
+    {/* <Breadcrumbs /> */}
     <div
       style={{
         minHeight: "100vh",
@@ -157,26 +224,26 @@ export default function ResourceDetailsPage() {
         fontFamily: "system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif",
         color: brandInk
       }}
-    >
+      >
       <div style={{ maxWidth: 1200, margin: "0 auto" }}>
         <button
-          onClick={() => window.history.back()}
+          onClick={() => navigate(-1)}
+          onMouseOver={(e) => (e.currentTarget.style.backgroundColor = brandDeep)}
+          onMouseOut={(e) => (e.currentTarget.style.backgroundColor = brandBlue)}
           style={{
-            display: "inline-flex",
-            alignItems: "center",
-            gap: 8,
-            background: "transparent",
-            border: "1px solid " + line,
+            marginBottom: 20,
+            padding: "8px 14px",
+            backgroundColor: "#EEF3F8",
             color: brandBlue,
-            borderRadius: 10,
-            padding: "8px 12px",
+            border: "1px solid #E6E9EC",
+            borderRadius: 8,
             cursor: "pointer",
-            fontWeight: 800,
-            marginBottom: 16
+            fontSize: 14,
+            fontWeight: 600,
           }}
         >
           <ArrowLeft size={16} />
-          Back to resources
+
         </button>
 
         <div
@@ -318,12 +385,14 @@ export default function ResourceDetailsPage() {
                     <iframe
                       src={
                         resource.file_url.includes("drive.google.com")
-                          ? `https://drive.google.com/file/d/${resource.file_url.split("/d/")[1].split("/")[0]}/preview`
-                          : resource.file_url
+                        ? `https://drive.google.com/file/d/${resource.file_url.match(/\/d\/([^/]+)/)?.[1] ||
+                          resource.file_url.match(/[?&]id=([^&]+)/)?.[1]
+                        }/preview`
+                        : resource.file_url
                       }
                       title="Document Preview"
                       style={{ width: "100%", height: 600, border: "none", background: "#fff" }}
-                    />
+                      />
                   ) : (
                     <div style={{ color: "#FFFFFF", padding: 24 }}>No file available.</div>
                   )}
@@ -366,26 +435,28 @@ export default function ResourceDetailsPage() {
                     <DownloadIcon size={18} />
                     Download now
                   </button>
-                  <Link
+                  {resource.file_url && (
+                    <Link
                     to={resource.file_url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    style={{
-                      display: "inline-flex",
-                      alignItems: "center",
-                      gap: 8,
-                      backgroundColor: "#FFFFFF",
-                      color: brandBlue,
-                      border: "1px solid " + brandBlue,
-                      borderRadius: 12,
-                      padding: "10px 16px",
-                      textDecoration: "none",
-                      fontWeight: 800
-                    }}
-                  >
-                    <ExternalLink size={18} />
-                    Open in new tab
-                  </Link>
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      style={{
+                        display: "inline-flex",
+                        alignItems: "center",
+                        gap: 8,
+                        backgroundColor: "#FFFFFF",
+                        color: brandBlue,
+                        border: "1px solid " + brandBlue,
+                        borderRadius: 12,
+                        padding: "10px 16px",
+                        textDecoration: "none",
+                        fontWeight: 800
+                      }}
+                    >
+                      <ExternalLink size={18} />
+                      Open in new tab
+                    </Link>
+                  )}
                 </div>
               </div>
             )}
@@ -504,12 +575,13 @@ export default function ResourceDetailsPage() {
                 textDecoration: "none",
                 fontWeight: 800
               }}
-            >
+              >
               Browse more
             </Link>
           </div>
         </div>
       </div>
     </div>
+              </>
   );
 }

@@ -44,7 +44,7 @@ export default function AnalyticsPage() {
   const [mediaTypeCounts, setMediaTypeCounts] = useState([]);
   const [feedbackStatusCounts, setFeedbackStatusCounts] = useState([]);
   const [attemptsOverTime, setAttemptsOverTime] = useState([]);
-
+const [users, setUsers] = useState([]);
   useEffect(() => {
     const fetchAll = async () => {
       setLoading(true);
@@ -55,14 +55,16 @@ export default function AnalyticsPage() {
           multimediaRes,
           storiesRes,
           feedbackRes,
-          attemptsRes
+          attemptsRes,
+          usersRes
         ] = await Promise.all([
           axios.get(`${apiurl}/api/careers`),
           axios.get(`${apiurl}/api/resources`),
           axios.get(`${apiurl}/api/multimedia`),
           axios.get(`${apiurl}/api/success-stories`),
           axios.get(`${apiurl}/api/feedback`),
-          axios.get(`${apiurl}/api/attempt/history`)
+          axios.get(`${apiurl}/api/attempt/history`),
+          axios.get(`${apiurl}/api/users/all`)
         ]);
 
         const careersData = careersRes.data || careersRes.data?.data || [];
@@ -71,6 +73,7 @@ export default function AnalyticsPage() {
         const storiesData = storiesRes.data || storiesRes.data?.data || [];
         const feedbackData = feedbackRes.data?.data ? feedbackRes.data.data : (feedbackRes.data || []);
         const attemptsData = attemptsRes.data || attemptsRes.data?.data || [];
+        const usersData = usersRes.data || [];
 
         setCareers(careersData);
         setResources(resourcesData);
@@ -78,6 +81,7 @@ export default function AnalyticsPage() {
         setStories(storiesData);
         setFeedback(feedbackData);
         setAttempts(attemptsData);
+        setUsers(usersData) 
 
         const domainMap = {};
         careersData.forEach(c => {
@@ -246,6 +250,19 @@ export default function AnalyticsPage() {
       ) : (
         <>
           <div style={{ display: "grid", gridTemplateColumns: "repeat(6, 1fr)", gap: 16, marginBottom: 18 }}>
+            <div style={{ gridColumn: "span 1", ...styles.statCard }}>
+  <div style={{ color: MUTED, fontSize: 12 }}>Total Users</div>
+  <div style={{ fontSize: 20, fontWeight: 700 }}>{users.length}</div>
+  <div style={styles.smallMuted}>Registered accounts</div>
+</div>
+
+<div style={{ gridColumn: "span 1", ...styles.statCard }}>
+  <div style={{ color: MUTED, fontSize: 12 }}>Active Users</div>
+  <div style={{ fontSize: 20, fontWeight: 700 }}>
+    {users.filter(u => u.role?.toLowerCase() === "student").length}
+  </div>
+  <div style={styles.smallMuted}>Currently active</div>
+</div>
             <div style={{ gridColumn: "span 1", ...styles.statCard }}>
               <div style={{ color: MUTED, fontSize: 12 }}>Careers</div>
               <div style={{ fontSize: 20, fontWeight: 700 }}>{careers.length}</div>

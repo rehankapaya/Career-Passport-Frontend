@@ -3,6 +3,38 @@ import axios from "axios";
 import { apiurl } from "../../api";
 import { Plus, List, Grid2X2, Search, Edit3, Trash2, X, Layers, SlidersHorizontal, DollarSign } from "lucide-react";
 
+const CACHE_KEY = "careers_cache_v1";
+
+function readCache() {
+  try {
+    const raw = localStorage.getItem(CACHE_KEY);
+    if (!raw) return null;
+    const parsed = JSON.parse(raw);
+    if (!parsed || !Array.isArray(parsed.items)) return null;
+    return parsed.items;
+  } catch {
+    return null;
+  }
+}
+
+function writeCache(items) {
+  try {
+    localStorage.setItem(CACHE_KEY, JSON.stringify({ items, savedAt: Date.now() }));
+  } catch {}
+}
+
+function upsertList(list, item) {
+  const next = Array.isArray(list) ? [...list] : [];
+  const idx = next.findIndex((x) => String(x._id) === String(item._id));
+  if (idx >= 0) next[idx] = item;
+  else next.unshift(item);
+  return next;
+}
+
+function removeFromList(list, id) {
+  return (Array.isArray(list) ? list : []).filter((x) => String(x._id) !== String(id));
+}
+
 const AdminCareerBankPage = () => {
   const [careers, setCareers] = useState([]);
   const [filteredCareers, setFilteredCareers] = useState([]);
@@ -27,7 +59,14 @@ const AdminCareerBankPage = () => {
   });
 
   useEffect(() => {
-    fetchCareers();
+    const cached = readCache();
+    if (cached && cached.length) {
+      setCareers(cached);
+      setFilteredCareers(cached);
+      setLoading(false);
+    } else {
+      fetchCareers();
+    }
   }, []);
 
   const domains = useMemo(() => {
@@ -60,6 +99,7 @@ const AdminCareerBankPage = () => {
       const response = await axios.get(`${apiurl}/api/careers`, { withCredentials: true });
       setCareers(response.data || []);
       setFilteredCareers(response.data || []);
+      writeCache(response.data || []);
     } catch {
       setMessage("Failed to fetch careers");
     } finally {
@@ -111,21 +151,30 @@ const AdminCareerBankPage = () => {
         education_path: formData.education_path,
         expected_salary: salaryNumber,
       };
+
       if (editingCareer) {
-        await axios.put(`${apiurl}/api/careers/${editingCareer._id}`, payload, {
+        const { data: updated } = await axios.put(`${apiurl}/api/careers/${editingCareer._id}`, payload, {
           headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
           withCredentials: true,
         });
+        const next = upsertList(careers, updated || { ...editingCareer, ...payload, _id: editingCareer._id });
+        setCareers(next);
+        setFilteredCareers(next);
+        writeCache(next);
         setMessage("Career updated successfully!");
       } else {
-        await axios.post(`${apiurl}/api/careers`, payload, {
+        const { data: created } = await axios.post(`${apiurl}/api/careers`, payload, {
           headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
           withCredentials: true,
         });
+        const next = upsertList(careers, created || payload);
+        setCareers(next);
+        setFilteredCareers(next);
+        writeCache(next);
         setMessage("Career added successfully!");
       }
+
       resetForm();
-      fetchCareers();
     } catch (error) {
       if (error.response?.status === 400) setMessage("All required fields must be provided.");
       else if (error.response?.status === 401) setMessage("Unauthorized. Please log in as admin.");
@@ -140,8 +189,11 @@ const AdminCareerBankPage = () => {
     try {
       const token = localStorage.getItem("token");
       await axios.delete(`${apiurl}/api/careers/${id}`, { headers: { Authorization: `Bearer ${token}` }, withCredentials: true });
+      const next = removeFromList(careers, id);
+      setCareers(next);
+      setFilteredCareers(next);
+      writeCache(next);
       setMessage("Career deleted successfully!");
-      fetchCareers();
     } catch {
       setMessage("Failed to delete career");
     }
@@ -372,9 +424,7 @@ const AdminCareerBankPage = () => {
 
 try {
   const sheet = document.styleSheets?.[0];
-  if (sheet) {
-    sheet.insertRule(`@keyframes spin { 0% { transform: rotate(0deg) } 100% { transform: rotate(360deg) } }`, sheet.cssRules.length);
-  }
+  if (sheet) sheet.insertRule(`@keyframes spin { 0% { transform: rotate(0deg) } 100% { transform: rotate(360deg) } }`, sheet.cssRules.length);
 } catch {}
 
 export default AdminCareerBankPage;

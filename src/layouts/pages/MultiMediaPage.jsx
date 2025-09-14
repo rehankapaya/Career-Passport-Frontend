@@ -2,11 +2,30 @@ import React, { useEffect, useState, useContext } from "react";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
 import { apiurl } from "../../api";
-import MultimediaPageeXTRA from "./MultimediaPageeXTRA";
 import { Video as VideoIcon, Mic as AudioIcon, FileText as PdfIcon, Image as ImageIcon, Star as StarIcon, Search as SearchIcon, PlayCircle, Bookmark, BookmarkCheck } from "lucide-react";
 import { useBookmark } from "../../hooks/useBookmark";
 import { UserContext } from "../../context/UserContext";
 import getThumbnail from "../../hooks/useThumbnail";
+
+const CACHE_KEY = "multimedia_cache_v1";
+
+function readCache() {
+  try {
+    const raw = localStorage.getItem(CACHE_KEY);
+    if (!raw) return null;
+    const parsed = JSON.parse(raw);
+    if (!parsed || !Array.isArray(parsed.items)) return null;
+    return parsed.items;
+  } catch {
+    return null;
+  }
+}
+
+function writeCache(items) {
+  try {
+    localStorage.setItem(CACHE_KEY, JSON.stringify({ items, savedAt: Date.now() }));
+  } catch {}
+}
 
 export default function MultimediaPage() {
   const [items, setItems] = useState([]);
@@ -21,15 +40,15 @@ export default function MultimediaPage() {
   async function saveHistory(resource) {
     try {
       const payload = {
-        userId: user._id,
+        userId: user?._id,
         categoryType: "multimedia",
         itemId: resource._id || resource.resource_id || resource.media_id,
         title: resource.title,
         subCategory: resource.type || null,
         meta: resource
       };
-      await axios.post(`${apiurl}/api/history`, payload);
-    } catch { }
+      if (user?._id) await axios.post(`${apiurl}/api/history`, payload);
+    } catch {}
   }
 
   const allCategories = ["all", "video", "audio", "pdf", "image"];
@@ -65,21 +84,32 @@ export default function MultimediaPage() {
   };
 
   useEffect(() => {
-    setLoading(true);
-    axios
-      .get(`${apiurl}/api/multimedia`)
-      .then((res) => {
-        const sortedItems = res.data.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+    const load = async () => {
+      setLoading(true);
+      const cached = readCache();
+      if (cached) {
+        setItems(cached);
+        setFilteredItems(cached);
+        setSuggestedItems(generateRandomSuggestions(cached, 4));
+        setLoading(false);
+        return;
+      }
+
+      try {
+        const res = await axios.get(`${apiurl}/api/multimedia`);
+        const sortedItems = (res.data || []).sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
         setItems(sortedItems);
         setFilteredItems(sortedItems);
         setSuggestedItems(generateRandomSuggestions(sortedItems, 4));
-        setLoading(false);
-      })
-      .catch(() => {
+        writeCache(sortedItems); // 🧠 persist for future mounts
+      } catch {
         setItems([]);
         setFilteredItems([]);
+      } finally {
         setLoading(false);
-      });
+      }
+    };
+    load();
   }, []);
 
   useEffect(() => {
@@ -101,9 +131,6 @@ export default function MultimediaPage() {
     saveHistory(item);
     navigate(`/multimedia/${item.media_id}`, { state: item });
   };
-
-
- 
 
   const formatDate = (dateString) => {
     const date = new Date(dateString);
@@ -253,11 +280,9 @@ export default function MultimediaPage() {
                 onMouseLeave={(e) => (e.currentTarget.style.transform = "translateY(0)")}
               >
                 <div style={{ position: "relative", height: 180, overflow: "hidden", backgroundColor: "#000", display: "flex", alignItems: "center", justifyContent: "center" }}>
-                      <img src={getThumbnail(item)} alt={item.title} style={{ width: "100%", height: "100%", objectFit: "cover", position: "absolute", inset: 0 }} />
-                      {item.type === "video" && (
-                        <PlayCircle size={56} style={{ position: "absolute", zIndex: 1, pointerEvents: "none", opacity: 0.9 }} />
-                      )}
-                
+                  <img src={getThumbnail(item)} alt={item.title} style={{ width: "100%", height: "100%", objectFit: "cover", position: "absolute", inset: 0 }} />
+                  {item.type === "video" && <PlayCircle size={56} style={{ position: "absolute", zIndex: 1, pointerEvents: "none", opacity: 0.9 }} />}
+
                   {item.type === "video" && isDriveUrl(item.url) && (
                     <div style={{ position: "absolute", top: 10, left: 10, backgroundColor: "#0A66C2", color: "#FFFFFF", padding: "4px 8px", borderRadius: 6, fontSize: 11, fontWeight: 700, zIndex: 2 }}>
                       Drive
@@ -316,8 +341,6 @@ export default function MultimediaPage() {
         }}>
           {suggestedItems.map((item) => (
             item.type !== "pdf" ? null : (
-
-
               <div
                 key={item.media_id}
                 style={{

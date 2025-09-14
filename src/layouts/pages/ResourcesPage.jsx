@@ -1,12 +1,34 @@
 import axios from "axios";
 import React, { useEffect, useState, useContext } from "react";
 import { apiurl } from "../../api";
-import { Link } from "react-router-dom";
+// ⬇️ switched from Link to useNavigate
+import { useNavigate } from "react-router-dom";
 import { useBookmark } from "../../hooks/useBookmark";
 import { Bookmark, BookmarkCheck, FileText, CalendarDays, Wrench, Lightbulb, BookOpen } from "lucide-react";
 import { UserContext } from "../../context/UserContext";
 
+const CACHE_KEY = "resources_cache_v1";
+
+function readCache() {
+  try {
+    const raw = localStorage.getItem(CACHE_KEY);
+    if (!raw) return null;
+    const parsed = JSON.parse(raw);
+    if (!parsed || !Array.isArray(parsed.items)) return null;
+    return parsed.items;
+  } catch {
+    return null;
+  }
+}
+
+function writeCache(items) {
+  try {
+    localStorage.setItem(CACHE_KEY, JSON.stringify({ items, savedAt: Date.now() }));
+  } catch {}
+}
+
 const ResourceCard = ({ resource }) => {
+  const navigate = useNavigate();
   const { isBookmarked, loading, toggleBookmark } = useBookmark("resource", resource.resource_id);
   const { user } = useContext(UserContext);
   const brandBlue = "#0A66C2";
@@ -21,16 +43,21 @@ const ResourceCard = ({ resource }) => {
   async function saveHistory() {
     try {
       const payload = {
-        userId: user._id,
+        userId: user?._id,
         categoryType: "resources",
         itemId: resource._id || resource.resource_id || resource.career_id,
         title: resource.title,
         subCategory: resource.category || null,
         meta: resource
       };
-      await axios.post(`${apiurl}/api/history`, payload);
+      if (user?._id) await axios.post(`${apiurl}/api/history`, payload);
     } catch {}
   }
+
+  const go = async () => {
+    await saveHistory();
+    navigate(`/resources/${resource.resource_id}`, { state: resource });
+  };
 
   return (
     <div
@@ -96,9 +123,8 @@ const ResourceCard = ({ resource }) => {
       </div>
 
       <div style={{ marginTop: "auto" }}>
-        <Link
-          onClick={saveHistory}
-          to={`/resources/${resource.resource_id}`}
+        <button
+          onClick={go}
           style={{
             backgroundColor: "#0A66C2",
             color: "#FFFFFF",
@@ -111,19 +137,21 @@ const ResourceCard = ({ resource }) => {
             textAlign: "center",
             fontWeight: 800,
             letterSpacing: 0.2,
-            transition: "transform 120ms ease, background-color 120ms ease"
+            transition: "transform 120ms ease, background-color 120ms ease",
+            width: "100%"
           }}
           onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = "#004182")}
           onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = "#0A66C2")}
         >
           Read article
-        </Link>
+        </button>
       </div>
     </div>
   );
 };
 
 export default function ResourcesPage() {
+  const navigate = useNavigate();
   const [resources, setResources] = useState([]);
   const brandBlue = "#0A66C2";
   const brandInk = "#1D2226";
@@ -135,15 +163,23 @@ export default function ResourcesPage() {
     { title: "Skill Development Center", description: "Curated learning paths to build in-demand skills." }
   ];
 
-  const fetchResources = async () => {
-    try {
-      const response = await axios.get(`${apiurl}/api/resources`);
-      setResources(response.data);
-    } catch {}
-  };
-
   useEffect(() => {
-    fetchResources();
+    const init = async () => {
+      const cached = readCache();
+      if (cached) {
+        setResources(cached);
+        return;
+      }
+      try {
+        const response = await axios.get(`${apiurl}/api/resources`);
+        const data = Array.isArray(response.data) ? response.data : [];
+        setResources(data);
+        writeCache(data);
+      } catch {
+        setResources([]);
+      }
+    };
+    init();
   }, []);
 
   const featuredLive = (Array.isArray(resources) ? resources.slice(0, 3) : []).filter(Boolean);
@@ -198,6 +234,8 @@ export default function ResourcesPage() {
               const dateTxt = res?.createdAt
                 ? new Date(res.createdAt).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })
                 : "N/A";
+              const openFeatured = () => navigate(`/resources/${res.resource_id}`, { state: res });
+
               return (
                 <div
                   key={idx}
@@ -231,8 +269,8 @@ export default function ResourcesPage() {
                   </div>
                   <div style={{ fontSize: 18, fontWeight: 800, color: "#1D2226", lineHeight: 1.35 }}>{res.title}</div>
                   <div style={{ color: "#56687A", fontSize: 14, lineHeight: 1.6 }}>{res.description}</div>
-                  <Link
-                    to={`/resources/${res.resource_id}`}
+                  <button
+                    onClick={openFeatured}
                     style={{
                       marginTop: "auto",
                       display: "inline-block",
@@ -244,7 +282,8 @@ export default function ResourcesPage() {
                       border: "1px solid #0A66C2",
                       fontWeight: 800,
                       textDecoration: "none",
-                      transition: "all 120ms ease"
+                      transition: "all 120ms ease",
+                      cursor: "pointer"
                     }}
                     onMouseEnter={(e) => {
                       e.currentTarget.style.backgroundColor = "#0A66C2";
@@ -256,7 +295,7 @@ export default function ResourcesPage() {
                     }}
                   >
                     Open
-                  </Link>
+                  </button>
                 </div>
               );
             })}

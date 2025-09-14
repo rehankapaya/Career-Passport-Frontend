@@ -43,6 +43,8 @@ import HistoryPage from './layouts/pages/HistoryPage'
 import UnifiedLogin from './auth/UndefiendLogin'
 import AnalyticsPage from './components/dashboardComponents/AnalyticsPage'
 import AdminQuizHistory from './dashboard/dashboardPages/AdminQuizHistory'
+import AdminQuizScoringLogic from './dashboard/dashboardPages/AdminQuizScoringLogic'
+import AdminTrackingPage from './layouts/pages/userdashboardpages/AdminTrackingPage'
 
 export default function App() {
   const { user } = useContext(UserContext)
@@ -161,6 +163,8 @@ export default function App() {
         {
           index: true, element: <AnalyticsPage/>
         },
+        { path:'scoringlogic',element:<AdminQuizScoringLogic/>},
+        { path:'tracking',element:<AdminTrackingPage/>},
         { path: 'manage-users', element: <h1>Manage Users</h1> },
         { path: 'admincareerbank', element: <AdminCareerBankPage /> },
         { path: 'quiz', element: <AdminQuizHistory /> },

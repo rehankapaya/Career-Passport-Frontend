@@ -19,6 +19,7 @@ import {
   Menu,
   X
 } from "lucide-react";
+import Breadcrumbs from "./Breadcrumbs";
 
 export default function NavbarComponent() {
   const [open, setOpen] = useState(false);
@@ -110,6 +111,7 @@ export default function NavbarComponent() {
             color: text
           }}
         >
+          {/* Logo + Brand */}
           <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
             <div style={{ width: 36, height: 36, borderRadius: 8, background: primary, color: "#fff", display: "grid", placeItems: "center", boxShadow: "0 4px 10px rgba(10,102,194,0.25)" }}>
               <Compass size={18} />
@@ -117,6 +119,7 @@ export default function NavbarComponent() {
             <span style={{ fontSize: 18, fontWeight: 700, letterSpacing: "0.2px" }}>NextStep Navigator</span>
           </div>
 
+          {/* Desktop Nav */}
           {!isMobile && (
             <nav style={{ display: "flex", alignItems: "center", gap: 22 }}>
               {filteredMain.map((item) => {
@@ -144,88 +147,124 @@ export default function NavbarComponent() {
             </nav>
           )}
 
-          {!isMobile && user && (
-            <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-              <span style={{ color: "#6B7280", fontSize: 14 }}>Welcome{user.name ? `, ${user.name}` : user.email ? `, ${user.email}` : ""}</span>
-              <div ref={menuRef} style={{ position: "relative" }}>
-                <button
-                  onClick={() => setOpen(v => !v)}
-                  style={{
-                    display: "flex",
-                    alignItems: "center",
-                    gap: 8,
-                    background: "transparent",
-                    border: "1px solid #E6E9EC",
-                    padding: "6px 10px",
-                    borderRadius: 20,
-                    cursor: "pointer",
-                    color: "#6B7280"
-                  }}
-                >
-                  <div style={{ width: 28, height: 28, borderRadius: "50%", background: "#F3F6F8", display: "grid", placeItems: "center", color: "#4B5563" }}>
-                    <UserIcon size={16} />
-                  </div>
-                  <ChevronDown size={16} />
-                </button>
-
-                <div
-                  style={{
-                    position: "absolute",
-                    right: 0,
-                    marginTop: 8,
-                    width: 200,
-                    background: "#fff",
-                    border: "1px solid #E6E9EC",
-                    borderRadius: 10,
-                    boxShadow: "0 12px 24px rgba(0,0,0,0.08)",
-                    zIndex: 9999,
-                    overflow: "hidden",
-                    opacity: open ? 1 : 0,
-                    pointerEvents: open ? "auto" : "none",
-                    transition: "opacity 180ms ease"
-                  }}
-                >
-                  <Link
-                    to="/profile"
-                    style={{
-                      display: "flex",
-                      alignItems: "center",
-                      gap: 10,
-                      padding: "10px 12px",
-                      color: "#4B5563",
-                      textDecoration: "none",
-                      fontSize: 14
-                    }}
-                  >
-                    <UserIcon size={16} />
-                    Profile
-                  </Link>
+          {/* User / Auth Buttons */}
+          {!isMobile && (
+            user ? (
+              <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+                <span style={{ color: "#6B7280", fontSize: 14 }}>
+                  Welcome{user.name ? `, ${user.name}` : user.email ? `, ${user.email}` : ""}
+                </span>
+                <div ref={menuRef} style={{ position: "relative" }}>
                   <button
-                    onClick={() => {
-                      userlogout();
-                      navigate("/login");
-                    }}
+                    onClick={() => setOpen(v => !v)}
                     style={{
                       display: "flex",
                       alignItems: "center",
-                      gap: 10,
-                      width: "100%",
-                      padding: "10px 12px",
+                      gap: 8,
                       background: "transparent",
-                      border: "none",
-                      color: "#4B5563",
+                      border: "1px solid #E6E9EC",
+                      padding: "6px 10px",
+                      borderRadius: 20,
                       cursor: "pointer",
-                      fontSize: 14
+                      color: "#6B7280"
                     }}
                   >
-                    <LogOut size={16} />
-                    Logout
+                    <div style={{ width: 28, height: 28, borderRadius: "50%", background: "#F3F6F8", display: "grid", placeItems: "center", color: "#4B5563" }}>
+                      <UserIcon size={16} />
+                    </div>
+                    <ChevronDown size={16} />
                   </button>
+
+                  <div
+                    style={{
+                      position: "absolute",
+                      right: 0,
+                      marginTop: 8,
+                      width: 200,
+                      background: "#fff",
+                      border: "1px solid #E6E9EC",
+                      borderRadius: 10,
+                      boxShadow: "0 12px 24px rgba(0,0,0,0.08)",
+                      zIndex: 9999,
+                      overflow: "hidden",
+                      opacity: open ? 1 : 0,
+                      pointerEvents: open ? "auto" : "none",
+                      transition: "opacity 180ms ease"
+                    }}
+                  >
+                    <Link
+                      to="/profile"
+                      style={{
+                        display: "flex",
+                        alignItems: "center",
+                        gap: 10,
+                        padding: "10px 12px",
+                        color: "#4B5563",
+                        textDecoration: "none",
+                        fontSize: 14
+                      }}
+                    >
+                      <UserIcon size={16} />
+                      Profile
+                    </Link>
+                    <button
+                      onClick={() => {
+                        userlogout();
+                        navigate("/login");
+                      }}
+                      style={{
+                        display: "flex",
+                        alignItems: "center",
+                        gap: 10,
+                        width: "100%",
+                        padding: "10px 12px",
+                        background: "transparent",
+                        border: "none",
+                        color: "#4B5563",
+                        cursor: "pointer",
+                        fontSize: 14
+                      }}
+                    >
+                      <LogOut size={16} />
+                      Logout
+                    </button>
+                  </div>
                 </div>
               </div>
-            </div>
+            ) : (
+              <div style={{ display: "flex", gap: 12 }}>
+                <Link
+                  to="/login"
+                  style={{
+                    padding: "8px 16px",
+                    border: "1px solid #E6E9EC",
+                    borderRadius: 8,
+                    color: "#374151",
+                    textDecoration: "none",
+                    fontWeight: 600
+                  }}
+                >
+                  Login
+                </Link>
+                <Link
+                  to="/signup"
+                  style={{
+                    padding: "8px 16px",
+                    borderRadius: 8,
+                    backgroundColor: primary,
+                    color: "#fff",
+                    textDecoration: "none",
+                    fontWeight: 700,
+                    boxShadow: "0 4px 10px rgba(10,102,194,0.25)"
+                  }}
+                >
+                  Sign up
+                </Link>
+              </div>
+            )
           )}
 
+          {/* Mobile Toggle */}
           {isMobile && (
             <button
               onClick={() => setMobileOpen((s) => !s)}
@@ -249,6 +288,7 @@ export default function NavbarComponent() {
           )}
         </div>
 
+        {/* Desktop Secondary Nav */}
         {!isMobile && (
           <div style={{ borderTop: "1px solid #E6E9EC", padding: "10px 24px", background: "#FFFFFF" }}>
             <nav style={{ display: "flex", alignItems: "center", gap: 24, justifyContent: "center", maxWidth: 1200, margin: "0 auto" }}>
@@ -278,6 +318,7 @@ export default function NavbarComponent() {
           </div>
         )}
 
+        {/* Mobile Drawer */}
         {isMobile && mobileOpen && (
           <div
             style={{
@@ -425,8 +466,8 @@ export default function NavbarComponent() {
           </div>
         )}
       </div>
-
       <div style={{ height: headerH }} />
+<Breadcrumbs/>
     </>
   );
 }

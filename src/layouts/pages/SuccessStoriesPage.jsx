@@ -4,9 +4,28 @@ import { toast } from "react-toastify";
 import { apiurl } from "../../api";
 import { useBookmark } from "../../hooks/useBookmark";
 import { Bookmark, BookmarkCheck, Send, Filter, User2, Image as ImageIcon, CheckCircle2, Loader2, BadgeCheck } from "lucide-react";
-import { useContext as useCtx } from "react";
 import { UserContext } from "../../context/UserContext";
 import { useNavigate } from "react-router-dom";
+
+const CACHE_KEY = "success_stories_cache_v1";
+
+function readCache() {
+  try {
+    const raw = localStorage.getItem(CACHE_KEY);
+    if (!raw) return null;
+    const parsed = JSON.parse(raw);
+    if (!parsed || !Array.isArray(parsed.items)) return null;
+    return parsed.items;
+  } catch {
+    return null;
+  }
+}
+
+function writeCache(items) {
+  try {
+    localStorage.setItem(CACHE_KEY, JSON.stringify({ items, savedAt: Date.now() }));
+  } catch {}
+}
 
 export default function SuccessStoriesPage() {
   const [stories, setStories] = useState([]);
@@ -17,7 +36,22 @@ export default function SuccessStoriesPage() {
   const [selectedDomain, setSelectedDomain] = useState("all");
 
   useEffect(() => {
-    axios.get(`${apiurl}/api/success-stories`).then((res) => setStories(res.data)).catch(() => setStories([]));
+    const init = async () => {
+      const cached = readCache();
+      if (cached) {
+        setStories(cached);
+        return;
+      }
+      try {
+        const res = await axios.get(`${apiurl}/api/success-stories`);
+        const data = Array.isArray(res.data) ? res.data : [];
+        setStories(data);
+        writeCache(data);
+      } catch {
+        setStories([]);
+      }
+    };
+    init();
   }, []);
 
   const domains = useMemo(() => {
@@ -59,7 +93,9 @@ export default function SuccessStoriesPage() {
       toast.success("Story submitted!");
       setForm({ rname: "", domain: "", story_text: "", image_url: null });
       const refreshed = await axios.get(`${apiurl}/api/success-stories`);
-      setStories(refreshed.data);
+      const freshData = Array.isArray(refreshed.data) ? refreshed.data : [];
+      setStories(freshData);
+      writeCache(freshData);
     } catch {
       toast.error("Error submitting story");
     }
@@ -124,7 +160,7 @@ export default function SuccessStoriesPage() {
           border: "1px solid " + line
         }}
       >
-        <div style={{  marginBottom: 12 }}>
+        <div style={{ marginBottom: 12 }}>
           <div>
             <label style={{ display: "block", fontWeight: 800, fontSize: 13, marginBottom: 6 }}>Your Name</label>
             <div style={{ position: "relative" }}>

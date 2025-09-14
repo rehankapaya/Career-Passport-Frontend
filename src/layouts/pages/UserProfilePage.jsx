@@ -18,12 +18,53 @@ import {
   PenLine
 } from "lucide-react";
 
+const PROFILE_CACHE_KEY = "user_profile_cache_v1";
+const WORK_EXP_KEY = "user_work_experience";
+
+// read work experience only
+function readWorkExp() {
+  try {
+    return localStorage.getItem(WORK_EXP_KEY) || "";
+  } catch {
+    return "";
+  }
+}
+
+// write work experience only
+function writeWorkExp(exp) {
+  try {
+    localStorage.setItem(WORK_EXP_KEY, exp);
+  } catch {}
+}
+function readProfileCache() {
+  try {
+    const raw = localStorage.getItem(PROFILE_CACHE_KEY);
+    if (!raw) return null;
+    const parsed = JSON.parse(raw);
+    if (!parsed || !parsed.item) return null;
+    return parsed.item;
+  } catch {
+    return null;
+  }
+}
+
+function writeProfileCache(profile) {
+  try {
+    localStorage.setItem(PROFILE_CACHE_KEY, JSON.stringify({ item: profile, savedAt: Date.now() }));
+  } catch { }
+}
+
 export default function UserProfilePage() {
+  const [formData, setFormData] = useState({
+    education_level: "",
+    interests: "",
+    work_experience: ""
+  });
+
   const [user, setUser] = useState(null);
   const [showResumePreview, setShowResumePreview] = useState(false);
   const [userProfile, setUserProfile] = useState(null);
   const [showEdit, setShowEdit] = useState(false);
-  const [formData, setFormData] = useState({ education_level: "", interests: "" });
   const [resumeFile, setResumeFile] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
   const [activeTab, setActiveTab] = useState("profile");
@@ -40,66 +81,90 @@ export default function UserProfilePage() {
     border: "#E6E6E6",
   };
 
-  useEffect(() => {
-    const storedUser = JSON.parse(localStorage.getItem("user"));
-    setUser(storedUser);
-    if (storedUser) fetchUserProfile();
-  }, []);
+useEffect(() => {
+  const storedUser = JSON.parse(localStorage.getItem("user"));
+  setUser(storedUser);
+  if (!storedUser) return;
 
-  const fetchUserProfile = async () => {
-    try {
-      setIsLoading(true);
-      const res = await axios.get(`${apiurl}/api/user-profiles/`, {
-        headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
-        withCredentials: true,
-      });
-      if (res.data) {
-        setUserProfile(res.data);
-        setFormData({
-          education_level: res.data.education_level || "",
-          interests: Array.isArray(res.data.interests)
-            ? res.data.interests.join(", ")
-            : res.data.interests || "",
-        });
-      }
-    } catch (err) {
-      console.error("Error fetching user profile:", err);
-    } finally {
-      setIsLoading(false);
-    }
-  };
+  const cached = readProfileCache();
+  const localWorkExp = readWorkExp();
 
-  const handleUpdate = async () => {
-    try {
-      setIsLoading(true);
-      const f = new FormData();
-      f.append("education_level", formData.education_level || "");
-      const interestsArray = formData.interests
-        ? formData.interests.split(",").map((x) => x.trim()).filter(Boolean)
-        : [];
-      f.append("interests", JSON.stringify(interestsArray));
-      if (formData.profile_image) f.append("profile_image", formData.profile_image);
-      const res = await axios.post(`${apiurl}/api/user-profiles/`, f, {
-        headers: {
-          "Content-Type": "multipart/form-data",
-          Authorization: `Bearer ${localStorage.getItem("token")}`,
-        },
-        withCredentials: true,
+  if (cached) {
+    setUserProfile(cached);
+    setFormData({
+      education_level: cached.education_level || "",
+      interests: Array.isArray(cached.interests) ? cached.interests.join(", ") : cached.interests || "",
+      work_experience: localWorkExp || "" // ✅ take from localStorage only
+    });
+  } else {
+    fetchUserProfile();
+  }
+}, []);
+
+const fetchUserProfile = async () => {
+  try {
+    setIsLoading(true);
+    const res = await axios.get(`${apiurl}/api/user-profiles/`, {
+      headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
+      withCredentials: true,
+    });
+    if (res.data) {
+      setUserProfile(res.data);
+      writeProfileCache(res.data);
+      const localWorkExp = readWorkExp();
+      setFormData({
+        education_level: res.data.education_level || "",
+        interests: Array.isArray(res.data.interests) ? res.data.interests.join(", ") : res.data.interests || "",
+        work_experience: localWorkExp || "" // ✅ override with local storage value
       });
-      if (res.data) {
-        toast.success("Profile updated");
-        setUserProfile(res.data);
-        setShowEdit(false);
-      } else {
-        toast.error("Update failed");
-      }
-    } catch (err) {
-      console.error(err);
-      toast.error("Something went wrong");
-    } finally {
-      setIsLoading(false);
     }
-  };
+  } catch (err) {
+    console.error("Error fetching user profile:", err);
+  } finally {
+    setIsLoading(false);
+  }
+};
+
+
+ const handleUpdate = async () => {
+  try {
+    setIsLoading(true);
+    const f = new FormData();
+    f.append("education_level", formData.education_level || "");
+    const interestsArray = formData.interests
+      ? formData.interests.split(",").map((x) => x.trim()).filter(Boolean)
+      : [];
+    f.append("interests", JSON.stringify(interestsArray));
+
+    // ✅ Save work experience locally only
+    if (formData.work_experience) {
+      writeWorkExp(formData.work_experience);
+    }
+
+    if (formData.profile_image) f.append("profile_image", formData.profile_image);
+
+    const res = await axios.post(`${apiurl}/api/user-profiles/`, f, {
+      headers: {
+        "Content-Type": "multipart/form-data",
+        Authorization: `Bearer ${localStorage.getItem("token")}`,
+      },
+      withCredentials: true,
+    });
+    if (res.data) {
+      toast.success("Profile updated");
+      setUserProfile(res.data);
+      writeProfileCache(res.data);
+      setShowEdit(false);
+    } else {
+      toast.error("Update failed");
+    }
+  } catch (err) {
+    console.error(err);
+    toast.error("Something went wrong");
+  } finally {
+    setIsLoading(false);
+  }
+};
 
   const handleResumeUpload = async (e) => {
     e.preventDefault();
@@ -119,8 +184,8 @@ export default function UserProfilePage() {
         withCredentials: true,
       });
       toast.success("Resume uploaded");
-      fetchUserProfile();
       setResumeFile(null);
+      await fetchUserProfile();
     } catch (err) {
       console.error("Error uploading resume:", err);
       toast.error("Upload failed");
@@ -376,6 +441,7 @@ export default function UserProfilePage() {
                 </div>
               </div>
 
+
               <div
                 style={{
                   display: "flex",
@@ -441,6 +507,42 @@ export default function UserProfilePage() {
                   </span>
                 </div>
               </div>
+              {(formData.work_experience || userProfile?.work_experience) && (
+                <div
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 14,
+                    padding: 14,
+                    background: "#F8F9FA",
+                    borderRadius: 10,
+                    border: `1px solid ${c.border}`,
+                  }}
+                >
+                  <div
+                    style={{
+                      width: 50,
+                      height: 50,
+                      display: "grid",
+                      placeItems: "center",
+                      background: c.primary,
+                      color: "#fff",
+                      borderRadius: "50%",
+                    }}
+                  >
+                    <FileText size={22} />
+                  </div>
+                  <div style={{ display: "flex", flexDirection: "column" }}>
+                    <span style={{ fontSize: "0.85rem", color: c.sub, marginBottom: 4 }}>
+                      Work Experience
+                    </span>
+                    <span style={{ fontSize: "1rem", color: "#2c3e50", fontWeight: 600 }}>
+                      {userProfile.work_experience}
+                    </span>
+                  </div>
+                </div>
+              )}
+
 
               <div
                 style={{
@@ -754,6 +856,36 @@ export default function UserProfilePage() {
                   }}
                 />
               </div>
+              <div style={{ marginBottom: 16 }}>
+                <label
+                  style={{
+                    display: "block",
+                    marginBottom: 8,
+                    fontWeight: 600,
+                    color: "#2c3e50",
+                  }}
+                >
+                  Work Experience
+                </label>
+                <textarea
+                  value={formData.work_experience}
+                  onChange={(e) =>
+                    setFormData({ ...formData, work_experience: e.target.value })
+                  }
+                  placeholder="e.g., 2 years as Software Engineer at XYZ"
+                  rows={3}
+                  style={{
+                    width: "100%",
+                    padding: "12px 12px",
+                    border: `1px solid ${c.border}`,
+                    borderRadius: 10,
+                    fontSize: "1rem",
+                    resize: "vertical",
+                    outline: "none",
+                  }}
+                />
+              </div>
+
 
               <div style={{ marginBottom: 6 }}>
                 <label style={{ display: "block", marginBottom: 8, fontWeight: 600, color: "#2c3e50" }}>

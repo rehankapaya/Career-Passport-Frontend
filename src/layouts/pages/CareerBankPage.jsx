@@ -17,7 +17,30 @@ import {
   CircleDollarSign
 } from "lucide-react";
 
+const CACHE_KEY = "career_bank_cache_v1";
+
+function readCache() {
+  try {
+    const raw = localStorage.getItem(CACHE_KEY);
+    if (!raw) return null;
+    const parsed = JSON.parse(raw);
+    if (!parsed || !Array.isArray(parsed.items)) return null;
+    return parsed.items;
+  } catch {
+    return null;
+  }
+}
+
+function writeCache(items) {
+  try {
+    localStorage.setItem(CACHE_KEY, JSON.stringify({ items, savedAt: Date.now() }));
+  } catch { }
+}
+
 export default function CareerBankPage() {
+  const [minSalary, setMinSalary] = useState("");
+const [maxSalary, setMaxSalary] = useState("");
+
   const [careerPaths, setCareerPaths] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -30,32 +53,69 @@ export default function CareerBankPage() {
   async function saveHistory(resource) {
     try {
       const payload = {
-        userId: user._id,
+        userId: user?._id,
         categoryType: "careers",
         itemId: resource._id || resource.career_id,
         title: resource.title,
         subCategory: resource.domain || null,
         meta: resource
       };
-      await axios.post(`${apiurl}/api/history`, payload);
-    } catch {}
+      if (user?._id) await axios.post(`${apiurl}/api/history`, payload);
+    } catch { }
   }
 
   useEffect(() => {
-    const fetchCareers = async () => {
+  let result = [...careerPaths];
+
+  if (industryFilter !== "All Industries") {
+    result = result.filter((career) => career.domain === industryFilter);
+  }
+
+  if (minSalary) {
+    result = result.filter((career) => (career.expected_salary || 0) >= parseInt(minSalary));
+  }
+  if (maxSalary) {
+    result = result.filter((career) => (career.expected_salary || 0) <= parseInt(maxSalary));
+  }
+
+  if (sortBy === "Alphabetical") {
+    result.sort((a, b) => a.title.localeCompare(b.title));
+  } else if (sortBy === "Salary: High to Low") {
+    result.sort((a, b) => (b.expected_salary || 0) - (a.expected_salary || 0));
+  } else if (sortBy === "Salary: Low to High") {
+    result.sort((a, b) => (a.expected_salary || 0) - (b.expected_salary || 0));
+  }
+
+  setFilteredCareers(result);
+}, [careerPaths, industryFilter, sortBy, minSalary, maxSalary]);
+
+  useEffect(() => {
+    const init = async () => {
+      setLoading(true);
+      setError(null);
+
+      const cached = readCache();
+      if (cached) {
+        setCareerPaths(cached);
+        setFilteredCareers(cached);
+        setLoading(false);
+        return;
+      }
+
       try {
-        const response = await axios(`${apiurl}/api/careers`);
-        if (!response.data.length > 0) throw new Error("Failed to fetch career data");
-        const data = response.data;
+        const response = await axios.get(`${apiurl}/api/careers`);
+        const data = Array.isArray(response.data) ? response.data : [];
+        if (data.length === 0) throw new Error("Failed to fetch career data");
         setCareerPaths(data);
         setFilteredCareers(data);
-        setLoading(false);
+        writeCache(data); // 🧠 store for next time
       } catch (err) {
-        setError(err.message);
+        setError(err.message || "Error fetching careers");
+      } finally {
         setLoading(false);
       }
     };
-    fetchCareers();
+    init();
   }, []);
 
   useEffect(() => {
@@ -67,7 +127,10 @@ export default function CareerBankPage() {
     setFilteredCareers(result);
   }, [careerPaths, industryFilter, sortBy]);
 
-  const domains = useMemo(() => ["All Industries", ...Array.from(new Set(careerPaths.map((c) => c.domain))).filter(Boolean)], [careerPaths]);
+  const domains = useMemo(
+    () => ["All Industries", ...Array.from(new Set(careerPaths.map((c) => c.domain))).filter(Boolean)],
+    [careerPaths]
+  );
 
   const brandBlue = "#0A66C2";
   const brandDeep = "#004182";
@@ -133,6 +196,26 @@ export default function CareerBankPage() {
                 ))}
               </select>
             </div>
+            <div style={{ display: "inline-flex", alignItems: "center", gap: 8, border: "1px solid " + line, background: "#FFFFFF", borderRadius: 12, padding: "8px 10px" }}>
+              <CircleDollarSign size={16} style={{ color: brandBlue }} />
+              <span style={{ color: brandMute, fontWeight: 700, fontSize: 12 }}>Salary Range</span>
+              <input
+                type="number"
+                placeholder="Min"
+                value={minSalary}
+                onChange={(e) => setMinSalary(e.target.value)}
+                style={{ width: 70, border: "none", outline: "none", background: "transparent", color: brandInk, fontWeight: 700 }}
+              />
+              <span style={{ color: brandMute }}>-</span>
+              <input
+                type="number"
+                placeholder="Max"
+                value={maxSalary}
+                onChange={(e) => setMaxSalary(e.target.value)}
+                style={{ width: 70, border: "none", outline: "none", background: "transparent", color: brandInk, fontWeight: 700 }}
+              />
+            </div>
+
             <div style={{ display: "inline-flex", alignItems: "center", gap: 8, border: "1px solid " + line, background: "#FFFFFF", borderRadius: 12, padding: "8px 10px" }}>
               <CircleDollarSign size={16} style={{ color: brandBlue }} />
               <span style={{ color: brandMute, fontWeight: 700, fontSize: 12 }}>Sort</span>
@@ -202,7 +285,7 @@ export default function CareerBankPage() {
                 <button
                   onClick={async () => {
                     await saveHistory(career);
-                    navigate(`/career-bank/${career.career_id}`);
+                    navigate(`/career-bank/${career.career_id}`, { state: career });
                   }}
                   style={{
                     width: "100%",

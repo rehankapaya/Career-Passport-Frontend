@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import axios from "axios";
 import { toast } from "react-toastify";
-import { useParams, Link, useLocation } from "react-router-dom";
+import { useParams, Link, useLocation, useNavigate } from "react-router-dom";
 import { apiurl } from "../../api";
 import {
   ArrowLeft,
@@ -15,8 +15,48 @@ import {
 } from "lucide-react";
 import getThumbnail from "../../hooks/useThumbnail";
 
+const CACHE_KEY = "multimedia_cache_v1";
+
+function readCache() {
+  try {
+    const raw = localStorage.getItem(CACHE_KEY);
+    if (!raw) return null;
+    const parsed = JSON.parse(raw);
+    if (!parsed || !Array.isArray(parsed.items)) return null;
+    return parsed.items;
+  } catch {
+    return null;
+  }
+}
+
+function writeCache(items) {
+  try {
+    localStorage.setItem(CACHE_KEY, JSON.stringify({ items, savedAt: Date.now() }));
+  } catch {}
+}
+
+function upsertCache(item) {
+  const items = readCache() || [];
+  const idx = items.findIndex(
+    (x) => String(x.media_id) === String(item.media_id) || String(x._id) === String(item._id)
+  );
+  if (idx >= 0) items[idx] = item;
+  else items.push(item);
+  writeCache(items);
+}
+
+function findInCacheById(items, id) {
+  if (!Array.isArray(items)) return null;
+  return (
+    items.find((x) => String(x.media_id) === String(id)) ||
+    items.find((x) => String(x._id) === String(id)) ||
+    null
+  );
+}
+
 export default function MultimediaDetailPage() {
   const { state } = useLocation();
+  const navigate = useNavigate()
   const [multimedia, setMultimedia] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -25,7 +65,6 @@ export default function MultimediaDetailPage() {
   const [showTranscript, setShowTranscript] = useState(false);
   const [audioErrored, setAudioErrored] = useState(false);
   const { id } = useParams();
-  
 
   const brandBlue = "#0A66C2";
   const brandDeep = "#004182";
@@ -93,32 +132,71 @@ export default function MultimediaDetailPage() {
 
   const generateRandomContent = (sourceItems, count, excludeId = null) => {
     if (!sourceItems || sourceItems.length === 0) return [];
-    const filteredItems = sourceItems.filter((item) => item.media_id !== excludeId);
+    const filteredItems = sourceItems.filter(
+      (item) => String(item.media_id) !== String(excludeId)
+    );
     if (filteredItems.length <= count) return [...filteredItems];
     const shuffled = [...filteredItems].sort(() => 0.5 - Math.random());
     return shuffled.slice(0, count);
   };
 
   useEffect(() => {
-    const fetchMultimedia = async () => {
+    const init = async () => {
       try {
         setLoading(true);
+        setError(null);
+
+        if (state) {
+          setMultimedia(state);
+          const cachedList = readCache();
+          if (cachedList && cachedList.length) {
+            setRelatedContent(generateRandomContent(cachedList, 4, id));
+            setPopularContent(generateRandomContent(cachedList, 4, id));
+          } else {
+            const allItemsRes = await axios.get(`${apiurl}/api/multimedia`);
+            const allItems = Array.isArray(allItemsRes.data) ? allItemsRes.data : [];
+            writeCache(allItems);
+            setRelatedContent(generateRandomContent(allItems, 4, id));
+            setPopularContent(generateRandomContent(allItems, 4, id));
+          }
+          setLoading(false);
+          return;
+        }
+
+        const cached = readCache();
+        if (cached && cached.length) {
+          const found = findInCacheById(cached, id);
+          if (found) {
+            setMultimedia(found);
+            setRelatedContent(generateRandomContent(cached, 4, id));
+            setPopularContent(generateRandomContent(cached, 4, id));
+            setLoading(false);
+            return;
+          }
+        }
+
         const [multimediaRes, allItemsRes] = await Promise.all([
           axios.get(`${apiurl}/api/multimedia/${id}`),
-          axios.get(`${apiurl}/api/multimedia`)
+          cached && cached.length ? Promise.resolve({ data: cached }) : axios.get(`${apiurl}/api/multimedia`)
         ]);
-        setMultimedia(state ? state : multimediaRes.data);
-        const allItems = allItemsRes.data;
+
+        const item = multimediaRes.data;
+        setMultimedia(item);
+        upsertCache(item);
+
+        const allItems = Array.isArray(allItemsRes.data) ? allItemsRes.data : [];
+        if (!cached || !cached.length) writeCache(allItems);
+
         setRelatedContent(generateRandomContent(allItems, 4, id));
         setPopularContent(generateRandomContent(allItems, 4, id));
-        setLoading(false);
       } catch {
         setError("Failed to load multimedia");
-        setLoading(false);
         toast.error("Error loading multimedia");
+      } finally {
+        setLoading(false);
       }
     };
-    fetchMultimedia();
+    init();
   }, [id, state]);
 
   const getMediaIcon = (type) => {
@@ -137,6 +215,7 @@ export default function MultimediaDetailPage() {
       toast.success("Thanks for the rating!");
       const response = await axios.get(`${apiurl}/api/multimedia/${id}`);
       setMultimedia(response.data);
+      upsertCache(response.data);
     } catch {
       toast.error("Error submitting rating");
     }
@@ -177,13 +256,29 @@ export default function MultimediaDetailPage() {
 
   return (
     <div style={{ backgroundColor: "#F3F2EF", minHeight: "100vh", padding: "24px", fontFamily: "system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif", color: brandInk }}>
-      <Link to="/multimedia" style={{ display: "inline-flex", alignItems: "center", textDecoration: "none", color: brandBlue, marginBottom: 16, fontWeight: 700, gap: 8 }}>
-        <ArrowLeft size={16} />
-        Back to Library
-      </Link>
+     
+      
+       <button
+                    onClick={() => navigate(-1)}
+                    onMouseOver={(e) => (e.currentTarget.style.backgroundColor = brandDeep)}
+                    onMouseOut={(e) => (e.currentTarget.style.backgroundColor = brandBlue)}
+                    style={{
+                      marginBottom: 20,
+                      padding: "8px 14px",
+                      backgroundColor: "#EEF3F8",
+                      color: brandBlue,
+                      border: "1px solid #E6E9EC",
+                      borderRadius: 8,
+                      cursor: "pointer",
+                      fontSize: 14,
+                      fontWeight: 600,
+                    }}
+                  >
+                    <ArrowLeft size={16} />
+                    
+                  </button>
 
       <div style={{ display: "grid", gridTemplateColumns: "70% 28%", gap: "2%", maxWidth: 1200, margin: "0 auto" }}>
-        {/* Left Side - Main Content (70%) */}
         <div style={{ width: "100%" }}>
           <div style={{ background: surface, borderRadius: 12, boxShadow: "0 6px 18px rgba(0,0,0,0.06)", padding: 24, marginBottom: 20 }}>
             <div
@@ -368,16 +463,14 @@ export default function MultimediaDetailPage() {
           </div>
         </div>
 
-        {/* Right Side - Related Content (30%) */}
         <div style={{ width: "100%" }}>
           <div style={{ background: surface, borderRadius: 12, boxShadow: "0 6px 18px rgba(0,0,0,0.06)", padding: 20, marginBottom: 20 }}>
             <h3 style={{ fontSize: 18, fontWeight: 800, color: brandInk, marginBottom: 16 }}>Related</h3>
             <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
               {relatedContent.map((item) => (
-                <Link key={item.media_id} to={`/multimedia/${item.media_id}`} style={{ display: "flex", alignItems: "center", gap: 12, textDecoration: "none", color: brandInk }}>
+                <Link key={item.media_id} to={`/multimedia/${item.media_id}`} state={item} style={{ display: "flex", alignItems: "center", gap: 12, textDecoration: "none", color: brandInk }}>
                   <div style={{ width: 56, height: 56, backgroundColor: chipBg, borderRadius: 10, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
-                    <img src={getThumbnail(item)} alt={item.title} style={{width:"100%"}}/>
-                    {/* {getMediaIcon(item.type)} */}
+                    <img src={getThumbnail(item)} alt={item.title} style={{ width: "100%" }} />
                   </div>
                   <div style={{ minWidth: 0 }}>
                     <h4 style={{ fontSize: 15, fontWeight: 700, margin: 0, lineHeight: 1.3, color: brandInk, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{item.title}</h4>
@@ -395,9 +488,9 @@ export default function MultimediaDetailPage() {
             <h3 style={{ fontSize: 18, fontWeight: 800, color: brandInk, marginBottom: 16 }}>Popular this week</h3>
             <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
               {popularContent.map((item) => (
-                <Link key={item.media_id} to={`/multimedia/${item.media_id}`} style={{ display: "flex", alignItems: "center", gap: 12, textDecoration: "none", color: brandInk }}>
+                <Link key={item.media_id} to={`/multimedia/${item.media_id}`} state={item} style={{ display: "flex", alignItems: "center", gap: 12, textDecoration: "none", color: brandInk }}>
                   <div style={{ width: 56, height: 56, backgroundColor: chipBg, borderRadius: 10, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
-                   <img src={getThumbnail(item)} alt={item.title} style={{width:"100%"}}/>
+                    <img src={getThumbnail(item)} alt={item.title} style={{ width: "100%" }} />
                   </div>
                   <div style={{ minWidth: 0 }}>
                     <h4 style={{ fontSize: 15, fontWeight: 700, margin: 0, lineHeight: 1.3, color: brandInk, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{item.title}</h4>

@@ -1,31 +1,83 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
-import { useParams } from "react-router-dom";
+import { useParams, useLocation, useNavigate } from "react-router-dom";
 import { useBookmark } from "../../hooks/useBookmark";
+import { apiurl } from "../../api";
 import { Bookmark, BookmarkCheck, ArrowLeft, Briefcase, GraduationCap, CircleDollarSign, Tag } from "lucide-react";
+
+const CACHE_KEY = "career_bank_cache_v1";
+
+function readCache() {
+  try {
+    const raw = localStorage.getItem(CACHE_KEY);
+    if (!raw) return null;
+    const parsed = JSON.parse(raw);
+    if (!parsed || !Array.isArray(parsed.items)) return null;
+    return parsed.items;
+  } catch {
+    return null;
+  }
+}
+
+function writeCache(items) {
+  try {
+    localStorage.setItem(CACHE_KEY, JSON.stringify({ items, savedAt: Date.now() }));
+  } catch {}
+}
+
+function upsertCache(item) {
+  const items = readCache() || [];
+  const idx = items.findIndex(
+    (c) => String(c.career_id) === String(item.career_id) || String(c._id) === String(item._id)
+  );
+  if (idx >= 0) items[idx] = item;
+  else items.push(item);
+  writeCache(items);
+}
 
 export default function CareerDetailPage() {
   const { id } = useParams();
+  const location = useLocation();
+   const navigate = useNavigate()
   const [career, setCareer] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const { isBookmarked, loading: bookmarkLoading, toggleBookmark } = useBookmark("career", id);
 
   useEffect(() => {
-    const fetchCareer = async () => {
+    const init = async () => {
+      setLoading(true);
+      setError("");
+      const stateCareer = location.state;
+      if (stateCareer) {
+        setCareer(stateCareer);
+        setLoading(false);
+        return;
+      }
+      const cached = readCache();
+      if (cached) {
+        const found = cached.find(
+          (c) => String(c.career_id) === String(id) || String(c._id) === String(id)
+        );
+        if (found) {
+          setCareer(found);
+          setLoading(false);
+          return;
+        }
+      }
       try {
-        setLoading(true);
-        setError("");
-        const response = await axios.get(`http://localhost:5000/api/careers/${id}`);
+        const response = await axios.get(`${apiurl}/api/careers/${id}`);
         setCareer(response.data);
+        console.log(response.data)
+        upsertCache(response.data);
       } catch {
         setError("Failed to fetch career. Please try again.");
       } finally {
         setLoading(false);
       }
     };
-    fetchCareer();
-  }, [id]);
+    init();
+  }, [id, location.state]);
 
   const brandBlue = "#0A66C2";
   const brandDeep = "#004182";
@@ -76,27 +128,26 @@ export default function CareerDetailPage() {
 
   return (
     <div style={{ maxWidth: 900, margin: "2rem auto", padding: "1rem", fontFamily: "system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif", color: brandInk }}>
+     
       <button
-        onClick={() => window.history.back()}
-        style={{
-          background: brandBlue,
-          color: "white",
-          border: "1px solid " + brandBlue,
-          padding: "10px 14px",
-          borderRadius: 12,
-          cursor: "pointer",
-          marginBottom: "1rem",
-          fontWeight: 800,
-          display: "inline-flex",
-          alignItems: "center",
-          gap: 8
-        }}
-        onMouseOver={(e) => (e.currentTarget.style.backgroundColor = brandDeep)}
-        onMouseOut={(e) => (e.currentTarget.style.backgroundColor = brandBlue)}
-      >
-        <ArrowLeft size={18} />
-        Back to Careers
-      </button>
+              onClick={() => navigate(-1)}
+              onMouseOver={(e) => (e.currentTarget.style.backgroundColor = brandDeep)}
+              onMouseOut={(e) => (e.currentTarget.style.backgroundColor = brandBlue)}
+              style={{
+                marginBottom: 20,
+                padding: "8px 14px",
+                backgroundColor: "#EEF3F8",
+                color: brandBlue,
+                border: "1px solid #E6E9EC",
+                borderRadius: 8,
+                cursor: "pointer",
+                fontSize: 14,
+                fontWeight: 600,
+              }}
+            >
+              <ArrowLeft size={16} />
+              
+            </button>
 
       <div
         style={{

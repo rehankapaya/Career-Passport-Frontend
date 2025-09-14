@@ -9,7 +9,8 @@ import {
   MessageSquare,
   Settings,
   Bookmark,
-  Menu
+  Menu,
+  TrendingUp
 } from "lucide-react";
 
 export default function DashboardSidebar() {
@@ -23,11 +24,14 @@ export default function DashboardSidebar() {
   const items = [
     { to: "", label: "Dashboard", icon: <Home size={18} />, exact: true },
     { to: "admincareerbank", label: "Career Bank", icon: <Briefcase size={18} /> },
+    { to: "tracking", label: "Tracking Popularity", icon: <TrendingUp size={18} /> },
     { to: "quiz", label: "Quiz History", icon: <FileText size={18} /> },
+    { to: "scoringlogic", label: "Quiz and Scoring Logic", icon: <FileText size={18} /> },
     { to: "adminmultimedia", label: "Multimedia", icon: <Video size={18} /> },
     { to: "adminsuccessstories", label: "Success Stories", icon: <Trophy size={18} /> },
     { to: "addresource", label: "Resources", icon: <Bookmark size={18} /> },
     { to: "adminfeedback", label: "Feedback", icon: <MessageSquare size={18} /> },
+    
   ];
 
   const baseItem = {

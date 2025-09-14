@@ -3,6 +3,38 @@ import axios from "axios";
 import { apiurl } from "../../api";
 import { Plus, List, Grid2X2, Search, Edit3, Trash2, X, Layers } from "lucide-react";
 
+const CACHE_KEY = "resources_cache_v1";
+
+function readCache() {
+  try {
+    const raw = localStorage.getItem(CACHE_KEY);
+    if (!raw) return null;
+    const parsed = JSON.parse(raw);
+    if (!parsed || !Array.isArray(parsed.items)) return null;
+    return parsed.items;
+  } catch {
+    return null;
+  }
+}
+
+function writeCache(items) {
+  try {
+    localStorage.setItem(CACHE_KEY, JSON.stringify({ items, savedAt: Date.now() }));
+  } catch {}
+}
+
+function upsertList(list, item) {
+  const next = Array.isArray(list) ? [...list] : [];
+  const idx = next.findIndex((x) => String(x._id) === String(item._id));
+  if (idx >= 0) next[idx] = item;
+  else next.unshift(item);
+  return next;
+}
+
+function removeFromList(list, id) {
+  return (Array.isArray(list) ? list : []).filter((x) => String(x._id) !== String(id));
+}
+
 const AdminAddResourcePage = () => {
   const [resources, setResources] = useState([]);
   const [filteredResources, setFilteredResources] = useState([]);
@@ -23,7 +55,14 @@ const AdminAddResourcePage = () => {
   });
 
   useEffect(() => {
-    fetchResources();
+    const cached = readCache();
+    if (cached && cached.length) {
+      setResources(cached);
+      setFilteredResources(cached);
+      setLoading(false);
+    } else {
+      fetchResources();
+    }
   }, []);
 
   useEffect(() => {
@@ -31,12 +70,10 @@ const AdminAddResourcePage = () => {
       const q = searchTerm.toLowerCase();
       const filtered = resources.filter(
         (r) =>
-          r.title.toLowerCase().includes(q) ||
-          r.category.toLowerCase().includes(q) ||
-          r.description.toLowerCase().includes(q) ||
-          (r.tag &&
-            Array.isArray(r.tag) &&
-            r.tag.some((t) => t.toLowerCase().includes(q)))
+          (r.title || "").toLowerCase().includes(q) ||
+          (r.category || "").toLowerCase().includes(q) ||
+          (r.description || "").toLowerCase().includes(q) ||
+          (Array.isArray(r.tag) && r.tag.some((t) => (t || "").toLowerCase().includes(q)))
       );
       setFilteredResources(filtered);
     } else {
@@ -54,6 +91,7 @@ const AdminAddResourcePage = () => {
       });
       setResources(response.data);
       setFilteredResources(response.data);
+      writeCache(response.data);
     } catch {
       setMessage("Failed to fetch resources");
     } finally {
@@ -66,10 +104,10 @@ const AdminAddResourcePage = () => {
   const handleEditClick = (resource) => {
     setEditingResource(resource);
     setFormData({
-      title: resource.title,
-      category: resource.category,
-      description: resource.description,
-      file_url: resource.file_url,
+      title: resource.title || "",
+      category: resource.category || "",
+      description: resource.description || "",
+      file_url: resource.file_url || "",
       tag: Array.isArray(resource.tag) ? resource.tag.join(", ") : resource.tag || "",
     });
     setShowAddForm(true);
@@ -83,21 +121,32 @@ const AdminAddResourcePage = () => {
       const token = localStorage.getItem("token");
       const tagArray = formData.tag ? formData.tag.split(",").map((t) => t.trim()).filter(Boolean) : [];
       const requestData = { ...formData, tag: tagArray };
+
       if (editingResource) {
-        await axios.put(`${apiurl}/api/resources/${editingResource._id}`, requestData, {
-          headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
-          withCredentials: true,
-        });
+        const { data: updated } = await axios.put(
+          `${apiurl}/api/resources/${editingResource._id}`,
+          requestData,
+          { headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" }, withCredentials: true }
+        );
+        const next = upsertList(resources, updated || { ...editingResource, ...requestData, _id: editingResource._id });
+        setResources(next);
+        setFilteredResources(next);
+        writeCache(next);
         setMessage("Resource updated successfully!");
       } else {
-        await axios.post(`${apiurl}/api/resources`, requestData, {
-          headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
-          withCredentials: true,
-        });
+        const { data: created } = await axios.post(
+          `${apiurl}/api/resources`,
+          requestData,
+          { headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" }, withCredentials: true }
+        );
+        const next = upsertList(resources, created || requestData);
+        setResources(next);
+        setFilteredResources(next);
+        writeCache(next);
         setMessage("Resource added successfully!");
       }
+
       resetForm();
-      fetchResources();
     } catch (error) {
       if (error.response?.status === 400) setMessage("All required fields must be provided.");
       else if (error.response?.status === 401) setMessage("Unauthorized. Please log in as admin.");
@@ -115,8 +164,11 @@ const AdminAddResourcePage = () => {
         headers: { Authorization: `Bearer ${token}` },
         withCredentials: true,
       });
+      const next = removeFromList(resources, id);
+      setResources(next);
+      setFilteredResources(next);
+      writeCache(next);
       setMessage("Resource deleted successfully!");
-      fetchResources();
     } catch {
       setMessage("Failed to delete resource");
     }
@@ -373,7 +425,7 @@ const AdminAddResourcePage = () => {
                   <div>
                     <div style={{ fontWeight: 700, color: "#1D2226", marginBottom: 4 }}>{resource.title}</div>
                     <div style={{ color: "#6B7280", fontSize: 14 }}>
-                      {resource.description.length > 110 ? `${resource.description.substring(0, 110)}...` : resource.description}
+                      {(resource.description || "").length > 110 ? `${resource.description.substring(0, 110)}...` : resource.description}
                     </div>
                   </div>
                   <div>
@@ -450,7 +502,7 @@ const AdminAddResourcePage = () => {
                     </span>
                   </div>
                   <p style={{ color: "#6B7280", marginBottom: 12, lineHeight: 1.55 }}>
-                    {resource.description.length > 140 ? `${resource.description.substring(0, 140)}...` : resource.description}
+                    {(resource.description || "").length > 140 ? `${resource.description.substring(0, 140)}...` : resource.description}
                   </p>
                   <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 12, fontSize: 14, color: "#6B7280" }}>
                     <span>{resource.views_count} views</span>

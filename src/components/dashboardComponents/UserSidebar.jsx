@@ -11,7 +11,7 @@ export default function UserSidebar() {
 
   const items = [
     // { icon: <Home size={18} />, label: "Dashboard", to: "/user-dashboard" },
-    { icon: <Clock size={18} />, label: "Recent Activity", to: "/user-dashboard/recent-activity" },
+    { icon: <Clock size={18} />, label: "Recent Activity", to: "/user-dashboard/" },
     { icon: <ListChecks size={18} />, label: "Quiz Results", to: "/user-dashboard/quiz-result" },
     { icon: <Bookmark size={18} />, label: "Bookmarked Items", to: "/user-dashboard/book-mark" },
     { icon: <Briefcase size={18} />, label: "Recommended Careers", to: "/user-dashboard/recommended-career" },
