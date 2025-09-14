@@ -273,7 +273,7 @@ export default function SuccessStoriesPage() {
               <div style={{ display: "flex", alignItems: "center", gap: 18 }}>
                 {story.image_url ? (
                   <img
-                    src={`http://localhost:5000/${story.image_url.replace(/\\/g, "/")}`}
+                    src={`${apiurl}/${story.image_url.replace(/\\/g, "/")}`}
                     alt={story.rname}
                     style={{ width: 80, height: 80, borderRadius: 12, objectFit: "cover", border: "1px solid " + line }}
                   />

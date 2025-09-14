@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { BarChart3, Mail } from "lucide-react";
+import { apiurl } from "../../api";
 
 export default function AdminQuizHistory() {
   const [history, setHistory] = useState([]);
@@ -8,7 +9,7 @@ export default function AdminQuizHistory() {
   useEffect(() => {
     const fetchHistory = async () => {
       try {
-        const res = await fetch("http://localhost:5000/api/attempt/history");
+        const res = await fetch(`${apiurl}/api/attempt/history`);
         const data = await res.json();
         setHistory(data);
       } catch {}

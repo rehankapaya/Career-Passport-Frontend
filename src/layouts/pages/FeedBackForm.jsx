@@ -7,7 +7,6 @@ import { apiurl } from "../../api";
 import { MessageSquare, CheckCircle2, XCircle, Pencil, Trash2, Send, Loader2, Inbox } from "lucide-react";
 
 export default function FeedbackForm() {
-  const apiurl = "http://localhost:5000";
   const [category, setCategory] = useState("general");
   const [message, setMessage] = useState("");
   const [status, setStatus] = useState(null);
@@ -37,12 +36,13 @@ export default function FeedbackForm() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setStatus("loading");
+    console.log({ category, message ,user_id:user.user_id})
     try {
       if (editingId) {
         const res = await axios.put(`${apiurl}/api/feedback/${editingId}`, { category, message }, {
-        headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
-        withCredentials: true,
-      });
+          headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
+          withCredentials: true,
+        });
         if (res.data.success) {
           setStatus("success");
           setEditingId(null);
@@ -50,7 +50,7 @@ export default function FeedbackForm() {
           fetchFeedbacks();
         }
       } else {
-        const res = await axios.post(`${apiurl}/api/feedback`, { user_id: user._id, category, message }, { withCredentials: true });
+        const res = await axios.post(`${apiurl}/api/feedback/${user._id}`, { category, message }, { withCredentials: true });
         if (res.data.success) {
           setStatus("success");
           setMessage("");
