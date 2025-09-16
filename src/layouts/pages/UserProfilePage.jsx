@@ -21,7 +21,7 @@ import {
 const PROFILE_CACHE_KEY = "user_profile_cache_v1";
 const WORK_EXP_KEY = "user_work_experience";
 
-// read work experience only
+// ---------- Local storage helpers ----------
 function readWorkExp() {
   try {
     return localStorage.getItem(WORK_EXP_KEY) || "";
@@ -29,12 +29,10 @@ function readWorkExp() {
     return "";
   }
 }
-
-// write work experience only
 function writeWorkExp(exp) {
   try {
     localStorage.setItem(WORK_EXP_KEY, exp);
-  } catch {}
+  } catch { }
 }
 function readProfileCache() {
   try {
@@ -47,18 +45,75 @@ function readProfileCache() {
     return null;
   }
 }
-
 function writeProfileCache(profile) {
   try {
     localStorage.setItem(PROFILE_CACHE_KEY, JSON.stringify({ item: profile, savedAt: Date.now() }));
   } catch { }
 }
 
+// ---------- Resume helpers ----------
+const getFileExt = (url = "", fallback = "") => {
+  try {
+    const u = new URL(url);
+    const base = (u.pathname.split("/").pop() || "").split("?")[0];
+    const ext = (base.split(".").pop() || "").toLowerCase();
+    return ext || (fallback || "").toLowerCase();
+  } catch {
+    const clean = (url || "").split("?")[0].toLowerCase();
+    const ext = (clean.split(".").pop() || "").toLowerCase();
+    return ext || (fallback || "").toLowerCase();
+  }
+};
+
+const isPDF = (url, fallbackExt = "") => getFileExt(url, fallbackExt) === "pdf";
+
+// Google Docs Viewer for doc/docx (PDF can load directly)
+const buildPreviewUrl = (cloudUrl) => {
+  if (!cloudUrl) return "";
+  // If already ends in .pdf, just return it
+  if (cloudUrl.toLowerCase().endsWith(".pdf")) return cloudUrl;
+  // Force PDF delivery: replace /upload/ with /upload/f_pdf/
+  return cloudUrl.replace("/upload/", "/upload/f_pdf/") + ".pdf";
+};
+
+// Prefer DB name+ext; fallback to URL basename
+const fileNameFromProfile = (profile) => {
+  if (!profile) return "resume";
+  const fromDb = `${profile.resume_name || ""}${profile.resume_ext ? "." + profile.resume_ext : ""}`.trim();
+  if (fromDb && fromDb !== ".") return fromDb;
+  try {
+    const u = new URL(profile.resume);
+    const base = (u.pathname.split("/").pop() || "").split("?")[0];
+    return base || "resume";
+  } catch {
+    return "resume";
+  }
+};
+
+// Build a Cloudinary "attachment" URL to suggest a download filename
+// Insert /fl_attachment[:<filename>] immediately after /upload
+const buildAttachmentUrl = (cloudinaryUrl, suggestedFilename) => {
+  try {
+    const u = new URL(cloudinaryUrl);
+    const parts = u.pathname.split("/");
+    const uploadIdx = parts.findIndex((p) => p === "upload");
+    if (uploadIdx > -1) {
+      const attach = suggestedFilename ? `fl_attachment:${encodeURIComponent(suggestedFilename)}` : "fl_attachment";
+      parts.splice(uploadIdx + 1, 0, attach);
+      u.pathname = parts.join("/");
+      return u.toString();
+    }
+    return cloudinaryUrl;
+  } catch {
+    return cloudinaryUrl;
+  }
+};
+
 export default function UserProfilePage() {
   const [formData, setFormData] = useState({
     education_level: "",
     interests: "",
-    work_experience: ""
+    work_experience: "",
   });
 
   const [user, setUser] = useState(null);
@@ -81,90 +136,95 @@ export default function UserProfilePage() {
     border: "#E6E6E6",
   };
 
-useEffect(() => {
-  const storedUser = JSON.parse(localStorage.getItem("user"));
-  setUser(storedUser);
-  if (!storedUser) return;
+  useEffect(() => {
+    const storedUser = JSON.parse(localStorage.getItem("user"));
+    setUser(storedUser);
+    if (!storedUser) return;
 
-  const cached = readProfileCache();
-  const localWorkExp = readWorkExp();
+    const cached = readProfileCache();
+    const localWorkExp = readWorkExp();
 
-  if (cached) {
-    setUserProfile(cached);
-    setFormData({
-      education_level: cached.education_level || "",
-      interests: Array.isArray(cached.interests) ? cached.interests.join(", ") : cached.interests || "",
-      work_experience: localWorkExp || "" // ✅ take from localStorage only
-    });
-  } else {
-    fetchUserProfile();
-  }
-}, []);
-
-const fetchUserProfile = async () => {
-  try {
-    setIsLoading(true);
-    const res = await axios.get(`${apiurl}/api/user-profiles/`, {
-      headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
-      withCredentials: true,
-    });
-    if (res.data) {
-      setUserProfile(res.data);
-      writeProfileCache(res.data);
-      const localWorkExp = readWorkExp();
+    if (cached) {
+      setUserProfile(cached);
       setFormData({
-        education_level: res.data.education_level || "",
-        interests: Array.isArray(res.data.interests) ? res.data.interests.join(", ") : res.data.interests || "",
-        work_experience: localWorkExp || "" // ✅ override with local storage value
+        education_level: cached.education_level || "",
+        interests: Array.isArray(cached.interests) ? cached.interests.join(", ") : cached.interests || "",
+        work_experience: localWorkExp || "",
       });
-    }
-  } catch (err) {
-    console.error("Error fetching user profile:", err);
-  } finally {
-    setIsLoading(false);
-  }
-};
-
-
- const handleUpdate = async () => {
-  try {
-    setIsLoading(true);
-    const f = new FormData();
-    f.append("education_level", formData.education_level || "");
-    const interestsArray = formData.interests
-      ? formData.interests.split(",").map((x) => x.trim()).filter(Boolean)
-      : [];
-    f.append("interests", JSON.stringify(interestsArray));
-
-    // ✅ Save work experience locally only
-    if (formData.work_experience) {
-      writeWorkExp(formData.work_experience);
-    }
-
-    if (formData.profile_image) f.append("profile_image", formData.profile_image);
-
-    const res = await axios.post(`${apiurl}/api/user-profiles/`, f, {
-      headers: {
-        "Content-Type": "multipart/form-data",
-        Authorization: `Bearer ${localStorage.getItem("token")}`,
-      },
-      withCredentials: true,
-    });
-    if (res.data) {
-      toast.success("Profile updated");
-      setUserProfile(res.data);
-      writeProfileCache(res.data);
-      setShowEdit(false);
+      // If cache has no resume (first load), fetch fresh
+      if (!cached.resume) {
+        fetchUserProfile();
+      }
     } else {
-      toast.error("Update failed");
+      fetchUserProfile();
     }
-  } catch (err) {
-    console.error(err);
-    toast.error("Something went wrong");
-  } finally {
-    setIsLoading(false);
-  }
-};
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const fetchUserProfile = async () => {
+    try {
+      setIsLoading(true);
+      const res = await axios.get(`${apiurl}/api/user-profiles/`, {
+        headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
+        withCredentials: true,
+      });
+
+      if (res.data) {
+        setUserProfile(res.data);
+        writeProfileCache(res.data);
+        const localWorkExp = readWorkExp();
+        setFormData({
+          education_level: res.data.education_level || "",
+          interests: Array.isArray(res.data.interests) ? res.data.interests.join(", ") : res.data.interests || "",
+          work_experience: localWorkExp || "",
+        });
+      }
+    } catch (err) {
+      console.error("Error fetching user profile:", err);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleUpdate = async () => {
+    try {
+      setIsLoading(true);
+      const f = new FormData();
+      f.append("education_level", formData.education_level || "");
+      const interestsArray = formData.interests
+        ? formData.interests.split(",").map((x) => x.trim()).filter(Boolean)
+        : [];
+      f.append("interests", JSON.stringify(interestsArray));
+
+      // Save work experience locally only
+      if (formData.work_experience) {
+        writeWorkExp(formData.work_experience);
+      }
+
+      if (formData.profile_image) f.append("profile_image", formData.profile_image);
+
+      const res = await axios.post(`${apiurl}/api/user-profiles/`, f, {
+        headers: {
+          "Content-Type": "multipart/form-data",
+          Authorization: `Bearer ${localStorage.getItem("token")}`,
+        },
+        withCredentials: true,
+      });
+      if (res.data) {
+        toast.success("Profile updated");
+        setUserProfile(res.data);
+        writeProfileCache(res.data);
+        setShowEdit(false);
+      } else {
+        toast.error("Update failed");
+      }
+    } catch (err) {
+      console.error(err);
+      toast.error("Something went wrong");
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   const handleResumeUpload = async (e) => {
     e.preventDefault();
@@ -185,7 +245,7 @@ const fetchUserProfile = async () => {
       });
       toast.success("Resume uploaded");
       setResumeFile(null);
-      await fetchUserProfile();
+      await fetchUserProfile(); // refresh to pick secure_url, ext, name
     } catch (err) {
       console.error("Error uploading resume:", err);
       toast.error("Upload failed");
@@ -194,26 +254,18 @@ const fetchUserProfile = async () => {
     }
   };
 
-  const handleDownloadResume = async () => {
-    try {
-      const response = await axios.get(`${apiurl}/${userProfile.resume}`, {
-        responseType: "blob",
-        headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
-        withCredentials: true,
-      });
-      const url = window.URL.createObjectURL(new Blob([response.data]));
-      const link = document.createElement("a");
-      link.href = url;
-      link.setAttribute("download", "resume.pdf");
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      window.URL.revokeObjectURL(url);
-    } catch (error) {
-      console.error("Error downloading the resume:", error);
-      toast.error("Download failed");
-    }
-  };
+ const handleDownloadResume = () => {
+  if (!userProfile?.resume) {
+    toast.error("No resume found");
+    return;
+  }
+  const link = document.createElement("a");
+  link.href = userProfile.resume;        // original secure_url
+  link.setAttribute("download", fileNameFromUrl(userProfile.resume));
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+};
 
   if (!user) {
     return (
@@ -223,7 +275,8 @@ const fetchUserProfile = async () => {
           placeItems: "center",
           height: "100vh",
           background: c.bg,
-          fontFamily: 'Segoe UI, Helvetica, Arial, system-ui, -apple-system, "Noto Sans", sans-serif',
+          fontFamily:
+            'Segoe UI, Helvetica, Arial, system-ui, -apple-system, "Noto Sans", sans-serif',
           color: c.sub,
           gap: 12,
         }}
@@ -245,7 +298,8 @@ const fetchUserProfile = async () => {
         display: "flex",
         justifyContent: "center",
         alignItems: "flex-start",
-        fontFamily: 'Segoe UI, Helvetica, Arial, system-ui, -apple-system, "Noto Sans", sans-serif',
+        fontFamily:
+          'Segoe UI, Helvetica, Arial, system-ui, -apple-system, "Noto Sans", sans-serif',
       }}
     >
       <div
@@ -260,6 +314,7 @@ const fetchUserProfile = async () => {
           border: `1px solid ${c.border}`,
         }}
       >
+        {/* Header */}
         <div
           style={{
             display: "flex",
@@ -275,7 +330,7 @@ const fetchUserProfile = async () => {
             <img
               src={
                 userProfile?.profile_image
-                  ? `${apiurl}/${userProfile?.profile_image}`
+                  ? `${userProfile?.profile_image}`
                   : "https://thumbs.dreamstime.com/b/default-avatar-profile-image-vector-social-media-user-icon-potrait-182347582.jpg"
               }
               alt="Profile"
@@ -322,7 +377,9 @@ const fetchUserProfile = async () => {
             />
           </div>
           <div style={{ flex: 1, minWidth: 200 }}>
-            <h2 style={{ fontSize: "1.75rem", margin: "0 0 6px 0", fontWeight: 700 }}>{user.username}</h2>
+            <h2 style={{ fontSize: "1.75rem", margin: "0 0 6px 0", fontWeight: 700 }}>
+              {user.username}
+            </h2>
             <p style={{ margin: "0 0 10px 0", opacity: 0.95 }}>{user.email}</p>
             <span
               style={{
@@ -340,6 +397,7 @@ const fetchUserProfile = async () => {
           </div>
         </div>
 
+        {/* Tabs */}
         <div style={{ display: "flex", borderBottom: `1px solid ${c.border}`, background: "#FAFAFA" }}>
           <button
             onClick={() => setActiveTab("profile")}
@@ -387,6 +445,7 @@ const fetchUserProfile = async () => {
           </button>
         </div>
 
+        {/* Profile tab */}
         {activeTab === "profile" && (
           <div style={{ padding: 26 }}>
             <h3
@@ -440,7 +499,6 @@ const fetchUserProfile = async () => {
                   </span>
                 </div>
               </div>
-
 
               <div
                 style={{
@@ -507,6 +565,7 @@ const fetchUserProfile = async () => {
                   </span>
                 </div>
               </div>
+
               {(formData.work_experience || userProfile?.work_experience) && (
                 <div
                   style={{
@@ -533,16 +592,13 @@ const fetchUserProfile = async () => {
                     <FileText size={22} />
                   </div>
                   <div style={{ display: "flex", flexDirection: "column" }}>
-                    <span style={{ fontSize: "0.85rem", color: c.sub, marginBottom: 4 }}>
-                      Work Experience
-                    </span>
+                    <span style={{ fontSize: "0.85rem", color: c.sub, marginBottom: 4 }}>Work Experience</span>
                     <span style={{ fontSize: "1rem", color: "#2c3e50", fontWeight: 600 }}>
-                      {userProfile.work_experience}
+                      {userProfile?.work_experience || formData.work_experience}
                     </span>
                   </div>
                 </div>
               )}
-
 
               <div
                 style={{
@@ -604,6 +660,7 @@ const fetchUserProfile = async () => {
           </div>
         )}
 
+        {/* Resume tab */}
         {activeTab === "resume" && (
           <div style={{ padding: 26 }}>
             <h3
@@ -631,7 +688,11 @@ const fetchUserProfile = async () => {
               }}
             >
               <div style={{ display: "grid", placeItems: "center" }}>
-                {userProfile?.resume ? <CheckCircle2 size={28} color={c.primaryDeep} /> : <FileText size={28} color={c.primaryDeep} />}
+                {userProfile?.resume ? (
+                  <CheckCircle2 size={28} color={c.primaryDeep} />
+                ) : (
+                  <FileText size={28} color={c.primaryDeep} />
+                )}
               </div>
               <div>
                 <h4 style={{ margin: "0 0 6px 0", color: "#2c3e50" }}>Current Resume Status</h4>
@@ -640,6 +701,11 @@ const fetchUserProfile = async () => {
                     ? "Your resume is uploaded and ready to view."
                     : "No resume uploaded yet. Add one to increase opportunities."}
                 </p>
+                {userProfile?.resume && (
+                  <p style={{ margin: "8px 0 0 0", color: c.sub, fontSize: ".9rem" }}>
+                    File: <strong>{fileNameFromProfile(userProfile)}</strong>
+                  </p>
+                )}
               </div>
             </div>
 
@@ -694,8 +760,20 @@ const fetchUserProfile = async () => {
                       overflow: "hidden",
                     }}
                   >
+                    {/* Debug header with raw URL (handy if preview fails) */}
+                    <div style={{ padding: 10, background: "#fff", borderBottom: `1px solid ${c.border}`, fontSize: 12, color: c.sub }}>
+                      <div style={{ overflowX: "auto", whiteSpace: "nowrap" }}>
+                        <strong>URL:</strong>{" "}
+                        <a href={userProfile.resume} target="_blank" rel="noreferrer">
+                          {userProfile.resume}
+                        </a>
+                        {userProfile?.resume_ext ? <> &nbsp;|&nbsp; <strong>ext:</strong> {userProfile.resume_ext}</> : null}
+                      </div>
+                    </div>
+
+                    {/* Primary preview via iframe (PDF directly, DOC/DOCX via Google Viewer) */}
                     <iframe
-                      src={`${apiurl}/${userProfile.resume}`}
+                      src={buildPreviewUrl(userProfile?.resume)}
                       title="Resume Preview"
                       style={{ width: "100%", height: 520, border: "none" }}
                     />
@@ -705,11 +783,20 @@ const fetchUserProfile = async () => {
             )}
 
             {user?.user_id && (
-              <div style={{ padding: 18, background: "#F8F9FA", borderRadius: 10, border: `1px solid ${c.border}` }}>
+              <div
+                style={{
+                  padding: 18,
+                  background: "#F8F9FA",
+                  borderRadius: 10,
+                  border: `1px solid ${c.border}`,
+                }}
+              >
                 <h4 style={{ margin: "0 0 8px 0", color: "#2c3e50" }}>
                   {userProfile?.resume ? "Update Your Resume" : "Add Resume"}
                 </h4>
-                <p style={{ margin: "0 0 14px 0", color: c.sub, fontSize: "0.92rem" }}>PDF, DOC, or DOCX</p>
+                <p style={{ margin: "0 0 14px 0", color: c.sub, fontSize: "0.92rem" }}>
+                  PDF, DOC, or DOCX
+                </p>
                 <form onSubmit={handleResumeUpload} style={{ display: "flex", flexDirection: "column", gap: 12 }}>
                   <div style={{ position: "relative" }}>
                     <label
@@ -768,6 +855,7 @@ const fetchUserProfile = async () => {
         )}
       </div>
 
+      {/* Edit modal */}
       {showEdit && (
         <div
           style={{
@@ -801,7 +889,9 @@ const fetchUserProfile = async () => {
                 borderBottom: `1px solid ${c.border}`,
               }}
             >
-              <h3 style={{ margin: 0, color: "#2c3e50" }}>{userProfile ? "Edit Profile" : "Add Profile"}</h3>
+              <h3 style={{ margin: 0, color: "#2c3e50" }}>
+                {userProfile ? "Edit Profile" : "Add Profile"}
+              </h3>
               <button
                 onClick={() => setShowEdit(false)}
                 style={{ background: "transparent", border: "none", cursor: "pointer", color: c.sub }}
@@ -856,6 +946,7 @@ const fetchUserProfile = async () => {
                   }}
                 />
               </div>
+
               <div style={{ marginBottom: 16 }}>
                 <label
                   style={{
@@ -869,9 +960,7 @@ const fetchUserProfile = async () => {
                 </label>
                 <textarea
                   value={formData.work_experience}
-                  onChange={(e) =>
-                    setFormData({ ...formData, work_experience: e.target.value })
-                  }
+                  onChange={(e) => setFormData({ ...formData, work_experience: e.target.value })}
                   placeholder="e.g., 2 years as Software Engineer at XYZ"
                   rows={3}
                   style={{
@@ -885,7 +974,6 @@ const fetchUserProfile = async () => {
                   }}
                 />
               </div>
-
 
               <div style={{ marginBottom: 6 }}>
                 <label style={{ display: "block", marginBottom: 8, fontWeight: 600, color: "#2c3e50" }}>
@@ -977,6 +1065,7 @@ const fetchUserProfile = async () => {
         </div>
       )}
 
+      {/* Busy overlay */}
       {isLoading && (
         <div
           style={{

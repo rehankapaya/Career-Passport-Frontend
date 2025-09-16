@@ -5,7 +5,7 @@ import { apiurl } from "../../api";
 import { Video as VideoIcon, Mic as AudioIcon, FileText as PdfIcon, Image as ImageIcon, Star as StarIcon, Search as SearchIcon, PlayCircle, Bookmark, BookmarkCheck } from "lucide-react";
 import { useBookmark } from "../../hooks/useBookmark";
 import { UserContext } from "../../context/UserContext";
-import getThumbnail from "../../hooks/useThumbnail";
+import getThumbnail, { thumbOnError } from "../../hooks/useThumbnail";
 
 const CACHE_KEY = "multimedia_cache_v1";
 
@@ -280,7 +280,7 @@ export default function MultimediaPage() {
                 onMouseLeave={(e) => (e.currentTarget.style.transform = "translateY(0)")}
               >
                 <div style={{ position: "relative", height: 180, overflow: "hidden", backgroundColor: "#000", display: "flex", alignItems: "center", justifyContent: "center" }}>
-                  <img src={getThumbnail(item)} alt={item.title} style={{ width: "100%", height: "100%", objectFit: "cover", position: "absolute", inset: 0 }} />
+                  <img src={getThumbnail(item)} onError={thumbOnError(item)} alt={item.title} style={{ width: "100%", height: "100%", objectFit: "cover", position: "absolute", inset: 0 }} />
                   {item.type === "video" && <PlayCircle size={56} style={{ position: "absolute", zIndex: 1, pointerEvents: "none", opacity: 0.9 }} />}
 
                   {item.type === "video" && isDriveUrl(item.url) && (

@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 import axios from "axios";
 import { toast } from "react-toastify";
 import { apiurl } from "../../api";
-import getThumbnail from "./../../hooks/useThumbnail";
+import getThumbnail, { thumbOnError } from "./../../hooks/useThumbnail";
 import {
   Video as VideoIcon,
   Mic as AudioIcon,
@@ -10,6 +10,8 @@ import {
   Image as ImageIcon,
   PlayCircle,
 } from "lucide-react";
+
+
 
 /* =========================
    LocalStorage Cache Utils
@@ -544,6 +546,7 @@ export default function AdminMultimediaPage() {
                 <>
                   <img
                     src={getThumbnail(item)}
+                    onError={thumbOnError(item)}
                     alt={item.title}
                     style={{ width: "100%", height: "100%", objectFit: "cover", position: "absolute", inset: 0 }}
                   />

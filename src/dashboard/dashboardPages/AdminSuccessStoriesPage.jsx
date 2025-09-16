@@ -6,6 +6,37 @@ import { apiurl } from "../../api";
 /* =========================
    LocalStorage Cache Utils
    ========================= */
+
+// --- Image helpers ---
+const isHttpUrl = (u) => typeof u === "string" && /^https?:\/\//i.test(u);
+const isCloudinaryUrl = (u) => typeof u === "string" && /res\.cloudinary\.com/i.test(u);
+
+/**
+ * Inject a Cloudinary transform into a delivery URL.
+ * Example: .../upload/ → .../upload/w_160,h_160,c_fill,q_auto,f_auto/
+ */
+const withCloudinaryTransform = (url, transform = "w_160,h_160,c_fill,q_auto,f_auto") => {
+  if (!isCloudinaryUrl(url)) return url;
+  return url.replace(/\/upload\/(?!v\d+)/, `/upload/${transform}/`);
+};
+
+/**
+ * Get best src for any stored image_url:
+ * - Cloudinary secure_url: return optimized with optional size
+ * - Absolute http(s): return as-is
+ * - Relative/local path: prefix with your apiurl
+ */
+const getImageSrc = (rawUrl, { w = 160, h = 160, crop = "c_fill" } = {}) => {
+  if (!rawUrl) return null;
+  if (isCloudinaryUrl(rawUrl)) {
+    const t = [`w_${w}`, `h_${h}`, crop, "q_auto", "f_auto"].join(",");
+    return withCloudinaryTransform(rawUrl, t);
+  }
+  if (isHttpUrl(rawUrl)) return rawUrl; // some CDN or other absolute URL
+  // legacy/local uploads
+  return `${apiurl}/${String(rawUrl).replace(/\\/g, "/")}`;
+};
+
 const CACHE_KEY = "pending_success_stories_v1";
 
 const readCache = () => {
@@ -26,7 +57,7 @@ const writeCache = (items) => {
       CACHE_KEY,
       JSON.stringify({ items, savedAt: Date.now() })
     );
-  } catch {}
+  } catch { }
 };
 
 const idOf = (s) => String(s?.story_id || s?._id || "");
@@ -157,9 +188,12 @@ export default function AdminSuccessStoriesPage() {
               <div style={{ display: "flex", alignItems: "center", gap: "16px", marginBottom: "12px" }}>
                 {story.image_url && (
                   <img
-                    src={`${apiurl}/${String(story.image_url).replace(/\\/g, "/")}`}
+                    src={getImageSrc(story.image_url, { w: 80, h: 80 })}
                     alt="Story"
                     style={{ width: 80, height: 80, borderRadius: "10px", objectFit: "cover" }}
+                    loading="lazy"
+                    referrerPolicy="no-referrer"
+                    onError={(e) => { e.currentTarget.src = getImageSrc("/images/placeholder.png"); }}
                   />
                 )}
                 <div>
@@ -195,7 +229,11 @@ export default function AdminSuccessStoriesPage() {
               <div style={styles.tableCell}>
                 {story.image_url ? (
                   <img
-                    src={`${apiurl}/${String(story.image_url).replace(/\\/g, "/")}`}
+                    src={getImageSrc(story.image_url, { w: 60, h: 60 })}
+                    loading="lazy"
+                    referrerPolicy="no-referrer"
+                    onError={(e) => { e.currentTarget.src = getImageSrc("/images/placeholder.png"); }}
+
                     alt="Story"
                     style={styles.thumbnailImage}
                   />
@@ -246,7 +284,9 @@ export default function AdminSuccessStoriesPage() {
               {selectedStory.image_url && (
                 <div style={styles.modalImageContainer}>
                   <img
-                    src={`${apiurl}/${String(selectedStory.image_url).replace(/\\/g, "/")}`}
+                    src={getImageSrc(selectedStory.image_url, { w: 900, h: 600, crop: "c_fit" })}
+                    referrerPolicy="no-referrer"
+                    onError={(e) => { e.currentTarget.src = getImageSrc("/images/placeholder-wide.png"); }}
                     alt="Story"
                     style={styles.modalImage}
                   />
@@ -299,7 +339,7 @@ const styles = {
   tableCell: { padding: "0 10px" },
   actionButtons: { display: "flex", gap: "10px" },
   viewActionButton: { padding: "6px 12px", backgroundColor: "#17a2b8", color: "white", border: "none", borderRadius: "4px", cursor: "pointer", fontSize: "12px", transition: "background-color 0.3s ease" },
-  thumbnailImage: { width: "60px", height: "60px", borderRadius: "8px", objectFit: "cover", border: "1px solid #e9ecef" },
+  thumbnailImage: { width: 60, height: 60, borderRadius: 8, objectFit: "cover", border: "1px solid #e9ecef", imageRendering: "auto" },
   noImagePlaceholder: { width: "60px", height: "60px", borderRadius: "8px", backgroundColor: "#f8f9fa", border: "1px solid #e9ecef", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "12px", color: "#6c757d" },
   modalOverlay: { position: "fixed", top: 0, left: 0, right: 0, bottom: 0, backgroundColor: "rgba(0, 0, 0, 0.5)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 1000, padding: "20px" },
   modalContent: { backgroundColor: "white", borderRadius: "12px", width: "100%", maxWidth: "600px", maxHeight: "90vh", overflowY: "auto", boxShadow: "0 10px 25px rgba(0, 0, 0, 0.2)" },
@@ -324,4 +364,4 @@ try {
       styleSheet.cssRules.length
     );
   }
-} catch {}
+} catch { }

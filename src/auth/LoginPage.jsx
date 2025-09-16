@@ -20,6 +20,7 @@ export default function LoginPage() {
     e.preventDefault();
     try {
       const response = await axios.post(`${apiurl}/api/user/login`, formData);
+      console.log(response)
       toast.success("Login Successful");
       userlogin(response.data.user);
       navigate("/");

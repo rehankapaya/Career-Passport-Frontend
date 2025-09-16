@@ -7,6 +7,27 @@ import { Bookmark, BookmarkCheck, Send, Filter, User2, Image as ImageIcon, Check
 import { UserContext } from "../../context/UserContext";
 import { useNavigate } from "react-router-dom";
 
+// --- Image helpers ---
+const isHttpUrl = (u) => typeof u === "string" && /^https?:\/\//i.test(u);
+const isCloudinaryUrl = (u) => typeof u === "string" && /res\.cloudinary\.com/i.test(u);
+
+/** Insert a Cloudinary transform into the delivery URL. */
+const withCloudinaryTransform = (url, transform = "w_160,h_160,c_fill,q_auto,f_auto") => {
+  if (!isCloudinaryUrl(url)) return url;
+  return url.replace(/\/upload\/(?!v\d+)/, `/upload/${transform}/`);
+};
+
+/** Normalize any stored image_url to a displayable <img src>. */
+const getImageSrc = (rawUrl, { w = 160, h = 160, crop = "c_fill" } = {}) => {
+  if (!rawUrl) return null;
+  if (isCloudinaryUrl(rawUrl)) {
+    const t = [`w_${w}`, `h_${h}`, crop, "q_auto", "f_auto"].join(",");
+    return withCloudinaryTransform(rawUrl, t);
+  }
+  if (isHttpUrl(rawUrl)) return rawUrl; // other CDN/absolute
+  return `${apiurl}/${String(rawUrl).replace(/\\/g, "/")}`; // legacy/local
+};
+
 const CACHE_KEY = "success_stories_cache_v1";
 
 function readCache() {
@@ -24,7 +45,7 @@ function readCache() {
 function writeCache(items) {
   try {
     localStorage.setItem(CACHE_KEY, JSON.stringify({ items, savedAt: Date.now() }));
-  } catch {}
+  } catch { }
 }
 
 export default function SuccessStoriesPage() {
@@ -208,6 +229,13 @@ export default function SuccessStoriesPage() {
           <div style={{ position: "relative", display: "inline-flex", alignItems: "center" }}>
             <input type="file" name="image_url" accept="image/*" onChange={handleChange} style={{ padding: 8, border: "1px solid " + line, borderRadius: 12 }} />
             <ImageIcon size={16} style={{ marginLeft: 8, color: brandMute }} />
+            {form.image_url && (
+              <img
+                src={URL.createObjectURL(form.image_url)}
+                alt="preview"
+                style={{ width: 48, height: 48, borderRadius: 8, objectFit: "cover", border: "1px solid " + line }}
+              />
+            )}
           </div>
         </div>
 
@@ -273,9 +301,12 @@ export default function SuccessStoriesPage() {
               <div style={{ display: "flex", alignItems: "center", gap: 18 }}>
                 {story.image_url ? (
                   <img
-                    src={`${apiurl}/${story.image_url.replace(/\\/g, "/")}`}
+                    src={getImageSrc(story.image_url, { w: 80, h: 80 })}
                     alt={story.rname}
                     style={{ width: 80, height: 80, borderRadius: 12, objectFit: "cover", border: "1px solid " + line }}
+                    loading="lazy"
+                    referrerPolicy="no-referrer"
+                    onError={(e) => { e.currentTarget.src = getImageSrc("/images/placeholder.png"); }}
                   />
                 ) : (
                   <div style={{ width: 80, height: 80, borderRadius: 12, background: "#E9F3FF", border: "1px solid #D7E9FF", display: "flex", alignItems: "center", justifyContent: "center", color: brandBlue }}>
